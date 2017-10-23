@@ -31,6 +31,12 @@ let camUtils = {
   convention: 'radio',
 };
 
+function XMLHttpRequestWithName(name) {
+    this.requete = new XMLHttpRequest();
+    this.filename = name;
+};
+
+
 /**
  * Init the scene
  */
@@ -77,11 +83,6 @@ function init() {
 }
 
 window.onload = function() {
-  // hookup load button
-  document.getElementById('buttoninput').onclick = function() {
-    document.getElementById('filesinput').click();
-  };
-
   // init threeJS...
   init();
 
@@ -351,12 +352,7 @@ window.onload = function() {
   /**
    * Parse incoming files
    */
-  function readMultipleFiles(evt) {
-    // hide the upload button
-    if (evt.target.files.length) {
-      document.getElementById('home-container').style.display = 'none';
-    }
-
+  function readMultipleFiles() {
     /**
      * Load sequence
      */
@@ -420,58 +416,92 @@ window.onload = function() {
         });
     }
 
+    function loadData() {
+      const data = [];
+      const dataGroups = [];
+      // convert object into array
+      for (let i = 0; i < files.length; i++) {
+        window.console.log(files[i]);
+        let dataUrl = CoreUtils.parseUrl(files[i].name);
+        if (dataUrl.extension.toUpperCase() === 'MHD' ||
+            dataUrl.extension.toUpperCase() === 'RAW') {
+          dataGroups.push(
+            {
+              file: files[i],
+              extension: dataUrl.extension.toUpperCase(),
+            });
+        } else {
+          data.push(files[i]);
+        }
+      }
+
+      // check if some files must be loaded together
+      if (dataGroups.length === 2) {
+        // if raw/mhd pair
+        const mhdFile = dataGroups.filter(_filterByExtension.bind(null, 'MHD'));
+        const rawFile = dataGroups.filter(_filterByExtension.bind(null, 'RAW'));
+        if (mhdFile.length === 1 &&
+            rawFile.length === 1) {
+        loadSequenceContainer.push(
+          loadSequenceGroup(dataGroups)
+        );
+        }
+      }
+
+      // load the rest of the files
+      for (let i = 0; i < data.length; i++) {
+        loadSequenceContainer.push(
+          loadSequence(i, data)
+        );
+      }
+
+      // run the load sequence
+      // load sequence for all files
+      Promise
+      .all(loadSequenceContainer)
+      .then(function() {
+        handleSeries(seriesContainer);
+      })
+      .catch(function(error) {
+        window.console.log('oops... something went wrong...');
+        window.console.log(error);
+      });
+    }
+
+    function loadXMLHttpRequest() {
+        var filename = GET[loadedFiles].split('/').pop();
+        var xhr = new XMLHttpRequestWithName(filename);
+        xhr.requete.open("GET", GET[loadedFiles]);
+        xhr.requete.responseType = "blob";//force the HTTP response, response-type header to be blob
+        xhr.requete.onload = function()
+        {
+            window.console.log("Try to load" + xhr.filename);
+        }
+        xhr.requete.addEventListener('readystatechange', function() {
+          if (xhr.requete.readyState === XMLHttpRequest.DONE) {
+            files.push(new File([xhr.requete.response], xhr.filename)); // convert blob to file
+            loadedFiles++;
+            if (loadedFiles === GET.length) {
+              loadData();
+            }
+            else {
+              loadXMLHttpRequest();
+            }
+          }
+        });
+        xhr.requete.send();
+    }
+
     const loadSequenceContainer = [];
 
-    const data = [];
-    const dataGroups = [];
-    // convert object into array
-    for (let i = 0; i < evt.target.files.length; i++) {
-      let dataUrl = CoreUtils.parseUrl(evt.target.files[i].name);
-      if (dataUrl.extension.toUpperCase() === 'MHD' ||
-          dataUrl.extension.toUpperCase() === 'RAW') {
-        dataGroups.push(
-          {
-            file: evt.target.files[i],
-            extension: dataUrl.extension.toUpperCase(),
-          });
-      } else {
-        data.push(evt.target.files[i]);
-      }
-    }
-
-    // check if some files must be loaded together
-    if (dataGroups.length === 2) {
-      // if raw/mhd pair
-      const mhdFile = dataGroups.filter(_filterByExtension.bind(null, 'MHD'));
-      const rawFile = dataGroups.filter(_filterByExtension.bind(null, 'RAW'));
-      if (mhdFile.length === 1 &&
-          rawFile.length === 1) {
-      loadSequenceContainer.push(
-        loadSequenceGroup(dataGroups)
-      );
-      }
-    }
-
-    // load the rest of the files
-    for (let i = 0; i < data.length; i++) {
-      loadSequenceContainer.push(
-        loadSequence(i, data)
-      );
-    }
-
-    // run the load sequence
-    // load sequence for all files
-    Promise
-    .all(loadSequenceContainer)
-    .then(function() {
-      handleSeries(seriesContainer);
-    })
-    .catch(function(error) {
-      window.console.log('oops... something went wrong...');
-      window.console.log(error);
-    });
+    // load GET values
+    var GET = [];
+    GET = ['http://127.0.0.1:8080/data/bs/CT_3.mhd', 'http://127.0.0.1:8080/data/bs/CT_3.raw']
+    var files = [];
+    var query = window.location.search.substring(1).split("&");
+    var loadedFiles = 0;
+    loadXMLHttpRequest();
+    //loadData();
   }
-  // hook up file input listener
-  document.getElementById('filesinput')
-    .addEventListener('change', readMultipleFiles, false);
+  readMultipleFiles();
 };
