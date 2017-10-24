@@ -32,7 +32,7 @@ let camUtils = {
 };
 
 function XMLHttpRequestWithName(name) {
-    this.requete = new XMLHttpRequest();
+    this.request = new XMLHttpRequest();
     this.filename = name;
 };
 
@@ -469,19 +469,19 @@ window.onload = function() {
     }
 
     function loadXMLHttpRequest() {
-        var filename = GET[loadedFiles].split('/').pop();
+        var filename = image[loadedFiles].split('/').pop();
         var xhr = new XMLHttpRequestWithName(filename);
-        xhr.requete.open("GET", GET[loadedFiles]);
-        xhr.requete.responseType = "blob";//force the HTTP response, response-type header to be blob
-        xhr.requete.onload = function()
+        xhr.request.open("GET", image[loadedFiles]);
+        xhr.request.responseType = "blob";//force the HTTP response, response-type header to be blob
+        xhr.request.onload = function()
         {
             window.console.log("Try to load" + xhr.filename);
         }
-        xhr.requete.addEventListener('readystatechange', function() {
-          if (xhr.requete.readyState === XMLHttpRequest.DONE) {
-            files.push(new File([xhr.requete.response], xhr.filename)); // convert blob to file
+        xhr.request.addEventListener('readystatechange', function() {
+          if (xhr.request.readyState === XMLHttpRequest.DONE && xhr.request.status == "200") {
+            files.push(new File([xhr.request.response], xhr.filename)); // convert blob to file
             loadedFiles++;
-            if (loadedFiles === GET.length) {
+            if (loadedFiles === image.length) {
               loadData();
             }
             else {
@@ -489,19 +489,40 @@ window.onload = function() {
             }
           }
         });
-        xhr.requete.send();
+        xhr.request.send();
     }
 
     const loadSequenceContainer = [];
 
     // load GET values
     var GET = [];
-    GET = ['http://127.0.0.1:8080/data/bs/CT_3.mhd', 'http://127.0.0.1:8080/data/bs/CT_3.raw']
-    var files = [];
     var query = window.location.search.substring(1).split("&");
+    for (var i = 0, max = query.length; i < max; i++) {
+        if (query[i] === "") // check for trailing & with no param
+            continue;
+        var param = query[i].split("=");
+        if (decodeURIComponent(param[0]) === "viewer")
+          GET[decodeURIComponent(param[0])] = decodeURIComponent(param[1] || "");
+    }
+
+    //Read the Json file
+    var jsonRequest = new XMLHttpRequest();
+    var jsonFile;
+    jsonRequest.overrideMimeType("application/json");
+    jsonRequest.open("GET", GET["viewer"], false);
+    jsonRequest.onreadystatechange = function() {
+        if (jsonRequest.readyState === XMLHttpRequest.DONE && jsonRequest.status == "200") {
+            jsonFile = jsonRequest.responseText;
+        }
+    }
+    jsonRequest.send(null);
+    var jsonData = JSON.parse(jsonFile);
+    var image = jsonData.image;
+        window.console.log(image);
+
     var loadedFiles = 0;
+    var files = [];
     loadXMLHttpRequest();
-    //loadData();
   }
   readMultipleFiles();
 };
