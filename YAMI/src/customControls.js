@@ -10,59 +10,41 @@ export default class customControls extends THREE.EventDispatcher {
     let _this = this;
 
     let STATE = {
-      NONE: 0
+      NONE: 0,
+      SETPROB: 1,
+      PAN: 2,
+      WINDOW: 3
     };
     let pressedKeys = new Map();
 
     let _state = STATE.NONE;
-    let _prevState = STATE.NONE;
+    //let _prevState = STATE.NONE;
 
-    let _eye = new THREE.Vector3();
 
     let EPS = 0.000001;
-    let _changed = true;
+    //let _changed = true;
+
+    let oldMousePosition = new THREE.Vector2();
+    let newMousePosition = new THREE.Vector2();
+
+    let _eye = new THREE.Vector3();
+    let _temp = new THREE.Vector3();
 
     // Public attributes
     this.camera = camera;
     this.stack = stack;
     this.domElement = (domElement !== undefined) ? domElement : document;
     this.target = new THREE.Vector3();
-    this.screen = {
-      left: 0,
-      top: 0,
-      width: 0,
-      height: 0
-    };
 
     this.noZoom = false;
-    this.noPan = true; //not implemented yet
+    this.noPan = false;
     this.noRotate = true; //not implemented yet
 
     // Public methods
     this.handleResize = function() {};
     this.update = function() {
-      /*
-            _eye.subVectors(_this.object.position, _this.target);
-
-            if (!_this.noZoom) {
-              this.zoomCamera();
-
-              if (_changed) {
-                this.object.updateProjectionMatrix();
-              }
-            }
-
-            if (!this.noPan) {
-              this.panCamera();
-            }
-
-            this.object.position.addVectors(_this.target, _eye);
-      */
-
-      if (_changed) {
+      if (_this._changed)
         _this.camera.updateProjectionMatrix();
-      }
-
       this.camera.lookAt(this.target);
     };
 
@@ -78,6 +60,35 @@ export default class customControls extends THREE.EventDispatcher {
       this.camera = this.save.clone();
       */
     };
+
+    this.pan = function(p1, p2) {
+      _eye.subVectors(_this.camera.position, _this.target);
+
+      if (this.noPan)
+        return;
+      let x = p2.x - p1.x;
+      let y = p2.y - p1.y;
+      // relative movment [-1,1]
+      x /= domElement.offsetWidth;
+      y /= domElement.offsetHeight;
+
+      // Scale movement to keep clicked/dragged position under cursor
+      let scale_x = (_this.camera.right - _this.camera.left) / _this.camera.zoom;
+      let scale_y = (_this.camera.top - _this.camera.bottom) / _this.camera.zoom;
+      x *= scale_x;
+      y *= scale_y;
+      
+      let pan = new THREE.Vector3();
+      // vertical component
+      pan.copy(_this.camera.up).setLength(y);
+      // horizontal component
+      pan.add(_temp.copy(_eye).cross(_this.camera.up).setLength(x));
+
+      _this.camera.position.add(pan);
+      _this.target.add(pan);
+      _this._changed = true;
+    }
+
 
     this.zoom = function(directionIn) {
       if (this.noZoom)
@@ -139,9 +150,14 @@ export default class customControls extends THREE.EventDispatcher {
       pressedKeys.set(event.keyCode, true);
 
       switch (event.key) {
+        case 'Escape':
+          _this._state = STATE.NONE;
+          break;
+
         case config.stackUp:
           _this.scrollStack(true);
           break;
+
         case config.stackDown:
           _this.scrollStack(false);
           break;
@@ -155,6 +171,52 @@ export default class customControls extends THREE.EventDispatcher {
 
     function isDown(keyCode) {
       return pressedKeys.has(keyCode) && pressedKeys.get(keyCode);
+    }
+
+    function mousedown(event) {
+      switch (event.which) { // which button of the mouse is pressed
+
+        case config.mouseClickProbe:
+          _this._state = STATE.SETPROB;
+          break;
+
+        case config.mouseClickPan:
+          _this._state = STATE.PAN;
+          break;
+
+        case config.mouseClickWindow:
+          _this._state = STATE.WINDOW;
+          break;
+      }
+      oldMousePosition.x = event.x;
+      oldMousePosition.y = event.y;
+
+      document.addEventListener('mousemove', mousemove, false);
+    }
+
+    function mouseup(event) {
+      _this._state = STATE.NONE;
+      document.removeEventListener('mousemove', mousemove, false);
+    }
+
+    function mousemove(event) {
+      newMousePosition.x = event.x;
+      newMousePosition.y = event.y;
+
+      switch (_this._state) {
+        case STATE.PAN:
+          _this.pan(oldMousePosition, newMousePosition);
+          break;
+        case STATE.SETPROB:
+          //TODO
+          break;
+        case STATE.WINDOW:
+          // TODO
+          break;
+      }
+
+      oldMousePosition = newMousePosition;
+      newMousePosition = new THREE.Vector2();
     }
 
     function mousewheel(event) {
@@ -173,6 +235,8 @@ export default class customControls extends THREE.EventDispatcher {
     }
 
     function addEvents() {
+      document.addEventListener('mousedown', mousedown, false);
+      document.addEventListener('mouseup', mouseup, false);
       document.addEventListener('wheel', mousewheel, false);
       document.addEventListener('contextmenu', contextMenu, false); // Right click
       document.addEventListener('keypress', keypressed, false); // Keys
@@ -181,6 +245,8 @@ export default class customControls extends THREE.EventDispatcher {
     }
 
     function clearEvents() {
+      document.removeEventListener('mousedown', mousedown, false);
+      document.removeEventListener('mouseup', mouseup, false);
       document.removeEventListener('wheel', mousewheel, false);
       document.removeEventListener('contextmenu', contextMenu, false); // Right click
       document.removeEventListener('keypress', keypressed, false); // Keys
