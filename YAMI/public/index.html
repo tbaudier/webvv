@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<title>AMI - Test Viewer</title>
+
+	<link rel="stylesheet" type="text/css" href="stylesheets/style.css">
+
+	<script type="text/javascript" src="https://use.edgefonts.net/source-code-pro.js"></script> <!-- font -->
+	<script type="text/javascript" src="https://cdn.rawgit.com/dataarts/dat.gui/master/build/dat.gui.min.js"></script> <!-- gui -->
+	<script type="text/javascript" src="https://cdn.rawgit.com/mrdoob/stats.js/master/build/stats.min.js"></script> <!-- stats (fps) -->
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/87/three.min.js"></script> <!-- 3D -->
+
+	<!-- AMI -->
+	<script type="text/javascript" src="lib/ami.min.js"></script> <!-- AMI -->
+</head>
+
+<body>
+
+	<div id="my-gui-container"></div>
+	<div id="my-lut-container">
+		<div id="my-lut-canvases"></div>
+	</div>
+	<div id="viewer">
+		<div id="orientation">
+			<div id="top" class="direction"></div>
+			<div id="bottom" class="direction"></div>
+			<div id="left" class="direction"></div>
+			<div id="right" class="direction"></div>
+		</div>
+		<div id="r3d"></div>
+	</div>
+	<div style="background-color: #f9f9f9; width: 0; height: 0;"></div>
+
+	<script type="text/javascript" src="bundle.js"></script>
+
+</body>
+
+</html>
