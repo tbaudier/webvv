@@ -4,13 +4,16 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "express": "^4.16.3"
+    "express": "^4.16.3",
+    "webpack": "^4.8.3"
   },
   "devDependencies": {
     "webpack-cli": "^2.1.3"
   },
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "webpack": "webpack -w",
+    "webpack_server": "webpack -w & node index.js"
   },
   "license": "UNLICENSED"
 }
