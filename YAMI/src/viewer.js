@@ -9,7 +9,7 @@ const animationManager = require('./animator');
 // GUI managment
 const guiManager = require('./guiManager');
 // Controls
-//const CustomControls = require('./customControls');
+const CustomControls = require('./customControls');
 
 // standard global variables
 let renderer; // @type {THREE.WebGLRenderer}
@@ -45,14 +45,6 @@ function init() {
     canvas.clientWidth / -2, canvas.clientWidth / 2,
     canvas.clientHeight / 2, canvas.clientHeight / -2,
     0.1, 10000);
-
-  // controls
-  controls = new AMI.TrackballOrthoControl(camera, canvas);
-  controls.staticMoving = true;
-  controls.noRotate = true;
-  //controls = new CustomControls.default(camera, canvas);
-  camera.controls = controls;
-
 }
 
 window.onload = function() {
@@ -83,6 +75,10 @@ window.onload = function() {
     stackHelper.border.visible = false;
     scene.add(stackHelper);
 
+    // Controls
+    controls = new CustomControls.default(camera, stackHelper, canvas);
+    camera.controls = controls;
+
     // set camera
     let worldbb = stack.worldBoundingBox();
     let lpsDims = new THREE.Vector3(
@@ -112,6 +108,7 @@ window.onload = function() {
     stackHelper.slice.intensityAuto = config.autoIntensity;
     stackHelper.slice.interpolation = config.interpolation;
 
+
     guiManager.updateLabels(camera.directionsLabel, stack.modality);
     guiManager.buildGUI(stackHelper, camera);
     hookCallbacks();
@@ -129,23 +126,7 @@ window.onload = function() {
         renderer.render(scene, camera);
         stats.update();
       });
-    // hook up callbacks
-    /*
-    controls.addEventListener('OnScroll', function(e) {
-      if (e.delta > 0) {
-        if (stackHelper.index >= stackHelper.orientationMaxIndex - 1) {
-          return false;
-        }
-        stackHelper.index += 1;
-      } else {
-        if (stackHelper.index <= 0) {
-          return false;
-        }
-        stackHelper.index -= 1;
-      }
-    });*/
-    window.addEventListener('resize', onWindowResize, false);
-    onWindowResize();
+
 
     /**
      * Handle window resize
@@ -157,6 +138,8 @@ window.onload = function() {
       };
       renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
     }
+    window.addEventListener('resize', onWindowResize, false);
+    onWindowResize();
 
     //
     // /*
