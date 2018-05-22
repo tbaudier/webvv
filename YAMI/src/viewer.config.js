@@ -19,14 +19,20 @@ module.exports = {
   // Let the user right-click our app ? (Menu : Copy Image, Save image as..)
   rightClickAllowed : false,
   zoomSpeed : 1.1, // factor of zooming, must be greater than 1.
+  zoomInIsWheelDown : true, // direction of wheel zooming
+  stackTopIsWheelDown : true, // direction of wheel stacking/changing index
 
   // Shortcuts KeyCodes
+  // (holding input must be saved as KeyCode)
 
   zoomIn : '+',
   zoomIn2 : 'i',
   zoomOut : '-',
   zoomOut2 : 'o',
   zoomHold : 17, // 'Ctrl'
+
+  stackUp : 'ArrowUp',
+  stackDown : 'ArrowDown',
 
   resetCamera : 'r',
 }

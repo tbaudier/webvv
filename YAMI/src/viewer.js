@@ -108,7 +108,6 @@ window.onload = function() {
     stackHelper.slice.intensityAuto = config.autoIntensity;
     stackHelper.slice.interpolation = config.interpolation;
 
-
     guiManager.updateLabels(camera.directionsLabel, stack.modality);
     guiManager.buildGUI(stackHelper, camera);
     hookCallbacks();
