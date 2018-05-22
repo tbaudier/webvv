@@ -7,7 +7,7 @@ const requestManager = require('./requestManager');
 // FPS managment
 const animationManager = require('./animator');
 // GUI managment
-//const guiManager = require('./guiManager');
+const guiManager = require('./guiManager');
 // Controls
 //const CustomControls = require('./customControls');
 
@@ -112,8 +112,8 @@ window.onload = function() {
     stackHelper.slice.intensityAuto = config.autoIntensity;
     stackHelper.slice.interpolation = config.interpolation;
 
-    //guiManager.updateLabels(camera.directionsLabel, stack.modality);
-    //guiManager.buildGUI(stackHelper, camera);
+    guiManager.updateLabels(camera.directionsLabel, stack.modality);
+    guiManager.buildGUI(stackHelper, camera);
     hookCallbacks();
   }
 
