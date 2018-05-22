@@ -1,7 +1,7 @@
 /* globals Stats, dat, AMI*/
 
 // Viewer config file
-//const config = require('./viewer.config');
+const config = require('./viewer.config');
 // Managment of JSON request, and parsing
 const requestManager = require('./requestManager');
 // FPS managment
@@ -25,11 +25,11 @@ function init() {
   // renderer
   canvas = document.getElementById('r3d');
   renderer = new THREE.WebGLRenderer({
-    antialias: false//(config.interpolation == 1),
+    antialias: (config.interpolation == 1),
   });
 
   renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
-  renderer.setClearColor(/*config.bgColor*/0xeeeeee, 1);
+  renderer.setClearColor(config.bgColor, 1);
   renderer.setPixelRatio(window.devicePixelRatio);
   canvas.appendChild(renderer.domElement);
 
@@ -109,8 +109,8 @@ window.onload = function() {
     camera.update();
     camera.fitBox(2); // here 2 means 'best of width & height' (0 'width', 1 'height')
 
-    stackHelper.slice.intensityAuto = false;//config.autoIntensity;
-    stackHelper.slice.interpolation = false;//config.interpolation;
+    stackHelper.slice.intensityAuto = config.autoIntensity;
+    stackHelper.slice.interpolation = config.interpolation;
 
     //guiManager.updateLabels(camera.directionsLabel, stack.modality);
     //guiManager.buildGUI(stackHelper, camera);
@@ -123,7 +123,7 @@ window.onload = function() {
   function hookCallbacks() {
 
     // Animation
-    animationManager.startAnimating(20,//config.fps,
+    animationManager.startAnimating(config.fps,
       function() {
         controls.update();
         renderer.render(scene, camera);
