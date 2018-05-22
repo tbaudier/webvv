@@ -9,8 +9,8 @@ app.get('/', function (req, res) {
 
 // Statics routes allow use to get files without any modification (image, data, ...)
 app.use('/viewer',express.static('public'));
-//app.use('/datafiles', express.static('studies'));
-//app.use('/thumbnail', express.static('thumbnails'));
+app.use('/datafiles', express.static('studies'));
+app.use('/thumbnail', express.static('thumbnails'));
 
 
 app.listen(port, function () {
