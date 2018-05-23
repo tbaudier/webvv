@@ -12,6 +12,7 @@ function requestManager() {
     return false;
   }
 
+
   function getGETparameters() {
     let params = [];
     let query = window.location.search.substring(1).split("&");
@@ -25,34 +26,88 @@ function requestManager() {
     return params
   }
 
+  function jsonHttpRequest(url) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
+      xhr.overrideMimeType("application/json");
+      xhr.onload = () => {
+        if (xhr.status == "200") {
+          resolve(xhr.responseText)
+        } else {
+          reject(xhr.statusText)
+        }
+      };
+      xhr.onerror = () => reject(xhr.statusText);
+      xhr.open("GET", url);
+      xhr.send();
+    })
+  }
+
+  function binaryHttpRequest(url) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.responseType = "blob"; //force the HTTP response, response-type header to be blob
+      xhr.onload = () => {
+        if (xhr.status == "200") {
+          resolve(xhr.response)
+        } else {
+          reject(xhr.statusText)
+        }
+      };
+      xhr.onerror = () => reject(xhr.statusText);
+      xhr.open("GET", url);
+      xhr.send();
+    });
+  }
+
   // Parse incoming files
   function readMultipleFiles(loader, handleSeriesFunct) {
 
     const loadSequenceContainer = [];
-
     let seriesContainer = [];
 
     // load GET values
     let GET = getGETparameters();
-    let jsonRequest = new XMLHttpRequest();
-    let jsonData;
+    const jsonURL = "/" + GET["viewer"]; //url to the json object
+    let jsonData; // the json object
+
     let loadedFiles = 0;
     let files = [];
-    let jsonURL = "/" + GET["viewer"];
 
-    jsonRequest.overrideMimeType("application/json");
-    jsonRequest.onreadystatechange = function() {
-      if (jsonRequest.readyState === XMLHttpRequest.DONE && jsonRequest.status == "200") {
-        let jsonFile = jsonRequest.responseText;
-
+    jsonHttpRequest(jsonURL)
+      .then((response) => {
         // Read the Json file
-        jsonData = JSON.parse(jsonFile);
-        // Read the content of the JSon file
-        loadXMLHttpRequest();
+        jsonData = JSON.parse(response);
+        //loadXMLHttpRequest2();
+        return loadImages();
+      }).then(() => {
+        console.log("done");
+      });
+
+    function loadImages() {
+      let filename;
+      let fileURL;
+
+      let promise = Promise.resolve()
+
+      for (let i = 0; i < jsonData.image.length; i++) {
+        promise = promise
+          .then(_ => {
+            filename = jsonData.image[i].split('/').pop();
+            fileURL = '/datafiles/' + jsonData.study + "/" + jsonData.image[i];
+            return binaryHttpRequest(fileURL);
+          })
+          .then((response) => {
+            files.push(new File([response], filename));
+          });
       }
+      promise = promise.then(_ => {
+        loadData();
+      });
+
+      return promise;
     }
-    jsonRequest.open("GET", jsonURL, true);
-    jsonRequest.send(null);
 
     // Load sequence
     function loadSequence(index, files) {
@@ -170,31 +225,6 @@ function requestManager() {
           window.console.log(error);
         });
     }
-
-    function loadXMLHttpRequest() {
-
-      let filename = jsonData.image[loadedFiles].split('/').pop();
-      let xhr = new XMLHttpRequest();
-      let fileURL = '/datafiles/' + jsonData.study + "/" + jsonData.image[loadedFiles];
-      xhr.open("GET", fileURL);
-      xhr.responseType = "blob"; //force the HTTP response, response-type header to be blob
-      xhr.onload = function() {
-        window.console.log("Try to load " + filename);
-      }
-      xhr.addEventListener('readystatechange', function() {
-        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status == "200") {
-          files.push(new File([xhr.response], filename)); // convert blob to file
-          loadedFiles++;
-          if (loadedFiles === jsonData.image.length) {
-            loadData();
-          } else {
-            loadXMLHttpRequest();
-          }
-        }
-      });
-      xhr.send();
-    }
-
   }
 
   // Using the module.exports system, we list here functions available from outside
