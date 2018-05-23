@@ -77,7 +77,7 @@ export default class customControls extends THREE.EventDispatcher {
       let scale_y = (_this.camera.top - _this.camera.bottom) / _this.camera.zoom;
       x *= scale_x;
       y *= scale_y;
-      
+
       let pan = new THREE.Vector3();
       // vertical component
       pan.copy(_this.camera.up).setLength(y);
@@ -258,6 +258,38 @@ export default class customControls extends THREE.EventDispatcher {
       clearEvents();
     };
 
+        // /**
+        //  * On mouse move callback
+        //  */
+        // function onMouseMove(event) {
+        //   if (ctrlDown) {
+        //     if (drag.start.x === null) {
+        //       drag.start.x = event.clientX;
+        //       drag.start.y = event.clientY;
+        //     }
+        //     let threshold = 15;
+        //
+        //     stackHelper.slice.intensityAuto = false;
+        //
+        //     let dynamicRange = stack.minMax[1] - stack.minMax[0];
+        //     dynamicRange /= threeD.clientWidth;
+        //
+        //     if (Math.abs(event.clientX - drag.start.x) > threshold) {
+        //       // window width
+        //       stackHelper.slice.windowWidth +=
+        //         dynamicRange * (event.clientX - drag.start.x);
+        //       drag.start.x = event.clientX;
+        //     }
+        //
+        //     if (Math.abs(event.clientY - drag.start.y) > threshold) {
+        //       // window center
+        //       stackHelper.slice.windowCenter -=
+        //         dynamicRange * (event.clientY - drag.start.y);
+        //       drag.start.y = event.clientY;
+        //     }
+        //   }
+        // }
+        // document.addEventListener('mousemove', onMouseMove);
 
     //////////////
     // Code executed in constructor

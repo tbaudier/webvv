@@ -12,7 +12,10 @@ function requestManager() {
     return false;
   }
 
-
+  /**
+   * Returns parameters given in URL (as GET parameters)
+   * @return {Object} a dictionnary params['paramName'] = 'paramValue'
+   */
   function getGETparameters() {
     let params = [];
     let query = window.location.search.substring(1).split("&");
@@ -26,6 +29,10 @@ function requestManager() {
     return params
   }
 
+  /**
+   * Makes a json request to a given URL
+   * @return {Promise} Promise object represents the content of the json request
+   */
   function jsonHttpRequest(url) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -41,12 +48,17 @@ function requestManager() {
       xhr.onerror = () => reject(xhr.statusText);
       xhr.open("GET", url);
       xhr.send();
-    })
+    });
   }
 
+  /**
+   * Makes a binary request to a given URL
+   * @return {Promise} Promise object represents the binary content of the http request
+   */
   function binaryHttpRequest(url) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
+
       xhr.responseType = "blob"; //force the HTTP response, response-type header to be blob
       xhr.onload = () => {
         if (xhr.status == "200") {
@@ -61,56 +73,101 @@ function requestManager() {
     });
   }
 
-  // Parse incoming files
-  function readMultipleFiles(loader, handleSeriesFunct) {
+  /**
+   * Fetches binary files given a json containing 'category : [url1, url2,...]'
+   * @return {Promise} Promise object represents the array of fetched files.
+   */
+  function fetchCategoryFiles(jsonData, files, categoryName) {
+    return new Promise((resolve, reject) => {
+      if (!jsonData[categoryName])
+        reject("No category with this name (" + categoryName + ") in json.");
 
-    const loadSequenceContainer = [];
-    let seriesContainer = [];
+      let promise = Promise.resolve();
+      let subCategoryFiles = [];
 
-    // load GET values
-    let GET = getGETparameters();
-    const jsonURL = "/" + GET["viewer"]; //url to the json object
-    let jsonData; // the json object
-
-    let loadedFiles = 0;
-    let files = [];
-
-    jsonHttpRequest(jsonURL)
-      .then((response) => {
-        // Read the Json file
-        jsonData = JSON.parse(response);
-        //loadXMLHttpRequest2();
-        return loadImages();
-      }).then(() => {
-        console.log("done");
-      });
-
-    function loadImages() {
-      let filename;
-      let fileURL;
-
-      let promise = Promise.resolve()
-
-      for (let i = 0; i < jsonData.image.length; i++) {
+      for (let i = 0; i < jsonData[categoryName].length; i++) {
         promise = promise
           .then(_ => {
-            filename = jsonData.image[i].split('/').pop();
-            fileURL = '/datafiles/' + jsonData.study + "/" + jsonData.image[i];
+            // for each url, fetch the appropriate file
+            let fileURL = '/datafiles/' + jsonData.study + "/" + jsonData[categoryName][i];
             return binaryHttpRequest(fileURL);
           })
           .then((response) => {
-            files.push(new File([response], filename));
+            // and add it to the array
+            let filename = jsonData[categoryName][i].split('/').pop();
+            subCategoryFiles.push(new File([response], jsonData[categoryName][i].split('/').pop()));
           });
       }
+
+      // finally we return "files" as the result
       promise = promise.then(_ => {
-        loadData();
+        files[categoryName] = subCategoryFiles;
+        resolve();
       });
 
-      return promise;
-    }
+    });
+  }
+
+  /**
+   * Parse incoming files
+   * Reads an URL of a json (given in GET param), and parse files indicated in this json
+   * @param {AMI.VolumeLoader} loader AMI given loader
+   * @param {function} handleSeriesFunct a callback function that takes a param (seriesContainer)
+   * seriesContainer format : {image : [array of IMG], fusion : [array of IMG], ...}
+   */
+  function readMultipleFiles(loader, handleSeriesFunct) {
+    
+    let seriesContainer = {};
+
+    let files = {};
+    let jsonParameters;
+
+    // Use Promises to keep every call synchronous
+    Promise.resolve()
+      .then(_ => {
+        // request the json, the url is read in the GET parameters
+        console.log("Json request...");
+        const GET = getGETparameters();
+        const jsonURL = "/" + GET["viewer"]; //url to the json object
+        return jsonHttpRequest(jsonURL);
+      })
+      .then((jsonResponse) => {
+        jsonParameters = JSON.parse(jsonResponse);
+      })
+      // IMAGE
+      .then(_ => {
+        console.log("IMAGE : Files request...");
+        return fetchCategoryFiles(jsonParameters, files, "image");
+      })
+      .then(_ => {
+        console.log("IMAGE : Files loading...");
+        return loadData(files, "image");
+      })
+      // FUSION
+      .then(_ => {
+        console.log("FUSION : Files request...");
+        return fetchCategoryFiles(jsonParameters, files, "fusion");
+      })
+
+      .then(_ => {
+        console.log("FUSION : Files loading...");
+        return loadData(files, "fusion");
+      })
+      // Final callback
+      .then((series) => {
+        console.log("Files loaded.");
+        handleSeriesFunct(seriesContainer);
+      })
+
+
+      // Error handling
+      .catch((error) => {
+        console.log("An error has occured:");
+        console.log(error);
+      });
 
     // Load sequence
-    function loadSequence(index, files) {
+    function loadSequence(index, files, category) {
       return Promise
         .resolve()
         // load the file
@@ -131,7 +188,8 @@ function requestManager() {
           });
         })
         .then(function(series) {
-          seriesContainer.push(series);
+          seriesContainer[category] = [];
+          seriesContainer[category].push(serie);
         })
         .catch(function(error) {
           window.console.log('Oops... something went wrong while loading the sequence...');
@@ -140,34 +198,37 @@ function requestManager() {
     }
 
     // Load group sequence
-    function loadSequenceGroup(files) {
-      const fetchSequence = [];
+    function loadSequenceGroup(file, category) {
+      const fetchSequencePromises = [];
 
-      for (let i = 0; i < files.length; i++) {
-        fetchSequence.push(
+      for (let formatName in file) {
+        fetchSequencePromises.push(
           new Promise((resolve, reject) => {
             const myReader = new FileReader();
             // should handle errors too...
-            myReader.addEventListener('load', function(e) {
+            myReader.onload = (e) => {
               resolve(e.target.result);
-            });
-            myReader.readAsArrayBuffer(files[i].file);
+            };
+            myReader.readAsArrayBuffer(file[formatName]);
           })
           .then(function(buffer) {
             return {
-              url: files[i].file.name,
+              // This is a AMI format
+              url: file[formatName].name,
               buffer
             };
           })
         );
       }
 
-      return Promise.all(fetchSequence)
+      return Promise.all(fetchSequencePromises)
         .then((rawdata) => {
+          // rawdata is given in the AMI format {url, buffer}
           return loader.parse(rawdata);
         })
-        .then(function(series) {
-          seriesContainer.push(series);
+        .then(function(serie) {
+          seriesContainer[category] = [];
+          seriesContainer[category].push(serie);
         })
         .catch(function(error) {
           window.console.log('oops... something went wrong while parsing the sequence...');
@@ -175,55 +236,56 @@ function requestManager() {
         });
     }
 
-    function loadData() {
-      const data = [];
-      const dataGroups = [];
-      // convert object into array
-      for (let i = 0; i < files.length; i++) {
-        //window.console.log(files[i]);
-        let dataUrl = AMI.UtilsCore.parseUrl(files[i].name);
-        if (dataUrl.extension.toUpperCase() === 'MHD' ||
-          dataUrl.extension.toUpperCase() === 'RAW') {
-          dataGroups.push({
-            file: files[i],
-            extension: dataUrl.extension.toUpperCase(),
-          });
+    // Load one image/sequence/header+image group
+    function loadData(files, category) {
+      return new Promise((resolve, reject) => {
+
+        const loadSequencePromiseContainer = [];
+        const data = [];
+        const dataGroup = {};
+
+        // convert object into array
+        for (let i = 0; i < files[category].length; i++) {
+          let dataUrl = AMI.UtilsCore.parseUrl(files[category][i].name);
+          if (_filterByExtension('mhd', dataUrl)) {
+            dataGroup["header"] = files[category][i];
+            separatedFormat = true;
+          } else if (_filterByExtension('raw', dataUrl)) {
+            dataGroup["data"] = files[category][i];
+          } else {
+            data.push(files[category][i]);
+          }
+        }
+
+        if (separatedFormat) {
+          if (dataGroup["header"] === undefined || dataGroup["data"] === undefined) {
+            reject("Data seems to be 'header (mhd) + data (raw)' but data can't be found !");
+          } else {
+            loadSequencePromiseContainer.push(
+              loadSequenceGroup(dataGroup, category)
+            );
+          }
         } else {
-          data.push(files[i]);
+          // load the rest of the files
+          for (let i = 0; i < data.length; i++) {
+            loadSequencePromiseContainer.push(
+              loadSequence(i, data, category)
+            );
+          }
         }
-      }
 
-      // check if some files must be loaded together
-      if (dataGroups.length === 2) {
-        // if raw/mhd pair
-        const mhdFile = dataGroups.filter(_filterByExtension.bind(null, 'MHD'));
-        const rawFile = dataGroups.filter(_filterByExtension.bind(null, 'RAW'));
-        if (mhdFile.length === 1 &&
-          rawFile.length === 1) {
-          loadSequenceContainer.push(
-            loadSequenceGroup(dataGroups)
-          );
-        }
-      }
-
-      // load the rest of the files
-      for (let i = 0; i < data.length; i++) {
-        loadSequenceContainer.push(
-          loadSequence(i, data)
-        );
-      }
-
-      // run the load sequence
-      // load sequence for all files
-      Promise
-        .all(loadSequenceContainer)
-        .then(function() {
-          handleSeriesFunct(seriesContainer);
-        })
-        .catch(function(error) {
-          window.console.log('oops... something went wrong while using the sequence...');
-          window.console.log(error);
-        });
+        // run the load sequence
+        // load sequence for all files
+        Promise
+          .all(loadSequencePromiseContainer)
+          .then(function() {
+            resolve(seriesContainer);
+          })
+          .catch(function(error) {
+            window.console.log(error);
+            reject('oops... something went wrong while using the sequence...');
+          });
+      });
     }
   }
 
