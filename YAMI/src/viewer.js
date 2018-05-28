@@ -10,44 +10,18 @@ const animationManager = require('./animator');
 const guiManager = require('./guiManager');
 // Controls
 const CustomControls = require('./customControls');
+// Scene Managment
+const SceneManager = require('./sceneManager');
 
 // standard global variables
 let renderer; // @type {THREE.WebGLRenderer}
 let canvas; // HTML container
 let stats; // @type {Stats}
 
-let scene; // @type {THREE.Scene}
+let sceneManager; // @type {sceneManager}
 
-let sceneLayer0; // @type {THREE.Scene}
-let meshLayer0;
-let sceneLayer0TextureRender;
-
-let sceneLayer1; // @type {THREE.Scene}
-let meshLayer1;
-let sceneLayerTextureRender;
-
-let sceneMix; // @type {THREE.Scene}
-let meshMix;
-let uniformsMix;
-let materialMix;
-
-let layer0 = {
-  opacity: 1.0,
-  lut: null,
-  interpolation: 0,
-};
-let layer1 = {
-  opacity: 1.0,
-  lut: null,
-  interpolation: 0,
-};
-
-let layerMix = {
-  opacity0: 1.0,
-  opacity1: 1.0,
-  type0: 0,
-  type1: 1,
-  trackMouse: true,
+let changePtr = {
+  hasChanged: true
 };
 
 let stackHelper; // @type {AMI.StackHelper}
@@ -73,36 +47,8 @@ function init() {
   canvas.appendChild(stats.domElement);
 
   // scene
-  scene = new THREE.Scene();
 
-  sceneLayer0 = new THREE.Scene();
-  sceneLayer1 = new THREE.Scene();
-  sceneMix = new THREE.Scene();
-
-  // Texture render targets
-  scene0TextureRender = new THREE.WebGLRenderTarget(canvas.clientWidth, canvas.clientHeight, {
-    minFilter: THREE.LinearFilter,
-    magFilter: THREE.NearestFilter,
-    format: THREE.RGBAFormat,
-  });
-  scene1TextureRender = new THREE.WebGLRenderTarget(canvas.clientWidth, canvas.clientHeight, {
-    minFilter: THREE.LinearFilter,
-    magFilter: THREE.NearestFilter,
-    format: THREE.RGBAFormat,
-  });
-
-  // CREATE LUT
-  lutLayer0 = new AMI.LutHelper(
-    'my-lut-canvases',
-    'default',
-    'linear', [
-      [0, 0, 0, 0],
-      [0, 1, 1, 1]
-    ], [
-      [0, 1],
-      [1, 1]
-    ]);
-  lutLayer0.luts = AMI.LutHelper.presetLuts();
+  sceneManager = new SceneManager.default(canvas);
 
   // camera
   camera = new AMI.OrthographicCamera(
@@ -131,16 +77,19 @@ window.onload = function() {
     // prepare for slice visualization
     // first stack of first series
     let stack = seriesContainer["image"][0].mergeSeries(seriesContainer["image"])[0].stack[0];
+    let stack1 = seriesContainer["fusion"][0].mergeSeries(seriesContainer["fusion"])[0].stack[0];
 
     stackHelper = new AMI.StackHelper(stack);
     stackHelper.bbox.visible = false;
-    stackHelper.borderColor = '#2196F3';
     stackHelper.border.visible = false;
-    scene.add(stackHelper);
-    //sceneLayer0.add(stackHelper);
 
-    // Controls
-    controls = new CustomControls.default(camera, stackHelper, canvas);
+    let stacks = [stackHelper, stack1];
+
+
+    sceneManager.setMainStackHelper(stackHelper);
+    sceneManager.addLayer(stack1, stackHelper);
+
+    controls = new CustomControls.default(camera, stacks, canvas, changePtr);
     camera.controls = controls;
 
     // set camera
@@ -169,16 +118,11 @@ window.onload = function() {
     camera.update();
     camera.fitBox(2); // here 2 means 'best of width & height' (0 'width', 1 'height')
 
-    stackHelper.slice.intensityAuto = config.autoIntensity;
-    stackHelper.slice.interpolation = config.interpolation;
-    stackHelper.slice.lutTexture = lutLayer0.texture;
-
-    guiManager.updateLabels(camera.directionsLabel, stack.modality);
-    guiManager.buildGUI(stackHelper, camera);
+    //guiManager.updateLabels(camera.directionsLabel, stack.modality);
+    //guiManager.buildGUI(stackHelper, camera);
     hookCallbacks();
   }
-
-  /**
+  /*
    * Connect all callback event observesrs
    */
   function hookCallbacks() {
@@ -186,40 +130,13 @@ window.onload = function() {
     animationManager.startAnimating(config.fps,
       function() {
         controls.update();
-        renderer.render(scene, camera);
-        //renderer.render(sceneLayer0, camera, sceneLayer0TextureRender, true);
-        //renderer.render(sceneLayer1, camera, sceneLayer1TextureRender, true);
-        //renderer.render(sceneMix, camera);
+        if (changePtr.hasChanged) {
+          sceneManager.render(renderer, camera);
+          changePtr.hasChanged = false;
+        }
         stats.update();
       });
 
-    function updateLayer1() {
-      // update layer1 geometry...
-      if (meshLayer1) {
-        meshLayer1.geometry.dispose();
-        meshLayer1.geometry = stackHelper.slice.geometry;
-        meshLayer1.geometry.verticesNeedUpdate = true;
-      }
-    }
-
-    function updateLayerMix() {
-      // update layer1 geometry...
-      if (meshMix) {
-        sceneMix.remove(meshMix);
-        meshMix.material.dispose();
-        // meshLayerMix.material = null;
-        meshMix.geometry.dispose();
-        // meshLayerMix.geometry = null;
-
-        // add mesh in this scene with right shaders...
-        meshMix =
-          new THREE.Mesh(stackHelper.slice.geometry, materiaMix);
-        // go the LPS space
-        meshMix.applyMatrix(stackHelper.stack._ijk2LPS);
-
-        sceneMix.add(meshMix);
-      }
-    }
     /**
      * Handle window resize
      */
@@ -229,6 +146,7 @@ window.onload = function() {
         height: canvas.offsetHeight,
       };
       renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
+      sceneManager.resize();
     }
     window.addEventListener('resize', onWindowResize, false);
     onWindowResize();

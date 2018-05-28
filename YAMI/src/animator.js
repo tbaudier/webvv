@@ -27,7 +27,7 @@ function f() {
   }
 
   return {
-    startAnimating:startAnimating
+    startAnimating: startAnimating
   };
 }
 

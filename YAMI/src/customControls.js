@@ -5,9 +5,11 @@ const config = require('./viewer.config');
 //const Map = require("collections/map");
 
 export default class customControls extends THREE.EventDispatcher {
-  constructor(camera, stack, domElement) {
+  constructor(camera, stacks, domElement, chgPtr) {
     super();
     let _this = this;
+
+    let changePtr = chgPtr;
 
     let STATE = {
       NONE: 0,
@@ -32,7 +34,7 @@ export default class customControls extends THREE.EventDispatcher {
 
     // Public attributes
     this.camera = camera;
-    this.stack = stack;
+    this.stacks = stacks;
     this.domElement = (domElement !== undefined) ? domElement : document;
     this.target = new THREE.Vector3();
 
@@ -59,6 +61,7 @@ export default class customControls extends THREE.EventDispatcher {
       console.log("reset try");
       this.camera = this.save.clone();
       */
+      changePtr.hasChanged = true;
     };
 
     this.pan = function(p1, p2) {
@@ -87,6 +90,7 @@ export default class customControls extends THREE.EventDispatcher {
       _this.camera.position.add(pan);
       _this.target.add(pan);
       _this._changed = true;
+      changePtr.hasChanged = true;
     }
 
 
@@ -98,21 +102,24 @@ export default class customControls extends THREE.EventDispatcher {
 
       if (Math.abs(factor - 1.0) > EPS && factor > 0.0) {
         this.camera.zoom /= factor;
-        //_changed = true;
+        changePtr.hasChanged = true;
       }
     }
     this.scrollStack = function(directionTop) {
-      if (directionTop) {
-        if (stack.index >= stack.orientationMaxIndex - 1) {
-          return false;
+      for (let stack of stacks) {
+        if (directionTop) {
+          if (stack.index >= stack.orientationMaxIndex - 1) {
+            return false;
+          }
+          stack.index += 1;
+        } else {
+          if (stack.index <= 0) {
+            return false;
+          }
+          stack.index -= 1;
         }
-        stack.index += 1;
-      } else {
-        if (stack.index <= 0) {
-          return false;
-        }
-        stack.index -= 1;
       }
+      changePtr.hasChanged = true;
     }
     /*
         this.handleEvent = function(event) {
@@ -258,38 +265,38 @@ export default class customControls extends THREE.EventDispatcher {
       clearEvents();
     };
 
-        // /**
-        //  * On mouse move callback
-        //  */
-        // function onMouseMove(event) {
-        //   if (ctrlDown) {
-        //     if (drag.start.x === null) {
-        //       drag.start.x = event.clientX;
-        //       drag.start.y = event.clientY;
-        //     }
-        //     let threshold = 15;
-        //
-        //     stackHelper.slice.intensityAuto = false;
-        //
-        //     let dynamicRange = stack.minMax[1] - stack.minMax[0];
-        //     dynamicRange /= threeD.clientWidth;
-        //
-        //     if (Math.abs(event.clientX - drag.start.x) > threshold) {
-        //       // window width
-        //       stackHelper.slice.windowWidth +=
-        //         dynamicRange * (event.clientX - drag.start.x);
-        //       drag.start.x = event.clientX;
-        //     }
-        //
-        //     if (Math.abs(event.clientY - drag.start.y) > threshold) {
-        //       // window center
-        //       stackHelper.slice.windowCenter -=
-        //         dynamicRange * (event.clientY - drag.start.y);
-        //       drag.start.y = event.clientY;
-        //     }
-        //   }
-        // }
-        // document.addEventListener('mousemove', onMouseMove);
+    // /**
+    //  * On mouse move callback
+    //  */
+    // function onMouseMove(event) {
+    //   if (ctrlDown) {
+    //     if (drag.start.x === null) {
+    //       drag.start.x = event.clientX;
+    //       drag.start.y = event.clientY;
+    //     }
+    //     let threshold = 15;
+    //
+    //     stackHelper.slice.intensityAuto = false;
+    //
+    //     let dynamicRange = stack.minMax[1] - stack.minMax[0];
+    //     dynamicRange /= threeD.clientWidth;
+    //
+    //     if (Math.abs(event.clientX - drag.start.x) > threshold) {
+    //       // window width
+    //       stackHelper.slice.windowWidth +=
+    //         dynamicRange * (event.clientX - drag.start.x);
+    //       drag.start.x = event.clientX;
+    //     }
+    //
+    //     if (Math.abs(event.clientY - drag.start.y) > threshold) {
+    //       // window center
+    //       stackHelper.slice.windowCenter -=
+    //         dynamicRange * (event.clientY - drag.start.y);
+    //       drag.start.y = event.clientY;
+    //     }
+    //   }
+    // }
+    // document.addEventListener('mousemove', onMouseMove);
 
     //////////////
     // Code executed in constructor
