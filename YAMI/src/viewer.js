@@ -20,7 +20,7 @@ let stats; // @type {Stats}
 
 let sceneManager; // @type {sceneManager}
 
-let changePtr = {
+let changePtr = { // a pointer to pass the "haschanged" value by reference
   hasChanged: true
 };
 
@@ -28,28 +28,23 @@ let stackHelper; // @type {AMI.StackHelper}
 let camera; // @type {THREE.OrthographicCamera}
 let controls; // @type {AMI.TrackballOrthoControl}e;
 
-let luitLayer0;
-
 function init() {
-  // renderer
+  // canvas and THREE.js renderer
   canvas = document.getElementById('r3d');
   renderer = new THREE.WebGLRenderer({
     antialias: (config.interpolation == 1),
   });
-
+  // set up the renderer
   renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
   renderer.setClearColor(config.bgColor, 1);
   renderer.setPixelRatio(window.devicePixelRatio);
+  // add this renderer to the canvas
   canvas.appendChild(renderer.domElement);
-
-  // stats
+  // stats, fps, ...
   stats = new Stats();
   canvas.appendChild(stats.domElement);
-
-  // scene
-
+  // empty scene
   sceneManager = new SceneManager.default(canvas);
-
   // camera
   camera = new AMI.OrthographicCamera(
     canvas.clientWidth / -2, canvas.clientWidth / 2,
@@ -58,13 +53,13 @@ function init() {
 }
 
 window.onload = function() {
-  // init threeJS...
+  // init threeJS and the scene
   init();
 
   // instantiate the loader
-  // it loads and parses the dicom image
+  // it loads and parses the images
   let loader = new AMI.VolumeLoader(canvas);
-
+  // Reads the GET params, reads the JSON and load the files
   requestManager.readMultipleFiles(loader, handleSeries);
 
   /**
@@ -78,52 +73,47 @@ window.onload = function() {
     // first stack of first series
     let stack = seriesContainer["image"][0].mergeSeries(seriesContainer["image"])[0].stack[0];
     let stack1 = seriesContainer["fusion"][0].mergeSeries(seriesContainer["fusion"])[0].stack[0];
-
+    // we create the main stackHelper (easy manipulation of stacks)
     stackHelper = new AMI.StackHelper(stack);
     stackHelper.bbox.visible = false;
     stackHelper.border.visible = false;
-
+    // and add the stacks we have loaded to the 3D scene
     sceneManager.setMainStackHelper(stackHelper);
     sceneManager.addLayer(stack1, "fusion");
-
+    // setup controls and shortcuts
     controls = new CustomControls.default(camera, stackHelper, canvas, changePtr);
     camera.controls = controls;
-    // set camera
+    // setup camera
     let worldbb = sceneManager.worldBB;
     let lpsDims = new THREE.Vector3(
       (worldbb[1] - worldbb[0]) / 2,
       (worldbb[3] - worldbb[2]) / 2,
       (worldbb[5] - worldbb[4]) / 2
     );
-
     // box: {halfDimensions, center}
     let box = {
       center: stack.worldCenter().clone(),
       halfDimensions: new THREE.Vector3(lpsDims.x + 100, lpsDims.y + 100, lpsDims.z + 100),
     };
-
     // init and zoom
     let canvasConfig = {
       width: canvas.clientWidth,
       height: canvas.clientHeight,
     };
-
     camera.directions = [stack.xCosine, stack.yCosine, stack.zCosine];
     camera.box = box;
     camera.canvas = canvasConfig;
     camera.update();
     camera.fitBox(2); // here 2 means 'best of width & height' (0 'width', 1 'height')
 
+    guiManager.updateLabels(camera.directionsLabel, stack.modality);
+    guiManager.buildGUI(stackHelper, camera, changePtr);
 
-    //guiManager.updateLabels(camera.directionsLabel, stack.modality);
-    //guiManager.buildGUI(stackHelper, camera);
-    hookCallbacks();
-  }
-  /*
-   * Connect all callback event observesrs
-   */
-  function hookCallbacks() {
-    // Animation
+    //Set the "Resize" listener
+    window.addEventListener('resize', onWindowResize, false);
+    onWindowResize();
+
+    // And start animating
     animationManager.startAnimating(config.fps,
       function() {
         controls.update();
@@ -133,19 +123,16 @@ window.onload = function() {
         }
         stats.update();
       });
-
-    /**
-     * Handle window resize
-     */
-    function onWindowResize() {
-      camera.canvas = {
-        width: canvas.offsetWidth,
-        height: canvas.offsetHeight,
-      };
-      renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
-      sceneManager.resize();
-    }
-    window.addEventListener('resize', onWindowResize, false);
-    onWindowResize();
+  }
+  /**
+   * Handle window resize
+   */
+  function onWindowResize() {
+    camera.canvas = {
+      width: canvas.offsetWidth,
+      height: canvas.offsetHeight,
+    };
+    renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
+    sceneManager.resize();
   }
 };

@@ -51,7 +51,7 @@ void main(void) {
   vec4 baseColorBG = texture2D(uTextureBackground, texc);
   vec4 baseColorFusion = texture2D(uTextureFusion, texc);
 
-  if(baseColorFusion.w < uThreshold){
+  if(!uUseFusion || baseColorFusion.w < uThreshold){
     gl_FragColor = baseColorBG;
   }else{
     gl_FragColor = mix( baseColorBG, baseColorFusion, uOpacityMin+uOpacityMax*baseColorFusion.w);

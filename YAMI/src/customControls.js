@@ -186,6 +186,7 @@ export default class customControls extends THREE.EventDispatcher {
 
         case config.mouseClickPan:
           _this._state = STATE.PAN;
+          event.preventDefault();
           break;
 
         case config.mouseClickWindow:
@@ -196,7 +197,6 @@ export default class customControls extends THREE.EventDispatcher {
       oldMousePosition.y = event.clientY;
 
       document.addEventListener('mousemove', mousemove, false);
-      event.preventDefault();
     }
 
     function mouseup(event) {

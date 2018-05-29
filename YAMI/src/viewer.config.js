@@ -6,8 +6,9 @@ module.exports = {
 
   // Target Frame Per Secound count /!\ Performance related
   fps: 30,
-  // /!\ Seems to only be antialasing ('1' = trilinear interpolation) & is a huge slow down /!\ Performance related
+  // /!\ Seems to only be linear ('1' = trilinear interpolation) & is a huge slow down /!\ Performance related
   interpolation: 0,
+  interpolationNM: 0,
   // Reset the intensity to 'best' values after every change (including changing the slide index)
   autoIntensity: false,
   // Background Color (behind the image borders) ( in hexa as 0x46BFB0 )

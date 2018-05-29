@@ -9,6 +9,7 @@ export default class ShadersUniform {
         value: [],
         typeGLSL: 'sampler2D',
       },
+      // Fusion
       'uTextureFusion': {
         type: 't',
         value: [],
@@ -29,6 +30,22 @@ export default class ShadersUniform {
         value: 0.01,
         typeGLSL: 'float',
       },
+      'uUseFusion':{
+        type:'b',
+        value:true,
+        typeGLSL:'bool',
+      },
+      //
+      'uTextureOverlay': {
+        type: 't',
+        value: [],
+        typeGLSL: 'sampler2D',
+      },
+      'uUseOverlay': {
+        type:'b',
+        value:true,
+        typeGLSL:'bool',
+      }
     };
   }
 }

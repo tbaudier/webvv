@@ -7,6 +7,9 @@ export default class sceneManager {
   constructor(canvasElement) {
     let worldBB = [0, 0, 0, 0, 0, 0]; // xmin, xmax, ymin, ymax, zmin, zmax
     this.worldBB = worldBB;
+    this.uniforms = {};
+
+    let _this = this;
 
     let canvas = canvasElement;
 
@@ -46,8 +49,6 @@ export default class sceneManager {
     }
 
     let stackHelper;
-
-    let uniformsMix;
 
     // mixing : sceneBG+sceneLayers[0] then scenesMix[i]+sceneLayers[i+1]
     // final mix is last element of scenesMix
@@ -140,6 +141,8 @@ export default class sceneManager {
      *
      */
     this.addLayer = function(stack, stackname) {
+      if (!(stackname == "fusion" || stackname == "overlay"))
+        return;
       // Constructions
       let scene = new THREE.Scene();
       scenes[stackname] = scene;
@@ -199,7 +202,7 @@ export default class sceneManager {
         stack.dimensionsIJK.y,
         stack.dimensionsIJK.z
       ];
-      uniformsLayer.uInterpolation.value = config.interpolation;
+      uniformsLayer.uInterpolation.value = config.interpolationNM;
       // we can only display positive values
       let offset = 0;
       if (stack._minMax[0] < 0) {
@@ -208,6 +211,7 @@ export default class sceneManager {
       uniformsLayer.uLowerUpperThreshold.value = [stack.minMax[0] + offset, stack.minMax[1] + offset];
       uniformsLayer.uLut.value = 1;
       uniformsLayer.uTextureLUT.value = lut.texture;
+      _this.uniforms[stackname] = uniformsLayer;
 
 
       // generate shaders on-demand!
@@ -243,14 +247,14 @@ export default class sceneManager {
     function setMixLayer() {
       sceneMix = new THREE.Scene();
 
-      uniformsMix = FusionShaderUni.default.uniforms();
+      _this.uniformsMix = FusionShaderUni.default.uniforms();
       updateMixUniforms();
       // generate shaders on-demand!
-      let fls = new FusionShaderFrag.default(uniformsMix);
+      let fls = new FusionShaderFrag.default(_this.uniformsMix);
       let vls = new AMI.LayerVertexShader();
       let mat = new THREE.ShaderMaterial({
         side: THREE.FrontSide,
-        uniforms: uniformsMix,
+        uniforms: _this.uniformsMix,
         vertexShader: vls.compute(),
         fragmentShader: fls.compute(),
         transparent: true,
@@ -265,16 +269,16 @@ export default class sceneManager {
     }
 
     function updateMixUniforms() {
-      uniformsMix.uTextureBackground.value = textureTargets["background"].texture;
+      _this.uniformsMix.uTextureBackground.value = textureTargets["background"].texture;
       // fusion
       if (textureTargets["fusion"] !== null)
-        uniformsMix.uTextureFusion.value = textureTargets["fusion"].texture;
+        _this.uniformsMix.uTextureFusion.value = textureTargets["fusion"].texture;
       // overlay
       if (textureTargets["overlay"] !== null)
-        uniformsMix.uTextureOverlay.value = textureTargets["overlay"].texture;
-      uniformsMix.uOpacityMin.value = 0.1;
-      uniformsMix.uOpacityMax.value = 0.8;
-      uniformsMix.uThreshold.value = 0.01;
+        _this.uniformsMix.uTextureOverlay.value = textureTargets["overlay"].texture;
+      _this.uniformsMix.uOpacityMin.value = 0.1;
+      _this.uniformsMix.uOpacityMax.value = 0.8;
+      _this.uniformsMix.uThreshold.value = 0.01;
     }
 
     function update() {
