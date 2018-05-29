@@ -79,21 +79,18 @@ window.onload = function() {
     let stack = seriesContainer["image"][0].mergeSeries(seriesContainer["image"])[0].stack[0];
     let stack1 = seriesContainer["fusion"][0].mergeSeries(seriesContainer["fusion"])[0].stack[0];
 
+
     stackHelper = new AMI.StackHelper(stack);
     stackHelper.bbox.visible = false;
     stackHelper.border.visible = false;
 
-    let stacks = [stackHelper, stack1];
-
-
     sceneManager.setMainStackHelper(stackHelper);
     sceneManager.addLayer(stack1, stackHelper);
 
-    controls = new CustomControls.default(camera, stacks, canvas, changePtr);
+    controls = new CustomControls.default(camera, stackHelper, canvas, changePtr);
     camera.controls = controls;
-
     // set camera
-    let worldbb = stack.worldBoundingBox();
+    let worldbb = sceneManager.worldBB;
     let lpsDims = new THREE.Vector3(
       (worldbb[1] - worldbb[0]) / 2,
       (worldbb[3] - worldbb[2]) / 2,
@@ -103,7 +100,7 @@ window.onload = function() {
     // box: {halfDimensions, center}
     let box = {
       center: stack.worldCenter().clone(),
-      halfDimensions: new THREE.Vector3(lpsDims.x + 10, lpsDims.y + 10, lpsDims.z + 10),
+      halfDimensions: new THREE.Vector3(lpsDims.x + 100, lpsDims.y + 100, lpsDims.z + 100),
     };
 
     // init and zoom
@@ -117,6 +114,7 @@ window.onload = function() {
     camera.canvas = canvasConfig;
     camera.update();
     camera.fitBox(2); // here 2 means 'best of width & height' (0 'width', 1 'height')
+
 
     //guiManager.updateLabels(camera.directionsLabel, stack.modality);
     //guiManager.buildGUI(stackHelper, camera);

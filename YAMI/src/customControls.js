@@ -5,7 +5,7 @@ const config = require('./viewer.config');
 //const Map = require("collections/map");
 
 export default class customControls extends THREE.EventDispatcher {
-  constructor(camera, stacks, domElement, chgPtr) {
+  constructor(camera, stack, domElement, chgPtr) {
     super();
     let _this = this;
 
@@ -34,7 +34,7 @@ export default class customControls extends THREE.EventDispatcher {
 
     // Public attributes
     this.camera = camera;
-    this.stacks = stacks;
+    this.stack = stack;
     this.domElement = (domElement !== undefined) ? domElement : document;
     this.target = new THREE.Vector3();
 
@@ -86,7 +86,6 @@ export default class customControls extends THREE.EventDispatcher {
       pan.copy(_this.camera.up).setLength(y);
       // horizontal component
       pan.add(_temp.copy(_eye).cross(_this.camera.up).setLength(x));
-
       _this.camera.position.add(pan);
       _this.target.add(pan);
       _this._changed = true;
@@ -106,18 +105,16 @@ export default class customControls extends THREE.EventDispatcher {
       }
     }
     this.scrollStack = function(directionTop) {
-      for (let stack of stacks) {
-        if (directionTop) {
-          if (stack.index >= stack.orientationMaxIndex - 1) {
-            return false;
-          }
-          stack.index += 1;
-        } else {
-          if (stack.index <= 0) {
-            return false;
-          }
-          stack.index -= 1;
+      if (directionTop) {
+        if (stack.index >= stack.orientationMaxIndex - 1) {
+          return false;
         }
+        stack.index += 1;
+      } else {
+        if (stack.index <= 0) {
+          return false;
+        }
+        stack.index -= 1;
       }
       changePtr.hasChanged = true;
     }
@@ -195,10 +192,11 @@ export default class customControls extends THREE.EventDispatcher {
           _this._state = STATE.WINDOW;
           break;
       }
-      oldMousePosition.x = event.x;
-      oldMousePosition.y = event.y;
+      oldMousePosition.x = event.clientX;
+      oldMousePosition.y = event.clientY;
 
       document.addEventListener('mousemove', mousemove, false);
+      event.preventDefault();
     }
 
     function mouseup(event) {
@@ -207,9 +205,8 @@ export default class customControls extends THREE.EventDispatcher {
     }
 
     function mousemove(event) {
-      newMousePosition.x = event.x;
-      newMousePosition.y = event.y;
-
+      newMousePosition.x = event.clientX;
+      newMousePosition.y = event.clientY;
       switch (_this._state) {
         case STATE.PAN:
           _this.pan(oldMousePosition, newMousePosition);

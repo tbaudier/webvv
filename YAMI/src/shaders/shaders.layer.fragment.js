@@ -48,14 +48,13 @@ void main(void) {
   // vec4 dummy = vPos;
 
   //The back position is the world space position stored in the texture.
-  vec4 baseColor0 = texture2D(uTextureBackTest0, texc);
-  vec4 baseColor1 = texture2D(uTextureBackTest1, texc);
+  vec4 baseColorBG = texture2D(uTextureBackground, texc);
+  vec4 baseColorFusion = texture2D(uTextureFusion, texc);
 
-  if(baseColor1.w < uThreshold){
-    gl_FragColor = baseColor0;
+  if(baseColorFusion.w < uThreshold){
+    gl_FragColor = baseColorBG;
   }else{
-  gl_FragColor = mix( baseColor0, baseColor1, uOpacity);
-
+    gl_FragColor = mix( baseColorBG, baseColorFusion, uOpacityMin+uOpacityMax*baseColorFusion.w);
   }
   return;
 }
@@ -81,5 +80,5 @@ ${this.functions()}
 // main loop
 ${this._main}
       `;
-    }
+  }
 }
