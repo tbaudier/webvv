@@ -79,13 +79,12 @@ window.onload = function() {
     let stack = seriesContainer["image"][0].mergeSeries(seriesContainer["image"])[0].stack[0];
     let stack1 = seriesContainer["fusion"][0].mergeSeries(seriesContainer["fusion"])[0].stack[0];
 
-
     stackHelper = new AMI.StackHelper(stack);
     stackHelper.bbox.visible = false;
     stackHelper.border.visible = false;
 
     sceneManager.setMainStackHelper(stackHelper);
-    sceneManager.addLayer(stack1, stackHelper);
+    sceneManager.addLayer(stack1, "fusion");
 
     controls = new CustomControls.default(camera, stackHelper, canvas, changePtr);
     camera.controls = controls;

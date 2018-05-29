@@ -10,46 +10,84 @@ export default class sceneManager {
 
     let canvas = canvasElement;
 
+    let scenes = {
+      background: null,
+      fusion: null,
+      overlay: null,
+      struct: [],
+    };
+
+    let luts = {
+      background: null,
+      fusion: null,
+      overlay: null,
+      struct: [],
+    }
+
+    let textureTargets = {
+      background: null,
+      fusion: null,
+      overlay: null,
+      struct: [],
+    }
+
+    let meshes = {
+      background: null,
+      fusion: null,
+      overlay: null,
+      struct: [],
+    }
+
+    let translations = {
+      background: null,
+      fusion: null,
+      overlay: null,
+      struct: [],
+    }
+
     let stackHelper;
 
-    let sceneBG; // @type {THREE.Scene}
-    let lutBG;
-    let sceneTextureBG;
-
-    let sceneLayers = []; // @type {THREE.Scene}
-    let lutLayers = [];
-    let meshesLayers = [];
-    let translationLayers = [];
-    let sceneTextureLayers = [];
+    let uniformsMix;
 
     // mixing : sceneBG+sceneLayers[0] then scenesMix[i]+sceneLayers[i+1]
     // final mix is last element of scenesMix
-    let scenesMix = [];
-    let materialsMix = [];
-    let meshesMix = [];
+    let sceneMix;
+    let materialMix;
+    let mesheMix;
 
     initBG();
 
     this.resize = function() {
-
-      for (let i = 0; i < sceneTextureLayers.length; i++)
-        sceneTextureLayers[i].setSize(canvas.clientWidth, canvas.clientHeight);
-      sceneTextureBG.setSize(canvas.clientWidth, canvas.clientHeight);
+      // background
+      textureTargets["background"].setSize(canvas.clientWidth, canvas.clientHeight);
+      // fusion
+      if (textureTargets["fusion"] !== null)
+        textureTargets["fusion"].setSize(canvas.clientWidth, canvas.clientHeight);
+      // overlay
+      if (textureTargets["overlay"] !== null)
+        textureTargets["overlay"].setSize(canvas.clientWidth, canvas.clientHeight);
+      // RT structs
+      for (let text of textureTargets["struct"])
+        text.setSize(canvas.clientWidth, canvas.clientHeight);
 
     }
 
     this.render = function(renderer, camera) {
       update(); // TODO ailleurs
-      // render background
-      renderer.render(sceneBG, camera, sceneTextureBG, true); // last param is forceClear, it was at true, now testing with false
-      // render layers on texture and mix between previous layer and this one
-      for (let i = 0; i < sceneLayers.length - 1; i++) {
-        renderer.render(sceneLayers[i], camera, sceneTextureLayers[i], true);
-        renderer.render(scenesMix[i], camera, sceneTextureLayers[i], true);
-      }
 
-      renderer.render(sceneLayers[sceneLayers.length - 1], camera, sceneTextureLayers[sceneTextureLayers.length - 1], true);
-      renderer.render(scenesMix[sceneLayers.length - 1], camera);
+      // background
+      renderer.render(scenes["background"], camera, textureTargets["background"], true);
+      // fusion
+      if (textureTargets["fusion"] !== null)
+        renderer.render(scenes["fusion"], camera, textureTargets["fusion"], true);
+      // overlay
+      if (textureTargets["overlay"] !== null)
+        renderer.render(scenes["overlay"], camera, textureTargets["overlay"], true);
+      // RT structs
+      for (let i = 0; i < textureTargets["struct"].length; i++)
+        renderer.render(scenes["struct"][i], camera, textureTargets["struct"][i], true);
+
+      renderer.render(sceneMix, camera);
     }
 
     /*
@@ -63,12 +101,14 @@ export default class sceneManager {
       // some settings on this stack
       stackHelper.slice.intensityAuto = config.autoIntensity;
       stackHelper.slice.interpolation = config.interpolation;
-      stackHelper.slice.lut = lutBG;
-      stackHelper.slice.lutTexture = lutBG.texture;
+      stackHelper.slice.lut = luts["background"];
+      stackHelper.slice.lutTexture = luts["background"].texture;
       // add it to its 3D scene
-      sceneBG.add(stackHelper);
+      scenes["background"].add(stackHelper);
       // Update the whole scene BB
       updateWorldBB(stackHelper._stack.worldBoundingBox());
+
+      setMixLayer();
     }
 
     /**
@@ -76,33 +116,33 @@ export default class sceneManager {
      */
     function initBG() {
       // The 3D scene
-      sceneBG = new THREE.Scene();
+      scenes["background"] = new THREE.Scene();
       // The LUT
-      lutBG = new AMI.LutHelper('my-lut-canvases', 'default', 'linear', [
+      luts["background"] = new AMI.LutHelper('my-lut-canvases', 'default', 'linear', [
         [0, 0, 0, 0],
         [0, 1, 1, 1]
       ], [
         [0, 1],
         [1, 1]
       ]);
-      lutBG.luts = AMI.LutHelper.presetLuts();
-      lutBG.lut = "default";
+      luts["background"].luts = AMI.LutHelper.presetLuts();
+      luts["background"].lut = "default";
       // Render to a (buffer) texture !
-      sceneTextureBG = new THREE.WebGLRenderTarget(canvas.clientWidth, canvas.clientHeight, {
+      textureTargets["background"] = new THREE.WebGLRenderTarget(canvas.clientWidth, canvas.clientHeight, {
         minFilter: THREE.NearestFilter,
         magFilter: THREE.NearestFilter,
         format: THREE.RGBAFormat,
       });
-      sceneTextureBG.setSize(canvas.clientWidth, canvas.clientHeight);
+      textureTargets["background"].setSize(canvas.clientWidth, canvas.clientHeight);
     }
 
     /**
      *
      */
-    this.addLayer = function(stack) {
+    this.addLayer = function(stack, stackname) {
       // Constructions
       let scene = new THREE.Scene();
-      sceneLayers.push(scene);
+      scenes[stackname] = scene;
 
       let lut = new AMI.LutHelper('my-lut-canvases', 'default', 'linear', [
         [0, 0, 0, 0],
@@ -112,7 +152,7 @@ export default class sceneManager {
         [1, 1]
       ]);
       lut.luts = AMI.LutHelper.presetLuts();
-      lutLayers.push(lut);
+      luts[stackname] = lut;
       lut.lut = "blue";
 
       let sceneTexture = new THREE.WebGLRenderTarget(canvas.clientWidth, canvas.clientHeight, {
@@ -121,8 +161,7 @@ export default class sceneManager {
         format: THREE.RGBAFormat,
       });
       sceneTexture.setSize(canvas.clientWidth, canvas.clientHeight);
-
-      sceneTextureLayers.push(sceneTexture);
+      textureTargets[stackname] = sceneTexture;
 
       // Stack preparation
       stack.prepare();
@@ -161,7 +200,12 @@ export default class sceneManager {
         stack.dimensionsIJK.z
       ];
       uniformsLayer.uInterpolation.value = config.interpolation;
-      uniformsLayer.uLowerUpperThreshold.value = [...stack.minMax];
+      // we can only display positive values
+      let offset = 0;
+      if (stack._minMax[0] < 0) {
+        offset -= stack._minMax[0];
+      }
+      uniformsLayer.uLowerUpperThreshold.value = [stack.minMax[0] + offset, stack.minMax[1] + offset];
       uniformsLayer.uLut.value = 1;
       uniformsLayer.uTextureLUT.value = lut.texture;
 
@@ -177,91 +221,98 @@ export default class sceneManager {
       });
 
       let meshLayer = new THREE.Mesh(stackHelper.slice.geometry, materialLayer);
-      meshesLayers.push(meshLayer);
+      meshes[stackname] = meshLayer;
       // go the LPS space
       meshLayer.applyMatrix(stackHelper.stack._ijk2LPS);
       // Correct translation
 
       let translation = stackHelper._stack.worldCenter().clone();
       translation.sub(stack.worldCenter());
-      translationLayers.push(translation);
       meshLayer.translateX(translation.x);
       meshLayer.translateY(translation.y);
       meshLayer.translateZ(translation.z);
+      translations[stackname] = translation;
 
       scene.add(meshLayer);
       // Update the whole scene BB
       updateWorldBB(stack.worldBoundingBox());
 
-      addMixLayer(stack, stackHelper);
+      updateMixUniforms();
     }
 
-    function addMixLayer(stack) {
-      scenesMix.push(new THREE.Scene());
+    function setMixLayer() {
+      sceneMix = new THREE.Scene();
 
-      // Create the Mix layer
-      let uni = FusionShaderUni.default.uniforms();
-      let i = sceneTextureLayers.length - 1;
-      if (i === 0) {
-
-        uni.uTextureBackground.value = sceneTextureBG.texture;
-        uni.uTextureFusion.value = sceneTextureLayers[i].texture;
-      } else {
-        uni.uTextureBackground.value = sceneTextureLayers[i - 1].texture;
-        uni.uTextureFusion.value = sceneTextureLayers[i].texture;
-      }
-      uni.uOpacityMin.value = 0.1;
-      uni.uOpacityMax.value = 0.8;
-      uni.uThreshold.value = 0.01;
-
-
+      uniformsMix = FusionShaderUni.default.uniforms();
+      updateMixUniforms();
       // generate shaders on-demand!
-      let fls = new FusionShaderFrag.default(uni);
-      //let fls = new AMI.LayerFragmentShader(uni);
+      let fls = new FusionShaderFrag.default(uniformsMix);
       let vls = new AMI.LayerVertexShader();
       let mat = new THREE.ShaderMaterial({
         side: THREE.FrontSide,
-        uniforms: uni,
+        uniforms: uniformsMix,
         vertexShader: vls.compute(),
         fragmentShader: fls.compute(),
         transparent: true,
       });
-      materialsMix.push(mat);
+      materialMix = mat;
       let mesh = new THREE.Mesh(stackHelper.slice.geometry, mat);
-      meshesMix.push(mesh);
+      mesheMix = mesh;
       // go the LPS space
       mesh.applyMatrix(stackHelper.stack._ijk2LPS);
-      scenesMix[scenesMix.length - 1].add(mesh);
+      sceneMix.add(mesh);
       update();
+    }
+
+    function updateMixUniforms() {
+      uniformsMix.uTextureBackground.value = textureTargets["background"].texture;
+      // fusion
+      if (textureTargets["fusion"] !== null)
+        uniformsMix.uTextureFusion.value = textureTargets["fusion"].texture;
+      // overlay
+      if (textureTargets["overlay"] !== null)
+        uniformsMix.uTextureOverlay.value = textureTargets["overlay"].texture;
+      uniformsMix.uOpacityMin.value = 0.1;
+      uniformsMix.uOpacityMax.value = 0.8;
+      uniformsMix.uThreshold.value = 0.01;
     }
 
     function update() {
       function updateLayers() {
-        // update layers geometry...
-        for (let i = 0; i < meshesLayers.length; i++) {
-          meshesLayers[i].geometry.dispose();
-          meshesLayers[i].geometry = stackHelper.slice.geometry;
-          meshesLayers[i].geometry.verticesNeedUpdate = true;
+        // fusion
+        if (textureTargets["fusion"] !== null) {
+          meshes["fusion"].geometry.dispose();
+          meshes["fusion"].geometry = stackHelper.slice.geometry;
+          meshes["fusion"].geometry.verticesNeedUpdate = true;
+        }
+        // overlay
+        if (textureTargets["overlay"] !== null) {
+          meshes["overlay"].geometry.dispose();
+          meshes["overlay"].geometry = stackHelper.slice.geometry;
+          meshes["overlay"].geometry.verticesNeedUpdate = true;
+        }
+        // RT structs
+        for (let mesh of meshes["struct"]) {
+          mesh.geometry.dispose();
+          mesh.geometry = stackHelper.slice.geometry;
+          mesh.geometry.verticesNeedUpdate = true;
         }
       }
 
       function updateLayerMix() {
-        // update layer1 geometry...
-        for (let i = 0; i < meshesMix.length; i++) {
-          scenesMix[i].remove(meshesMix[i]);
-          meshesMix[i].material.dispose();
-          // meshLayerMix.material = null;
-          meshesMix[i].geometry.dispose();
-          // meshLayerMix.geometry = null;
+        sceneMix.remove(mesheMix);
+        mesheMix.material.dispose();
+        // meshLayerMix.material = null;
+        mesheMix.geometry.dispose();
+        // meshLayerMix.geometry = null;
 
-          // add mesh in this scene with right shaders...
-          meshesMix[i] =
-            new THREE.Mesh(stackHelper.slice.geometry, materialsMix[i]);
-          // go the LPS space
-          meshesMix[i].applyMatrix(stackHelper.stack._ijk2LPS);
+        // add mesh in this scene with right shaders...
+        mesheMix =
+          new THREE.Mesh(stackHelper.slice.geometry, materialMix);
+        // go the LPS space
+        mesheMix.applyMatrix(stackHelper.stack._ijk2LPS);
 
-          scenesMix[i].add(meshesMix[i]);
-        }
+        sceneMix.add(mesheMix);
       }
       updateLayers();
       updateLayerMix();
