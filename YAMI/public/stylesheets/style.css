@@ -1,34 +1,106 @@
-#stats {
-  position: absolute;
-  top:0;
-  left: 0;
+body, html {
+  margin: 0;
+  height: 100%;
+  background-color: black;
+  color: white;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
 }
 
-#r3d, #orientation, #viewer {
-  background-color: #000;
-  left: 0;
+.wrapper {
+  min-height: 100%;
+  min-width: 100%;
+  position: absolute;
+  text-align: center;
+}
+
+.mid-width {
+  display: inline-block;
+  width: 50%;
+}
+
+.general-panel, .viewer-panel, .gui-panel {
+  display: inline-block;
+  margin: 0;
+  vertical-align: top;
+  text-align : center;
+}
+
+.general-panel {
+  width: 20%;
+  min-width: 200px;
+  max-width: 20%;
+  padding : 10px;
+}
+
+.viewer-panel {
+  width: 60%;
+  min-width: 200px;
+}
+
+.gui-panel {
+  width: 245px;
+  position: absolute;
+  top: 100px;
   right: 0;
-  top: 0;
-  bottom: 0;
-  position: absolute;
-  width: 800px;
-  height:800px;
-  overflow:hidden;
 }
 
-#orientation {
+.align-left {
+  text-align: left;
+}
+
+.viewer-canvas {
+  height: 500px;
+  max-height: 500px;
+  max-width: 500px;
+  margin: auto;
   display: flex;
   align-items: center;
   justify-content: center;
-
+  position: relative;
 }
 
-#my-gui-container {
-  position: fixed;
-  top: 80px;
-  right: 20px;
-  z-index:1;
+.viewer-canvas canvas{
+  border: 1px solid white;
 }
+
+.direction {
+  z-index: 1;
+  color: #fff;
+  text-transform: uppercase;
+  font-size: 16px;
+  position: absolute;
+  padding: 4px;
+  border-radius: 50%;
+  min-width: 18px;
+  min-height: 18px;
+  text-align: center;
+  background-color: rgba(0, 0, 0, .3);
+}
+
+#top {
+  top: 8px;
+}
+
+#bottom {
+  bottom: 8px;
+}
+
+#left {
+  left: 8px;
+}
+
+#right {
+  right: 8px;
+}
+
+#my-lut-canvases{
+  padding : 10px;
+}
+#my-lut-canvases canvas{
+  border : solid grey 1px;
+}
+
+/*
 
 #VJSProbe {
   position: absolute;
@@ -41,36 +113,6 @@
   background-color: rgba(249, 249, 249, .7);
 }
 
-.direction {
-  z-index: 1;
-  color: #fff;
-  text-transform: uppercase;
-  font-size: 16px;
-  position: absolute;
-  margin: 14px;
-  padding: 4px;
-  border-radius: 50%;
-  min-width: 18px;
-  min-height: 18px;
-  text-align: center;
-  background-color: rgba(0, 0, 0, .3);
-}
-
-#top {
-  top: 24px;
-}
-
-#bottom {
-  bottom: 0;
-}
-
-#left {
-  left: 0;
-}
-
-#right {
-  right: 0;
-}
 #my-lut-container {
   position: fixed;
   left: 50%;
@@ -101,62 +143,4 @@
   top: 0;
   left: 0;
 }
-
-#home-container{
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  background-color: #212121;
-  z-index: 99;
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-}
-
-.big{
-  font-size:60px;
-}
-
-.medium{
-  font-size:40px;
-}
-
-.small{
-  font-size:30px;
-}
-
-.small{
-  font-size:20px;
-}
-
-#buttons{
-  flex: 1;
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  justify-content:center;
-}
-
-#filesinput{
-  display:none;
-}
-
-#buttoninput{
-  padding: 10px;
-  border: 6px solid #2196F3;
-  background-color: #2196F3;
-  color: #F9F9F9;
-  border-radius: 50%;
-  height: 200px;
-  width: 200px;
-  font-size:30px;
-}
-
-#buttoninput:hover{
-  /*border-style: dashed;*/
-  background-color: #F9F9F9;
-  color: #2196F3;
-  cursor:pointer;
-}
+*/

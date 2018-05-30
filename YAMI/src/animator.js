@@ -1,6 +1,5 @@
 function f() {
   // Animation managment
-  //let imgHasChanged = true;
   let fps, fpsInterval, startTime, now, then, elapsed;
   let updateFunction;
 

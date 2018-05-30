@@ -8,8 +8,8 @@ Note : shortcut can't use System input in browser (ex : F1-F12, Ctrl+S, ...)
 
 ### General remarks :
 Each soft has its system. But some mechanisms often appear :
-- The __select the tool__ system where zoom, slide, move, windowing are all LMB drag : first you have to select a tool (by pressing the Tool button or the associated key), and then a simple LMB Drag does the action (advantage : friendly with new user thanks to the buttons and icons + efficient thanks to shortcuts).
-- __Change the slide__ : often wheel by default, sometime a simple drag with a tool (cf previous point).
+- The __select the tool__ system where zoom, slice, move, windowing are all LMB drag : first you have to select a tool (by pressing the Tool button or the associated key), and then a simple LMB Drag does the action (advantage : friendly with new user thanks to the buttons and icons + efficient thanks to shortcuts).
+- __Change the slice__ : often wheel by default, sometime a simple drag with a tool (cf previous point).
 - __shortcuts__ people who I talked to said they were not familiar with shortcut, the generally use 2 or 3 of them max, so the buttons/tools system might be better for someone who don't use it a lot.
 - __Windowing__ drags directions are the same : vertical for the center (top dark) and horizontal for width (right for low contrasts).
 - __customization__ windowing presets and color-map presets are generally customizable. The issue here is we are on a online service :
@@ -26,7 +26,7 @@ Each soft has its system. But some mechanisms often appear :
 |Zoom| Ctrl+Wheel & i/o| RMB Drag (Bottom right --) & D+LMB Drag|+ / -| _tool + click_|Vertical LMB Drag||Drag => which direction + -|
 |Rotate| ? | ? |_Menu + click_| _tool + click_|||-|
 |Move| MMB Drag | LMB Drag|_Menu + click_| _tool + click_||| - |
-|Change slide| Up/Down & Wheel | Wheel |?|Wheel|RMB Drag|LMB Drag| - |
+|Change slice| Up/Down & Wheel | Wheel |?|Wheel|RMB Drag|LMB Drag| - |
 |Preset Camera (reset) | R | ? |?||||-|
 |Preset View | F2-F4 | ? |?|||| -|
 |Horizontal flip | F5 | ? |_Menu_|||| -|

@@ -40,31 +40,15 @@ function f() {
     });
     //stackFolder.add(stackHelper.slice, 'interpolation', { No:0, Yes:1}).listen();
     //stackFolder.add(stackHelper.slice, 'interpolation', 0, 1).step(1).listen();
-
-    // CREATE LUT
-    lut = new AMI.LutHelper(
-      'my-lut-canvases',
-      'default',
-      'linear', [
-        [0, 0, 0, 0],
-        [1, 1, 1, 1]
-      ], [
-        [0, 1],
-        [1, 1]
-      ]);
-    lut.luts = AMI.LutHelper.presetLuts();
-
     let lutUpdate = stackFolder.add(
-      stackHelper.slice, 'lut', lut.lutsAvailable());
+      stackHelper.slice.lut, 'lut', stackHelper.slice.lut.lutsAvailable());
     lutUpdate.onChange(function(value) {
-      lut.lut = value;
-      stackHelper.slice.lutTexture = lut.texture;
+      stackHelper.slice.lutTexture = stackHelper.slice.lut.texture;
       changes.hasChanged = true;
     });
-    let lutDiscrete = stackFolder.add(lut, 'discrete', false);
+    let lutDiscrete = stackFolder.add(stackHelper.slice.lut, 'discrete', false);
     lutDiscrete.onChange(function(value) {
-      lut.discrete = value;
-      stackHelper.slice.lutTexture = lut.texture;
+      stackHelper.slice.lutTexture = stackHelper.slice.lut.texture;
       changes.hasChanged = true;
     });
 

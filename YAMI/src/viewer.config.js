@@ -12,7 +12,8 @@ module.exports = {
   // Reset the intensity to 'best' values after every change (including changing the slide index)
   autoIntensity: false,
   // Background Color (behind the image borders) ( in hexa as 0x46BFB0 )
-  bgColor: 0xFF0000,
+  bgColor: 0x00FF00,
+  bgAlpha: 0,
 
 
   // User controls

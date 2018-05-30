@@ -1,5 +1,6 @@
 const FusionShaderFrag = require('./shaders/shaders.layer.fragment');
 const FusionShaderUni = require('./shaders/shaders.layer.uniform');
+const LutHelper = require('./customLutHelper');
 // Viewer config file
 const config = require('./viewer.config');
 
@@ -119,14 +120,14 @@ export default class sceneManager {
       // The 3D scene
       scenes["background"] = new THREE.Scene();
       // The LUT
-      luts["background"] = new AMI.LutHelper('my-lut-canvases', 'default', 'linear', [
+      luts["background"] = new LutHelper.default('my-lut-canvases', 'default', 'linear', [
         [0, 0, 0, 0],
         [0, 1, 1, 1]
       ], [
         [0, 1],
         [1, 1]
       ]);
-      luts["background"].luts = AMI.LutHelper.presetLuts();
+      luts["background"].luts = LutHelper.default.presetLuts();
       luts["background"].lut = "default";
       // Render to a (buffer) texture !
       textureTargets["background"] = new THREE.WebGLRenderTarget(canvas.clientWidth, canvas.clientHeight, {
@@ -147,14 +148,14 @@ export default class sceneManager {
       let scene = new THREE.Scene();
       scenes[stackname] = scene;
 
-      let lut = new AMI.LutHelper('my-lut-canvases', 'default', 'linear', [
+      let lut = new LutHelper.default('my-lut-canvases', 'default', 'linear', [
         [0, 0, 0, 0],
         [1, 1, 1, 1]
       ], [
         [0, 0],
         [1, 1]
       ]);
-      lut.luts = AMI.LutHelper.presetLuts();
+      lut.luts = LutHelper.default.presetLuts();
       luts[stackname] = lut;
       lut.lut = "blue";
 

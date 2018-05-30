@@ -33,16 +33,17 @@ function init() {
   canvas = document.getElementById('r3d');
   renderer = new THREE.WebGLRenderer({
     antialias: (config.interpolation == 1),
+    alpha : true
   });
   // set up the renderer
   renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
-  renderer.setClearColor(config.bgColor, 1);
+  renderer.setClearColor(config.bgColor, config.bgAlpha);
   renderer.setPixelRatio(window.devicePixelRatio);
   // add this renderer to the canvas
   canvas.appendChild(renderer.domElement);
   // stats, fps, ...
   stats = new Stats();
-  canvas.appendChild(stats.domElement);
+  canvas.parentNode.insertBefore(stats.domElement, canvas);
   // empty scene
   sceneManager = new SceneManager.default(canvas);
   // camera
@@ -134,5 +135,6 @@ window.onload = function() {
     };
     renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
     sceneManager.resize();
+    changePtr.hasChanged = true;
   }
 };

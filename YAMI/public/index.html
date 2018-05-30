@@ -18,7 +18,58 @@
 </head>
 
 <body>
+	<div class="wrapper">
+		<h1 class="title">YAMI - Medical Viewer</h1>
+		<h2 class="sub-title">Study - patient</h2>
 
+		<div class="align-left">
+			<div class="general-panel">
+				<div id="general-info-panel">
+					infos générales
+					<br/>
+					Here will general data concerning this image (patient, date, ...)
+				</div>
+				<hr/>
+				<div id="controls-panel" class="align-left">
+					<h3>Basic controls</h3>
+					Zoom In :  + , i , Ctrl + Wheel down<br/>
+					Zoom Out : - , o , Cltr + Wheel up <br/>
+					Slice Up :   ↑ , Wheel Up <br/>
+					Slice Down : ↓ , Wheel Down <br/>
+				</div>
+			</div>
+
+			<div class="viewer-panel">
+				<div class="viewer-canvas" id="r3d">
+					<div id="top" class="direction"></div>
+					<div id="bottom" class="direction"></div>
+					<div id="left" class="direction"></div>
+					<div id="right" class="direction"></div>
+				</div>
+
+				<div class="under-viewer">
+					<div class="mid-width" id="my-lut-container">
+						<div id="my-lut-canvases">
+							<!-- Colormaps -->
+						</div>
+					</div><!--
+
+					--><div class="mid-width">
+						prob data<br/>
+						Here data about the prob and values
+
+					</div>
+				</div>
+
+			</div>
+		</div>
+
+		<div class="gui-panel" id="my-gui-container">
+			<!-- GUI -->
+		</div>
+
+	</div>
+<!--
 <div class="wrapper">
 	<div id="my-gui-container"></div>
 	<div id="my-lut-container">
@@ -34,7 +85,7 @@
 		<div id="r3d"></div>
 	</div>
 	<div style="background-color: #f9f9f9; width: 0; height: 0;"></div>
-</div>
+</div>-->
 	<script type="text/javascript" src="bundle.js"></script>
 
 </body>
