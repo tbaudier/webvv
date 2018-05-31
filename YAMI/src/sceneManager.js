@@ -1,5 +1,7 @@
 const FusionShaderFrag = require('./shaders/shaders.layer.fragment');
 const FusionShaderUni = require('./shaders/shaders.layer.uniform');
+const DataShaderFrag = require('./shaders/shaders.data.fragment');
+const DataShaderUni = require('./shaders/shaders.data.uniform');
 const LutHelper = require('./customLutHelper');
 // Viewer config file
 const config = require('./viewer.config');
@@ -101,14 +103,20 @@ export default class sceneManager {
       stackHelper = stackHelperI;
 
       // some settings on this stack
-      stackHelper.slice.intensityAuto = config.autoIntensity;
-      stackHelper.slice.interpolation = config.interpolation;
-      stackHelper.slice.lut = luts["background"];
-      stackHelper.slice.lutTexture = luts["background"].texture;
+      stackHelperI.slice.intensityAuto = config.autoIntensity;
+      stackHelperI.slice.interpolation = config.interpolation;
+      stackHelperI.slice.lut = luts["background"];
+      stackHelperI.slice.lutTexture = luts["background"].texture;
+      if (stackHelperI._stack._minMax[0] < 0) {
+        stackHelperI.slice._uniforms.uWindowCenterWidth["offset"] = -stackHelperI._stack._minMax[0];
+      }
+
+      _this.uniforms["background"] = stackHelperI.slice._uniforms;
+      meshes["background"] = stackHelperI;
       // add it to its 3D scene
-      scenes["background"].add(stackHelper);
+      scenes["background"].add(stackHelperI);
       // Update the whole scene BB
-      updateWorldBB(stackHelper._stack.worldBoundingBox());
+      updateWorldBB(stackHelperI._stack.worldBoundingBox());
 
       setMixLayer();
     }
@@ -138,10 +146,11 @@ export default class sceneManager {
       textureTargets["background"].setSize(canvas.clientWidth, canvas.clientHeight);
     }
 
+
     /**
      *
      */
-    this.addLayer = function(stack, stackname) {
+    this.addLayerStack = function(stack, stackname) {
       if (!(stackname == "fusion" || stackname == "overlay"))
         return;
       // Constructions
@@ -189,9 +198,12 @@ export default class sceneManager {
         texture.push(tex);
       }
 
+      let translation = stackHelper._stack.worldCenter().clone();
+      translation.sub(stack.worldCenter());
       // create material && mesh then add it to sceneLayers[i]
-      let uniformsLayer = AMI.DataUniformShader.uniforms();
+      let uniformsLayer = DataShaderUni.default.uniforms();
       uniformsLayer.uTextureSize.value = stack.textureSize;
+      uniformsLayer.uOffset.value = [-translation.x,-translation.y,-translation.z];
       uniformsLayer.uTextureContainer.value = texture;
       uniformsLayer.uWorldToData.value = stack.lps2IJK;
       uniformsLayer.uNumberOfChannels.value = stack.numberOfChannels;
@@ -207,19 +219,19 @@ export default class sceneManager {
       // we can only display positive values
       let offset = 0;
       if (stack._minMax[0] < 0) {
-        offset -= stack._minMax[0];
+        offset = -stack._minMax[0];
+        uniformsLayer.uWindowCenterWidth["offset"] = offset;
       }
       uniformsLayer.uLowerUpperThreshold.value = [stack.minMax[0] + offset, stack.minMax[1] + offset];
       uniformsLayer.uLut.value = 1;
       uniformsLayer.uTextureLUT.value = lut.texture;
       _this.uniforms[stackname] = uniformsLayer;
 
-
       // generate shaders on-demand!
-      let fs = new AMI.DataFragmentShader(uniformsLayer);
+      let fs = new DataShaderFrag.default(uniformsLayer);
       let vs = new AMI.DataVertexShader();
       let materialLayer = new THREE.ShaderMaterial({
-        side: THREE.FrontSide,
+        side: THREE.DoubleSide,
         uniforms: uniformsLayer,
         vertexShader: vs.compute(),
         fragmentShader: fs.compute(),
@@ -228,15 +240,24 @@ export default class sceneManager {
       let meshLayer = new THREE.Mesh(stackHelper.slice.geometry, materialLayer);
       meshes[stackname] = meshLayer;
       // go the LPS space
+      //meshLayer.position.z = 160;
+      //meshLayer.updateMatrix();
       meshLayer.applyMatrix(stackHelper.stack._ijk2LPS);
+/*
       // Correct translation
-
       let translation = stackHelper._stack.worldCenter().clone();
       translation.sub(stack.worldCenter());
-      meshLayer.translateX(translation.x);
-      meshLayer.translateY(translation.y);
-      meshLayer.translateZ(translation.z);
+      //stack._origin.z-=160;
+      //console.log(stack._origin);
+
+            meshLayer.translateX(translation.x);
+            meshLayer.translateY(translation.y);
+            meshLayer.translateZ(translation.z);
+
       translations[stackname] = translation;
+*/
+    console.log(stack.worldCenter());
+        console.log(stackHelper._stack.worldCenter());
 
       scene.add(meshLayer);
       // Update the whole scene BB
@@ -254,7 +275,7 @@ export default class sceneManager {
       let fls = new FusionShaderFrag.default(_this.uniformsMix);
       let vls = new AMI.LayerVertexShader();
       let mat = new THREE.ShaderMaterial({
-        side: THREE.FrontSide,
+        side: THREE.DoubleSide,
         uniforms: _this.uniformsMix,
         vertexShader: vls.compute(),
         fragmentShader: fls.compute(),
@@ -282,12 +303,31 @@ export default class sceneManager {
       _this.uniformsMix.uThreshold.value = 0.01;
     }
 
+
     function update() {
+      function updateLuts() {
+        luts["background"].updateLevels(_this.uniforms["background"].uWindowCenterWidth);
+        // fusion
+        if (luts["fusion"] !== null) {
+          luts["fusion"].updateLevels(_this.uniforms["fusion"].uWindowCenterWidth);
+        }
+        // overlay
+        if (luts["overlay"] !== null) {
+          luts["overlay"].updateLevels(_this.uniforms["overlay"].uWindowCenterWidth);
+        }
+        // RT structs
+        if (luts["struct"] !== null) {
+          for (let i = 0; i < luts["struct"].length; i++) {
+            luts["struct"][i].updateLevels(_this.uniforms["struct"][i].uWindowCenterWidth);
+          }
+        }
+      }
+
       function updateLayers() {
         // fusion
         if (textureTargets["fusion"] !== null) {
           meshes["fusion"].geometry.dispose();
-          meshes["fusion"].geometry = stackHelper.slice.geometry;
+          meshes["fusion"].geometry = stackHelper.slice.geometry; //.clone().translate(0, 0, 130);
           meshes["fusion"].geometry.verticesNeedUpdate = true;
         }
         // overlay
@@ -321,6 +361,7 @@ export default class sceneManager {
       }
       updateLayers();
       updateLayerMix();
+      updateLuts();
     }
 
     function updateWorldBB(otherBB) {

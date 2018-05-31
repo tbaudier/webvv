@@ -106,7 +106,7 @@ export default class customControls extends THREE.EventDispatcher {
     }
     this.scrollStack = function(directionTop) {
       if (directionTop) {
-        if (stack.index >= stack.orientationMaxIndex - 1) {
+        if (stack.index >= stack._stack.dimensionsIJK.z - 1) {
           return false;
         }
         stack.index += 1;
@@ -228,7 +228,7 @@ export default class customControls extends THREE.EventDispatcher {
         _this.zoom((event.deltaY > 0) === config.zoomInIsWheelDown);
         event.preventDefault();
       } else {
-        _this.scrollStack((event.deltaY > 0) === config.stackTopIsWheelDown);
+        _this.scrollStack((event.deltaY < 0) === config.stackTopIsWheelDown);
         event.preventDefault();
       }
     }

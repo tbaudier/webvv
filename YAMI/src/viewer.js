@@ -27,13 +27,14 @@ let changePtr = { // a pointer to pass the "haschanged" value by reference
 let stackHelper; // @type {AMI.StackHelper}
 let camera; // @type {THREE.OrthographicCamera}
 let controls; // @type {AMI.TrackballOrthoControl}e;
+let camera2;
 
 function init() {
   // canvas and THREE.js renderer
   canvas = document.getElementById('r3d');
   renderer = new THREE.WebGLRenderer({
     antialias: (config.interpolation == 1),
-    alpha : true
+    alpha: true
   });
   // set up the renderer
   renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
@@ -51,6 +52,17 @@ function init() {
     canvas.clientWidth / -2, canvas.clientWidth / 2,
     canvas.clientHeight / 2, canvas.clientHeight / -2,
     0.1, 10000);
+/*
+  camera2 =
+    new THREE.PerspectiveCamera(
+      90, canvas.offsetWidth / canvas.offsetHeight,
+      1, 10000000);
+  camera2.position.x = 0;
+  camera2.position.y = 0;
+  camera2.position.z = -405;
+  camera2.lookAt( new THREE.Vector3(0,0,-400) );
+  console.log(camera2.position.z);
+  let controls2 = new THREE.OrbitControls(camera2, canvas);*/
 }
 
 window.onload = function() {
@@ -78,9 +90,11 @@ window.onload = function() {
     stackHelper = new AMI.StackHelper(stack);
     stackHelper.bbox.visible = false;
     stackHelper.border.visible = false;
+
     // and add the stacks we have loaded to the 3D scene
     sceneManager.setMainStackHelper(stackHelper);
-    sceneManager.addLayer(stack1, "fusion");
+    // and add the stacks we have loaded to the 3D scene
+    sceneManager.addLayerStack(stack1, "fusion");
     // setup controls and shortcuts
     controls = new CustomControls.default(camera, stackHelper, canvas, changePtr);
     camera.controls = controls;
