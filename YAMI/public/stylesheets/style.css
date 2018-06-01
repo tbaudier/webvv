@@ -39,6 +39,14 @@ body, html {
   padding : 10px;
 }
 
+.data-label {
+  font-weight: bold;
+}
+
+.data-content {
+  font-size : 0.8em;
+}
+
 .viewer-panel {
   width: 60%;
   min-width: 200px;

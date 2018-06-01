@@ -59,6 +59,10 @@ export default class HelpersLut {
     this._textRight.classList.add("float-right");
     this._canvasContainer.appendChild(this._textRight);
 
+    this._units = document.createElement('div');
+    this._units.innerHTML = "units";
+    this._canvasContainer.appendChild(this._units);
+
     // foreground
     this._canvas = this.createCanvas();
     this._canvasContainer.appendChild(this._canvas);
@@ -128,10 +132,11 @@ export default class HelpersLut {
     }
   }
 
-  updateLevels(windowCenterWidth){
-    let offset = (windowCenterWidth["offset"]==null) ? 0 : -windowCenterWidth["offset"];
-    this._textLeft.innerHTML = offset + windowCenterWidth.value[0] - windowCenterWidth.value[1]/2;
-    this._textRight.innerHTML = offset + windowCenterWidth.value[0] + windowCenterWidth.value[1]/2;
+  updateLevels(windowCenterWidth) {
+    let offset = (windowCenterWidth["offset"] == null) ? 0 : -windowCenterWidth["offset"];
+    this._units.innerHTML = (windowCenterWidth.unit) ? windowCenterWidth.unit : "no unit";
+    this._textLeft.innerHTML = offset + windowCenterWidth.value[0] - windowCenterWidth.value[1] / 2;
+    this._textRight.innerHTML = offset + windowCenterWidth.value[0] + windowCenterWidth.value[1] / 2;
   }
 
   get texture() {

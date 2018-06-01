@@ -33,8 +33,7 @@ function init() {
   // canvas and THREE.js renderer
   canvas = document.getElementById('r3d');
   renderer = new THREE.WebGLRenderer({
-    antialias: (config.interpolation == 1),
-    alpha: true
+    antialias: (config.interpolation == 1)
   });
   // set up the renderer
   renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
@@ -43,8 +42,8 @@ function init() {
   // add this renderer to the canvas
   canvas.appendChild(renderer.domElement);
   // stats, fps, ...
-  stats = new Stats();
-  canvas.parentNode.insertBefore(stats.domElement, canvas);
+  //stats = new Stats();
+  //canvas.parentNode.insertBefore(stats.domElement, canvas);
   // empty scene
   sceneManager = new SceneManager(canvas);
   // camera
@@ -52,17 +51,18 @@ function init() {
     canvas.clientWidth / -2, canvas.clientWidth / 2,
     canvas.clientHeight / 2, canvas.clientHeight / -2,
     0.1, 10000);
-/*
-  camera2 =
-    new THREE.PerspectiveCamera(
-      90, canvas.offsetWidth / canvas.offsetHeight,
-      1, 10000000);
-  camera2.position.x = 0;
-  camera2.position.y = 0;
-  camera2.position.z = -405;
-  camera2.lookAt( new THREE.Vector3(0,0,-400) );
-  console.log(camera2.position.z);
-  let controls2 = new THREE.OrbitControls(camera2, canvas);*/
+  /*
+  // Test with a 3D free camera
+    camera2 =
+      new THREE.PerspectiveCamera(
+        90, canvas.offsetWidth / canvas.offsetHeight,
+        1, 10000000);
+    camera2.position.x = 0;
+    camera2.position.y = 0;
+    camera2.position.z = -405;
+    camera2.lookAt( new THREE.Vector3(0,0,-400) );
+    console.log(camera2.position.z);
+    let controls2 = new THREE.OrbitControls(camera2, canvas);*/
 }
 
 window.onload = function() {
@@ -78,14 +78,19 @@ window.onload = function() {
   /**
    * Visualize incoming data
    */
-  function handleSeries(seriesContainer) {
+  function handleSeries(seriesContainer, information) {
     // cleanup the loader and its progress bar
     loader.free();
     loader = null;
+    // write information on the page
+    writeInformation(information);
     // prepare for slice visualization
     // first stack of first series
     let stack = seriesContainer["image"][0].mergeSeries(seriesContainer["image"])[0].stack[0];
     let stack1 = seriesContainer["fusion"][0].mergeSeries(seriesContainer["fusion"])[0].stack[0];
+    // we add the "unit" attribute to the stacks
+    stack.unit = information["image"].unit;
+    stack1.unit = information["fusion"].unit;
     // we create the main stackHelper (easy manipulation of stacks)
     stackHelper = new AMI.StackHelper(stack);
     stackHelper.bbox.visible = false;
@@ -136,7 +141,7 @@ window.onload = function() {
           sceneManager.render(renderer, camera);
           changePtr.hasChanged = false;
         }
-        stats.update();
+        //stats.update();
       });
   }
   /**
@@ -151,4 +156,20 @@ window.onload = function() {
     sceneManager.resize();
     changePtr.hasChanged = true;
   }
+  /**
+   * Handle general information
+   */
+  function writeInformation(jsonData) {
+    document.getElementById("sub-title").innerHTML = "[" + jsonData.data.study + "] " + jsonData.data.patient;
+    // iterate on sub properties
+    for (let prop in jsonData.data) {
+      if (jsonData.data.hasOwnProperty(prop)) { // check if it's a direct property as we expect
+        let div = document.createElement('div');
+        div.innerHTML = "<span class='data-label'>" + prop + "</span> : <span class='data-content'>" +
+          jsonData.data[prop] + "</span>";
+        document.getElementById("general-info-panel").appendChild(div);
+      }
+    }
+  }
+
 };

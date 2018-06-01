@@ -3,7 +3,10 @@
 ## Sources :
 I am working with the AMI library, available on github : https://github.com/FNNDSC/ami .
 
-My development is under the commit [63c8ff5d5932b1132bc08ac7f63776fa54c0c938](https://github.com/FNNDSC/ami/commit/63c8ff5d5932b1132bc08ac7f63776fa54c0c938) done the 14 may 2018.
+My development is under the commit
+ [f8d659d9b5768d3c82932c7be32fed2c67120b7d](https://github.com/FNNDSC/ami/commit/f8d659d9b5768d3c82932c7be32fed2c67120b7d) done the 24th of may 2018.
+Previously
+ [63c8ff5d5932b1132bc08ac7f63776fa54c0c938](https://github.com/FNNDSC/ami/commit/63c8ff5d5932b1132bc08ac7f63776fa54c0c938) done the 14th of may 2018.
 
 ---
 

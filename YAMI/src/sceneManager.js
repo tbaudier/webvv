@@ -82,8 +82,10 @@ export default class sceneManager {
       // background
       renderer.render(scenes["background"], camera, textureTargets["background"], true);
       // fusion
+
       if (textureTargets["fusion"] !== null)
         renderer.render(scenes["fusion"], camera, textureTargets["fusion"], true);
+
       // overlay
       if (textureTargets["overlay"] !== null)
         renderer.render(scenes["overlay"], camera, textureTargets["overlay"], true);
@@ -107,6 +109,7 @@ export default class sceneManager {
       stackHelperI.slice.interpolation = config.interpolation;
       stackHelperI.slice.lut = luts["background"];
       stackHelperI.slice.lutTexture = luts["background"].texture;
+      stackHelperI.slice._uniforms.uWindowCenterWidth.unit = stackHelperI._stack.unit; // this is not in AMI class, used for display
       if (stackHelperI._stack._minMax[0] < 0) {
         stackHelperI.slice._uniforms.uWindowCenterWidth["offset"] = -stackHelperI._stack._minMax[0];
       }
@@ -210,6 +213,7 @@ export default class sceneManager {
       uniformsLayer.uBitsAllocated.value = stack.bitsAllocated;
       uniformsLayer.uPackedPerPixel.value = stack.packedPerPixel;
       uniformsLayer.uWindowCenterWidth.value = [stack.windowCenter, stack.windowWidth];
+      uniformsLayer.uWindowCenterWidth.unit = stack.unit; // this is not in AMI class, used for display
       uniformsLayer.uRescaleSlopeIntercept.value = [stack.rescaleSlope, stack.rescaleIntercept];
       uniformsLayer.uDataDimensions.value = [stack.dimensionsIJK.x,
         stack.dimensionsIJK.y,
@@ -240,25 +244,7 @@ export default class sceneManager {
       let meshLayer = new THREE.Mesh(stackHelper.slice.geometry, materialLayer);
       meshes[stackname] = meshLayer;
       // go the LPS space
-      //meshLayer.position.z = 160;
-      //meshLayer.updateMatrix();
       meshLayer.applyMatrix(stackHelper.stack._ijk2LPS);
-/*
-      // Correct translation
-      let translation = stackHelper._stack.worldCenter().clone();
-      translation.sub(stack.worldCenter());
-      //stack._origin.z-=160;
-      //console.log(stack._origin);
-
-            meshLayer.translateX(translation.x);
-            meshLayer.translateY(translation.y);
-            meshLayer.translateZ(translation.z);
-
-      translations[stackname] = translation;
-*/
-    console.log(stack.worldCenter());
-        console.log(stackHelper._stack.worldCenter());
-
       scene.add(meshLayer);
       // Update the whole scene BB
       updateWorldBB(stack.worldBoundingBox());

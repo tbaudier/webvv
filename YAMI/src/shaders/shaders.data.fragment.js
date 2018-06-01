@@ -67,86 +67,70 @@ void main(void) {
   }
 
   // get texture coordinates of current pixel
-  vec4 dataCoordinates = uWorldToData * ( vec4(uOffset,0) + vPos);
+  vec4 dataCoordinates = uWorldToData * ( vec4(uOffset,0) + vPos); // Better do the offset with a translation matrix...
   vec3 currentVoxel = dataCoordinates.xyz ;
   vec4 dataValue = vec4(0., 0., 0., 0.);
   vec3 gradient = vec3(0., 0., 0.);
   ${shadersInterpolation(this, 'currentVoxel', 'dataValue', 'gradient')}
 
-  // how do we deal wil more than 1 channel?
-  float intensity = dataValue.r;
-  if(uNumberOfChannels == 1){
-    float normalizedIntensity = dataValue.r;
+    if(uNumberOfChannels == 1){
+      // rescale/slope
+      float realIntensity = dataValue.r * uRescaleSlopeIntercept[0] + uRescaleSlopeIntercept[1];
 
-    // rescale/slope
-    normalizedIntensity =
-      normalizedIntensity*uRescaleSlopeIntercept[0] + uRescaleSlopeIntercept[1];
-    if ( normalizedIntensity < uLowerUpperThreshold[0] ||
-      normalizedIntensity > uLowerUpperThreshold[1]) {
-      discard;
+      // threshold
+      if (realIntensity < uLowerUpperThreshold[0] || realIntensity > uLowerUpperThreshold[1]) {
+        discard;
+      }
+
+      // normalize
+      float windowMin = uWindowCenterWidth[0] - uWindowCenterWidth[1] * 0.5;
+      float normalizedIntensity =
+        ( realIntensity - windowMin ) / uWindowCenterWidth[1];
+      dataValue.r = dataValue.g = dataValue.b = normalizedIntensity;
+      dataValue.a = 1.;
+
+      // apply LUT
+      if(uLut == 1){
+        // should opacity be grabbed there?
+        dataValue = texture2D( uTextureLUT, vec2( normalizedIntensity , 1.0) );
+      }
+
+      // apply segmentation
+      if(uLutSegmentation == 1){
+        // should opacity be grabbed there?
+        //
+        float textureWidth = 256.;
+        float textureHeight = 128.;
+        float min = 0.;
+        // start at 0!
+        int adjustedIntensity = int(floor(normalizedIntensity + 0.5));
+
+        // Get row and column in the texture
+        int colIndex = int(mod(float(adjustedIntensity), textureWidth));
+        int rowIndex = int(floor(float(adjustedIntensity)/textureWidth));
+
+        float texWidth = 1./textureWidth;
+        float texHeight = 1./textureHeight;
+
+        // Map row and column to uv
+        vec2 uv = vec2(0,0);
+        uv.x = 0.5 * texWidth + (texWidth * float(colIndex));
+        uv.y = 1. - (0.5 * texHeight + float(rowIndex) * texHeight);
+
+        dataValue = texture2D( uTextureLUTSegmentation, uv );
+      }
     }
-    float windowMin = uWindowCenterWidth[0] - uWindowCenterWidth[1] * 0.5;
-    normalizedIntensity =
-      ( normalizedIntensity - windowMin ) / uWindowCenterWidth[1];
 
-    dataValue.r = dataValue.g = dataValue.b = normalizedIntensity;
+    if(uInvert == 1){
+      dataValue = vec4(1.) - dataValue;
+      // how do we deal with that and opacity?
+      dataValue.a = 1.;
+    }
 
-    dataValue.a = step(normalizedIntensity, 0.);
+    gl_FragColor = dataValue;
   }
-
-  // Apply LUT table...
-  //
-  if(uLut == 1){
-    // should opacity be grabbed there?
-    dataValue = texture2D( uTextureLUT, vec2( dataValue.r , 1.0) );
-  }
-
-  if(uLutSegmentation == 1){
-    // should opacity be grabbed there?
-    //
-    float textureWidth = 256.;
-    float textureHeight = 128.;
-    float min = 0.;
-    // start at 0!
-    int adjustedIntensity = int(floor(intensity + 0.5));
-
-    // Get row and column in the texture
-    int colIndex = int(mod(float(adjustedIntensity), textureWidth));
-    int rowIndex = int(floor(float(adjustedIntensity)/textureWidth));
-
-    float texWidth = 1./textureWidth;
-    float texHeight = 1./textureHeight;
-
-    // Map row and column to uv
-    vec2 uv = vec2(0,0);
-    uv.x = 0.5 * texWidth + (texWidth * float(colIndex));
-    uv.y = 1. - (0.5 * texHeight + float(rowIndex) * texHeight);
-
-    dataValue = texture2D( uTextureLUTSegmentation, uv );
-    // uv.x = (0.5 + float(colIndex)) / textureWidth;
-    // uv.y = 1. - (0.5 + float(rowIndex)) / textureHeight;
-    // dataValue = texture2D( uTextureLUTSegmentation, uv );
-  }
-
-  if(uInvert == 1){
-    dataValue = vec4(1.) - dataValue;
-    // how do we deal with that and opacity?
-    dataValue.a = 1.;
-  }
-
-  gl_FragColor = dataValue;
-
-    // if on edge, draw line
-  // float xPos = gl_FragCoord.x/512.;
-  // float yPos = gl_FragCoord.y/512.;
-  // if( xPos < 0.05 || xPos > .95 || yPos < 0.05 || yPos > .95){
-  //   gl_FragColor = vec4(xPos, yPos, 0., 1.);//dataValue;
-  //   //return;
-  // }
-
-}
-   `;
-  }
+     `;
+    }
 
   compute() {
     let shaderInterpolation = '';

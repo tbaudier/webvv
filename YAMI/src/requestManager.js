@@ -85,17 +85,19 @@ function requestManager() {
       let promise = Promise.resolve();
       let subCategoryFiles = [];
 
-      for (let i = 0; i < jsonData[categoryName].length; i++) {
+      // TODO faire la 4D !!!
+      let time = 0;
+      for (let i = 0; i < jsonData[categoryName]["data"][time].length; i++) {
         promise = promise
           .then(_ => {
             // for each url, fetch the appropriate file
-            let fileURL = '/datafiles/' + jsonData.study + "/" + jsonData[categoryName][i];
+            let fileURL = '/datafiles/' + jsonData.study + "/" + jsonData[categoryName]["data"][time][i];
             return binaryHttpRequest(fileURL);
           })
           .then((response) => {
             // and add it to the array
-            let filename = jsonData[categoryName][i].split('/').pop();
-            subCategoryFiles.push(new File([response], jsonData[categoryName][i].split('/').pop()));
+            let filename = jsonData[categoryName]["data"][0][i].split('/').pop();
+            subCategoryFiles.push(new File([response], jsonData[categoryName]["data"][time][i].split('/').pop()));
           });
       }
 
@@ -133,6 +135,7 @@ function requestManager() {
       })
       .then((jsonResponse) => {
         jsonParameters = JSON.parse(jsonResponse);
+        parseInformationData(jsonParameters, files);
       })
       /*
             .then(_=>{
@@ -149,7 +152,7 @@ function requestManager() {
       // Final callback
       .then((series) => {
         console.log("Files loaded.");
-        handleSeriesFunct(seriesContainer);
+        handleSeriesFunct(seriesContainer, files["information"]);
       })
 
 
@@ -162,152 +165,166 @@ function requestManager() {
     function fetchAndLoadData(jsonParameters, files, category) {
       return new Promise((resolve, reject) => {
         Promise.resolve()
-        .then(_ => {
-          if (jsonParameters[category] !== undefined) {
-            console.log(category + " : Files request...");
-            return fetchCategoryFiles(jsonParameters, files, category);
-          }
-        })
-        .then(_ => {
-          if (jsonParameters[category] !== undefined) {
-            console.log(category + " : Files loading...");
-            return loadData(files, category);
-          }
-        })
-        .then(_ => {
-          resolve();
-        })
+          .then(_ => {
+            if (jsonParameters[category] !== undefined) {
+              console.log(category + " : Files request...");
+              return fetchCategoryFiles(jsonParameters, files, category);
+            }
+          })
+          .then(_ => {
+            if (jsonParameters[category] !== undefined) {
+              console.log(category + " : Files loading...");
+              return loadData(files, category);
+            }
+          })
+          .then(_ => {
+            resolve();
+          })
       });
-  }
-
-  // Load sequence
-  function loadSequence(index, files, category) {
-    return Promise
-      .resolve()
-      // load the file
-      .then(function() {
-        return new Promise(function(resolve, reject) {
-          const myReader = new FileReader();
-          // should handle errors too...
-          myReader.addEventListener('load', function(e) {
-            resolve(e.target.result);
-          });
-          myReader.readAsArrayBuffer(files[index]);
-        });
-      })
-      .then(function(buffer) {
-        return loader.parse({
-          url: files[index].name,
-          buffer
-        });
-      })
-      .then(function(serie) {
-        seriesContainer[category] = [];
-        seriesContainer[category].push(serie);
-      })
-      .catch(function(error) {
-        window.console.log('Oops... something went wrong while loading the sequence...');
-        window.console.log(error);
-      });
-  }
-
-  // Load group sequence
-  function loadSequenceGroup(file, category) {
-    const fetchSequencePromises = [];
-
-    for (let formatName in file) {
-      fetchSequencePromises.push(
-        new Promise((resolve, reject) => {
-          const myReader = new FileReader();
-          // should handle errors too...
-          myReader.onload = (e) => {
-            resolve(e.target.result);
-          };
-          myReader.readAsArrayBuffer(file[formatName]);
-        })
-        .then(function(buffer) {
-          return {
-            // This is a AMI format
-            url: file[formatName].name,
-            buffer
-          };
-        })
-      );
     }
 
-    return Promise.all(fetchSequencePromises)
-      .then((rawdata) => {
-        // rawdata is given in the AMI format {url, buffer}
-        return loader.parse(rawdata);
-      })
-      .then(function(serie) {
-        seriesContainer[category] = [];
-        seriesContainer[category].push(serie);
-      })
-      .catch(function(error) {
-        window.console.log('oops... something went wrong while parsing the sequence...');
-        window.console.log(error);
-      });
-  }
+    function parseInformationData(json, futureContainer) {
+      futureContainer["information"] = {};
+      futureContainer["information"]["data"] = json["information"];
+      futureContainer["information"]["data"]["study"] = json["study"];
+      if (json["image"])
+        futureContainer["information"]["image"] = {
+          "unit": json["image"]["unit"]
+        };
+      if (json["fusion"])
+        futureContainer["information"]["fusion"] = {
+          "unit": json["fusion"]["unit"]
+        };
+    }
 
-  // Load one image/sequence/header+image group
-  function loadData(files, category) {
-    return new Promise((resolve, reject) => {
-
-      const loadSequencePromiseContainer = [];
-      const data = [];
-      const dataGroup = {};
-      let separatedFormat;
-
-      // convert object into array
-      for (let i = 0; i < files[category].length; i++) {
-        let dataUrl = AMI.UtilsCore.parseUrl(files[category][i].name);
-        if (_filterByExtension('mhd', dataUrl)) {
-          dataGroup["header"] = files[category][i];
-          separatedFormat = true;
-        } else if (_filterByExtension('raw', dataUrl)) {
-          dataGroup["data"] = files[category][i];
-        } else {
-          data.push(files[category][i]);
-        }
-      }
-
-      if (separatedFormat !== undefined) {
-        if (dataGroup["header"] === undefined || dataGroup["data"] === undefined) {
-          reject("Data seems to be 'header (mhd) + data (raw)' but data can't be found !");
-        } else {
-          loadSequencePromiseContainer.push(
-            loadSequenceGroup(dataGroup, category)
-          );
-        }
-      } else {
-        // load the rest of the files
-        for (let i = 0; i < data.length; i++) {
-          loadSequencePromiseContainer.push(
-            loadSequence(i, data, category)
-          );
-        }
-      }
-
-      // run the load sequence
-      // load sequence for all files
-      Promise
-        .all(loadSequencePromiseContainer)
+    // Load sequence
+    function loadSequence(index, files, category) {
+      return Promise
+        .resolve()
+        // load the file
         .then(function() {
-          resolve(seriesContainer);
+          return new Promise(function(resolve, reject) {
+            const myReader = new FileReader();
+            // should handle errors too...
+            myReader.addEventListener('load', function(e) {
+              resolve(e.target.result);
+            });
+            myReader.readAsArrayBuffer(files[index]);
+          });
+        })
+        .then(function(buffer) {
+          return loader.parse({
+            url: files[index].name,
+            buffer
+          });
+        })
+        .then(function(serie) {
+          seriesContainer[category] = [];
+          seriesContainer[category].push(serie);
         })
         .catch(function(error) {
+          window.console.log('Oops... something went wrong while loading the sequence...');
           window.console.log(error);
-          reject('oops... something went wrong while using the sequence...');
         });
-    });
-  }
-}
+    }
 
-// Using the module.exports system, we list here functions available from outside
-return {
-  readMultipleFiles: readMultipleFiles
-}
+    // Load group sequence
+    function loadSequenceGroup(file, category) {
+      const fetchSequencePromises = [];
+
+      for (let formatName in file) {
+        fetchSequencePromises.push(
+          new Promise((resolve, reject) => {
+            const myReader = new FileReader();
+            // should handle errors too...
+            myReader.onload = (e) => {
+              resolve(e.target.result);
+            };
+            myReader.readAsArrayBuffer(file[formatName]);
+          })
+          .then(function(buffer) {
+            return {
+              // This is a AMI format
+              url: file[formatName].name,
+              buffer
+            };
+          })
+        );
+      }
+
+      return Promise.all(fetchSequencePromises)
+        .then((rawdata) => {
+          // rawdata is given in the AMI format {url, buffer}
+          return loader.parse(rawdata);
+        })
+        .then(function(serie) {
+          seriesContainer[category] = [];
+          seriesContainer[category].push(serie);
+        })
+        .catch(function(error) {
+          window.console.log('oops... something went wrong while parsing the sequence...');
+          window.console.log(error);
+        });
+    }
+
+    // Load one image/sequence/header+image group
+    function loadData(files, category) {
+      return new Promise((resolve, reject) => {
+
+        const loadSequencePromiseContainer = [];
+        const data = [];
+        const dataGroup = {};
+        let separatedFormat;
+
+        // convert object into array
+        for (let i = 0; i < files[category].length; i++) {
+          let dataUrl = AMI.UtilsCore.parseUrl(files[category][i].name);
+          if (_filterByExtension('mhd', dataUrl)) {
+            dataGroup["header"] = files[category][i];
+            separatedFormat = true;
+          } else if (_filterByExtension('raw', dataUrl)) {
+            dataGroup["data"] = files[category][i];
+          } else {
+            data.push(files[category][i]);
+          }
+        }
+
+        if (separatedFormat !== undefined) {
+          if (dataGroup["header"] === undefined || dataGroup["data"] === undefined) {
+            reject("Data seems to be 'header (mhd) + data (raw)' but data can't be found !");
+          } else {
+            loadSequencePromiseContainer.push(
+              loadSequenceGroup(dataGroup, category)
+            );
+          }
+        } else {
+          // load the rest of the files
+          for (let i = 0; i < data.length; i++) {
+            loadSequencePromiseContainer.push(
+              loadSequence(i, data, category)
+            );
+          }
+        }
+
+        // run the load sequence
+        // load sequence for all files
+        Promise
+          .all(loadSequencePromiseContainer)
+          .then(function() {
+            resolve(seriesContainer);
+          })
+          .catch(function(error) {
+            window.console.log(error);
+            reject('oops... something went wrong while using the sequence...');
+          });
+      });
+    }
+  }
+
+  // Using the module.exports system, we list here functions available from outside
+  return {
+    readMultipleFiles: readMultipleFiles
+  }
 }
 
 module.exports = requestManager();
