@@ -1,8 +1,8 @@
-const FusionShaderFrag = require('./shaders/shaders.layer.fragment');
-const FusionShaderUni = require('./shaders/shaders.layer.uniform');
-const DataShaderFrag = require('./shaders/shaders.data.fragment');
-const DataShaderUni = require('./shaders/shaders.data.uniform');
-const LutHelper = require('./customLutHelper');
+import FusionShaderFrag from './shaders/shaders.layer.fragment';
+import FusionShaderUni from './shaders/shaders.layer.uniform';
+import DataShaderFrag from './shaders/shaders.data.fragment';
+import DataShaderUni from './shaders/shaders.data.uniform';
+import LutHelper from './customLutHelper';
 // Viewer config file
 const config = require('./viewer.config');
 
@@ -128,14 +128,14 @@ export default class sceneManager {
       // The 3D scene
       scenes["background"] = new THREE.Scene();
       // The LUT
-      luts["background"] = new LutHelper.default('my-lut-canvases', 'default', 'linear', [
+      luts["background"] = new LutHelper('my-lut-canvases', 'default', 'linear', [
         [0, 0, 0, 0],
         [0, 1, 1, 1]
       ], [
         [0, 1],
         [1, 1]
       ]);
-      luts["background"].luts = LutHelper.default.presetLuts();
+      luts["background"].luts = LutHelper.presetLuts();
       luts["background"].lut = "default";
       // Render to a (buffer) texture !
       textureTargets["background"] = new THREE.WebGLRenderTarget(canvas.clientWidth, canvas.clientHeight, {
@@ -157,14 +157,14 @@ export default class sceneManager {
       let scene = new THREE.Scene();
       scenes[stackname] = scene;
 
-      let lut = new LutHelper.default('my-lut-canvases', 'default', 'linear', [
+      let lut = new LutHelper('my-lut-canvases', 'default', 'linear', [
         [0, 0, 0, 0],
         [1, 1, 1, 1]
       ], [
         [0, 0],
         [1, 1]
       ]);
-      lut.luts = LutHelper.default.presetLuts();
+      lut.luts = LutHelper.presetLuts();
       luts[stackname] = lut;
       lut.lut = "blue";
 
@@ -201,7 +201,7 @@ export default class sceneManager {
       let translation = stackHelper._stack.worldCenter().clone();
       translation.sub(stack.worldCenter());
       // create material && mesh then add it to sceneLayers[i]
-      let uniformsLayer = DataShaderUni.default.uniforms();
+      let uniformsLayer = DataShaderUni.uniforms();
       uniformsLayer.uTextureSize.value = stack.textureSize;
       uniformsLayer.uOffset.value = [-translation.x,-translation.y,-translation.z];
       uniformsLayer.uTextureContainer.value = texture;
@@ -228,7 +228,7 @@ export default class sceneManager {
       _this.uniforms[stackname] = uniformsLayer;
 
       // generate shaders on-demand!
-      let fs = new DataShaderFrag.default(uniformsLayer);
+      let fs = new DataShaderFrag(uniformsLayer);
       let vs = new AMI.DataVertexShader();
       let materialLayer = new THREE.ShaderMaterial({
         side: THREE.DoubleSide,
@@ -269,10 +269,10 @@ export default class sceneManager {
     function setMixLayer() {
       sceneMix = new THREE.Scene();
 
-      _this.uniformsMix = FusionShaderUni.default.uniforms();
+      _this.uniformsMix = FusionShaderUni.uniforms();
       updateMixUniforms();
       // generate shaders on-demand!
-      let fls = new FusionShaderFrag.default(_this.uniformsMix);
+      let fls = new FusionShaderFrag(_this.uniformsMix);
       let vls = new AMI.LayerVertexShader();
       let mat = new THREE.ShaderMaterial({
         side: THREE.DoubleSide,

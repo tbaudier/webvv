@@ -9,9 +9,9 @@ const animationManager = require('./animator');
 // GUI managment
 const guiManager = require('./guiManager');
 // Controls
-const CustomControls = require('./customControls');
+import CustomControls from './customControls';
 // Scene Managment
-const SceneManager = require('./sceneManager');
+import SceneManager from './sceneManager';
 
 // standard global variables
 let renderer; // @type {THREE.WebGLRenderer}
@@ -46,7 +46,7 @@ function init() {
   stats = new Stats();
   canvas.parentNode.insertBefore(stats.domElement, canvas);
   // empty scene
-  sceneManager = new SceneManager.default(canvas);
+  sceneManager = new SceneManager(canvas);
   // camera
   camera = new AMI.OrthographicCamera(
     canvas.clientWidth / -2, canvas.clientWidth / 2,
@@ -96,7 +96,7 @@ window.onload = function() {
     // and add the stacks we have loaded to the 3D scene
     sceneManager.addLayerStack(stack1, "fusion");
     // setup controls and shortcuts
-    controls = new CustomControls.default(camera, stackHelper, canvas, changePtr);
+    controls = new CustomControls(camera, stackHelper, canvas, changePtr);
     camera.controls = controls;
     // setup camera
     let worldbb = sceneManager.worldBB;
