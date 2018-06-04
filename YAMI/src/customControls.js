@@ -131,6 +131,15 @@ export default class customControls extends THREE.EventDispatcher {
       changePtr.hasChanged = true;
     }
 
+    this.changeWindow = function(deltaWidth, deltaCenter, factor) {
+      _this.stack.slice.windowWidth += deltaWidth*factor;
+      _this.stack.slice.windowWidth = Math.min(Math.max(_this.stack.slice.windowWidth, 1), _this.stack._stack.minMax[1] - _this.stack._stack.minMax[0]);
+
+      _this.stack.slice.windowCenter += deltaCenter*factor;
+      _this.stack.slice.windowCenter = Math.min(Math.max(_this.stack.slice.windowCenter, _this.stack._stack.minMax[0]),  _this.stack._stack.minMax[1]);
+      changePtr.hasChanged = true;
+    }
+
     this.prob = function(mousePosition) {
       //TODO
     }
@@ -144,11 +153,11 @@ export default class customControls extends THREE.EventDispatcher {
     }
 
     function sliceByDrag(pOld, pNew) {
-      _this.scrollStack(-pOld.x + pOld.y > -pNew.x + pNew.y);
+      _this.scrollStack(pOld.y - pOld.x > pNew.y - pNew.x);
     }
 
     function windowByDrag(pOld, pNew) {
-      // TODO
+      _this.changeWindow(pNew.x - pOld.x, pNew.y - pOld.y, 10);
     }
 
     function keypressed(event) {
