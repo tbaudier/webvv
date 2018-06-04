@@ -1,7 +1,10 @@
 function f() {
 
-  function buildGUI(stackHelper, camera, changes) {
-    let stack = stackHelper._stack;
+  function buildGUI(scene, camera, changes) {
+    let sceneManager = scene;
+    let stackHelper = scene.stackHelper;
+    let stack = scene.stackHelper._stack;
+    let fusionUni = scene.uniforms.fusion;
 
     let changePrt = changes;
 
@@ -21,7 +24,7 @@ function f() {
     let customContainer = document.getElementById('my-gui-container');
     customContainer.appendChild(gui.domElement);
 
-    let stackFolder = gui.addFolder('Stack');
+    let stackFolder = gui.addFolder('Main image');
     stackFolder.add(
         stackHelper.slice, 'windowWidth', 1, stack.minMax[1] - stack.minMax[0])
       .step(1).listen().onChange(_ => {
@@ -58,29 +61,48 @@ function f() {
     });
     stackFolder.open();
 
+    // Fusion
+    if (fusionUni) {
+      let fusionFolder = gui.addFolder('Fusion');
+      let lutUpdateFusion = fusionFolder.add(
+        sceneManager.luts.fusion, 'lut', sceneManager.luts.fusion.lutsAvailable());
+      lutUpdateFusion.onChange(function(value) {
+        fusionUni.uTextureLUT.value = sceneManager.luts.fusion.texture;
+        changes.hasChanged = true;
+      });
+      let thresholdFusion = fusionFolder.add(sceneManager.uniformsMix.uThreshold, 'value', 0, 1).name("Threshold");
+      thresholdFusion.onChange(function(value) {
+        changes.hasChanged = true;
+      });
+      let opacityMinFusion = fusionFolder.add(sceneManager.uniformsMix.uOpacityMin, 'value', 0, 1).name("Opacity min");
+      opacityMinFusion.onChange(function(value) {
+        changes.hasChanged = true;
+      });
+      let opacityMaxFusion = fusionFolder.add(sceneManager.uniformsMix.uOpacityMax, 'value', 0, 1).name("Opacity max");
+      opacityMaxFusion.onChange(function(value) {
+        changes.hasChanged = true;
+      });
+      fusionFolder.open();
+
+    }
     // camera
     let cameraFolder = gui.addFolder('Camera');
     let invertRows = cameraFolder.add(camUtils, 'invertRows');
     invertRows.onChange(function() {
       camera.invertRows();
       updateLabels(camera.directionsLabel, stack.modality);
+      changes.hasChanged = true;
     });
 
     let invertColumns = cameraFolder.add(camUtils, 'invertColumns');
     invertColumns.onChange(function() {
       camera.invertColumns();
       updateLabels(camera.directionsLabel, stack.modality);
+      changes.hasChanged = true;
     });
 
     let angle = cameraFolder.add(camera, 'angle', 0, 360).step(1).listen();
     angle.onChange(function() {
-      updateLabels(camera.directionsLabel, stack.modality);
-      changes.hasChanged = true;
-    });
-
-    let rotate = cameraFolder.add(camUtils, 'rotate');
-    rotate.onChange(function() {
-      camera.rotate();
       updateLabels(camera.directionsLabel, stack.modality);
       changes.hasChanged = true;
     });

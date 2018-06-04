@@ -9,8 +9,6 @@ const config = require('./viewer.config');
 export default class sceneManager {
   constructor(canvasElement) {
     let worldBB = [0, 0, 0, 0, 0, 0]; // xmin, xmax, ymin, ymax, zmin, zmax
-    this.worldBB = worldBB;
-    this.uniforms = {};
 
     let _this = this;
 
@@ -51,7 +49,12 @@ export default class sceneManager {
       struct: [],
     }
 
-    let stackHelper;
+    this.worldBB = worldBB;
+    this.uniforms = {};
+    this.stackHelper;
+    this.luts = luts;
+    this.uniformsMix;
+
 
     // mixing : sceneBG+sceneLayers[0] then scenesMix[i]+sceneLayers[i+1]
     // final mix is last element of scenesMix
@@ -102,7 +105,7 @@ export default class sceneManager {
      */
     this.setMainStackHelper = function(stackHelperI) {
       // keep the main stack in memory
-      stackHelper = stackHelperI;
+      _this.stackHelper = stackHelperI;
 
       // some settings on this stack
       stackHelperI.slice.intensityAuto = config.autoIntensity;
@@ -201,7 +204,7 @@ export default class sceneManager {
         texture.push(tex);
       }
 
-      let translation = stackHelper._stack.worldCenter().clone();
+      let translation = _this.stackHelper._stack.worldCenter().clone();
       translation.sub(stack.worldCenter());
       // create material && mesh then add it to sceneLayers[i]
       let uniformsLayer = DataShaderUni.uniforms();
@@ -241,10 +244,10 @@ export default class sceneManager {
         fragmentShader: fs.compute(),
       });
 
-      let meshLayer = new THREE.Mesh(stackHelper.slice.geometry, materialLayer);
+      let meshLayer = new THREE.Mesh(_this.stackHelper.slice.geometry, materialLayer);
       meshes[stackname] = meshLayer;
       // go the LPS space
-      meshLayer.applyMatrix(stackHelper.stack._ijk2LPS);
+      meshLayer.applyMatrix(_this.stackHelper.stack._ijk2LPS);
       scene.add(meshLayer);
       // Update the whole scene BB
       updateWorldBB(stack.worldBoundingBox());
@@ -268,10 +271,10 @@ export default class sceneManager {
         transparent: true,
       });
       materialMix = mat;
-      let mesh = new THREE.Mesh(stackHelper.slice.geometry, mat);
+      let mesh = new THREE.Mesh(_this.stackHelper.slice.geometry, mat);
       mesheMix = mesh;
       // go the LPS space
-      mesh.applyMatrix(stackHelper.stack._ijk2LPS);
+      mesh.applyMatrix(_this.stackHelper.stack._ijk2LPS);
       sceneMix.add(mesh);
       update();
     }
@@ -313,19 +316,19 @@ export default class sceneManager {
         // fusion
         if (textureTargets["fusion"] !== null) {
           meshes["fusion"].geometry.dispose();
-          meshes["fusion"].geometry = stackHelper.slice.geometry; //.clone().translate(0, 0, 130);
+          meshes["fusion"].geometry = _this.stackHelper.slice.geometry; //.clone().translate(0, 0, 130);
           meshes["fusion"].geometry.verticesNeedUpdate = true;
         }
         // overlay
         if (textureTargets["overlay"] !== null) {
           meshes["overlay"].geometry.dispose();
-          meshes["overlay"].geometry = stackHelper.slice.geometry;
+          meshes["overlay"].geometry = _this.stackHelper.slice.geometry;
           meshes["overlay"].geometry.verticesNeedUpdate = true;
         }
         // RT structs
         for (let mesh of meshes["struct"]) {
           mesh.geometry.dispose();
-          mesh.geometry = stackHelper.slice.geometry;
+          mesh.geometry = _this.stackHelper.slice.geometry;
           mesh.geometry.verticesNeedUpdate = true;
         }
       }
@@ -339,9 +342,9 @@ export default class sceneManager {
 
         // add mesh in this scene with right shaders...
         mesheMix =
-          new THREE.Mesh(stackHelper.slice.geometry, materialMix);
+          new THREE.Mesh(_this.stackHelper.slice.geometry, materialMix);
         // go the LPS space
-        mesheMix.applyMatrix(stackHelper.stack._ijk2LPS);
+        mesheMix.applyMatrix(_this.stackHelper.stack._ijk2LPS);
 
         sceneMix.add(mesheMix);
       }

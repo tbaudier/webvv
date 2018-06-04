@@ -42,8 +42,8 @@ function init() {
   // add this renderer to the canvas
   canvas.appendChild(renderer.domElement);
   // stats, fps, ...
-  //stats = new Stats();
-  //canvas.parentNode.insertBefore(stats.domElement, canvas);
+  stats = new Stats();
+  canvas.parentNode.insertBefore(stats.domElement, canvas);
   // empty scene
   sceneManager = new SceneManager(canvas);
   // camera
@@ -87,10 +87,8 @@ window.onload = function() {
     // prepare for slice visualization
     // first stack of first series
     let stack = seriesContainer["image"][0].mergeSeries(seriesContainer["image"])[0].stack[0];
-    let stack1 = seriesContainer["fusion"][0].mergeSeries(seriesContainer["fusion"])[0].stack[0];
     // we add the "unit" attribute to the stacks
     stack.unit = information["image"].unit;
-    stack1.unit = information["fusion"].unit;
     // we create the main stackHelper (easy manipulation of stacks)
     stackHelper = new AMI.StackHelper(stack);
     stackHelper.bbox.visible = false;
@@ -99,7 +97,12 @@ window.onload = function() {
     // and add the stacks we have loaded to the 3D scene
     sceneManager.setMainStackHelper(stackHelper);
     // and add the stacks we have loaded to the 3D scene
-    sceneManager.addLayerStack(stack1, "fusion");
+    if (seriesContainer["fusion"]) {
+      let stack1 = seriesContainer["fusion"][0].mergeSeries(seriesContainer["fusion"])[0].stack[0];
+      stack1.unit = information["fusion"].unit;
+      sceneManager.addLayerStack(stack1, "fusion");
+    }
+
     // setup controls and shortcuts
     controls = new CustomControls(camera, stackHelper, canvas, changePtr);
     camera.controls = controls;
@@ -127,7 +130,7 @@ window.onload = function() {
     camera.fitBox(2); // here 2 means 'best of width & height' (0 'width', 1 'height')
 
     guiManager.updateLabels(camera.directionsLabel, stack.modality);
-    guiManager.buildGUI(stackHelper, camera, changePtr);
+    guiManager.buildGUI(sceneManager, camera, changePtr);
 
     //Set the "Resize" listener
     window.addEventListener('resize', onWindowResize, false);
@@ -141,7 +144,7 @@ window.onload = function() {
           sceneManager.render(renderer, camera);
           changePtr.hasChanged = false;
         }
-        //stats.update();
+        stats.update();
       });
   }
   /**

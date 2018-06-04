@@ -256,7 +256,11 @@ export default class customControls extends THREE.EventDispatcher {
     function mouseup(event) {
       switch (_this._state) {
         case STATE.PANNING:
-          _this._state = STATE.PAN;
+          if (event.which == 2) {
+            _this._state = STATE.NONE;
+          } else {
+            _this._state = STATE.PAN;
+          }
           break;
         case STATE.ZOOMING:
           _this._state = STATE.ZOOM;
@@ -268,7 +272,11 @@ export default class customControls extends THREE.EventDispatcher {
           _this._state = STATE.SETPROB;
           break;
         case STATE.WINDOWING:
-          _this._state = STATE.WINDOW;
+          if (event.which == 3) {
+            _this._state = STATE.NONE;
+          } else {
+            _this._state = STATE.WINDOW;
+          }
           break;
         default:
           _this._state = STATE.NONE;

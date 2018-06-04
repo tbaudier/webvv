@@ -9,6 +9,9 @@ body, html {
 button:disabled{
   background-color: #00fa9a;
 }
+button::first-letter{
+  text-decoration: underline;
+}
 
 .disabled{
   color : grey;
