@@ -14,8 +14,15 @@ export default class customControls extends THREE.EventDispatcher {
     let STATE = {
       NONE: 0,
       SETPROB: 1,
-      PAN: 2,
-      WINDOW: 3
+      SETTINGPROB: 2,
+      PAN: 3,
+      PANNING: 4,
+      WINDOW: 5,
+      WINDOWING: 6,
+      ZOOM: 7,
+      ZOOMING: 8,
+      SLICE: 9,
+      SLICING: 10,
     };
     let pressedKeys = new Map();
 
@@ -93,14 +100,19 @@ export default class customControls extends THREE.EventDispatcher {
     }
 
 
-    this.zoom = function(directionIn) {
+    this.zoom = function(directionIn, mouseFactor) {
       if (this.noZoom)
         return;
 
-      let factor = (directionIn) ? 1 / config.zoomSpeed : config.zoomSpeed;
+      let speed = config.zoomSpeed;
+      if (mouseFactor !== undefined)
+        speed = mouseFactor + 1;
+
+      let factor = (directionIn) ? 1 / speed : speed;
 
       if (Math.abs(factor - 1.0) > EPS && factor > 0.0) {
         this.camera.zoom /= factor;
+        _this._changed = true;
         changePtr.hasChanged = true;
       }
     }
@@ -118,18 +130,26 @@ export default class customControls extends THREE.EventDispatcher {
       }
       changePtr.hasChanged = true;
     }
-    /*
-        this.handleEvent = function(event) {
-          if (typeof this[event.type] == 'function') {
-            this[event.type](event);
-          }
-        };*/
 
-    // hook up callbacks
+    this.prob = function(mousePosition) {
+      //TODO
+    }
 
     ///////////
     // Event handlers
     ///////////
+
+    function zoomByDrag(pOld, pNew) {
+      _this.zoom(pOld.y > pNew.y, 0.01 * Math.abs(pOld.y - pNew.y));
+    }
+
+    function sliceByDrag(pOld, pNew) {
+      _this.scrollStack(-pOld.x + pOld.y > -pNew.x + pNew.y);
+    }
+
+    function windowByDrag(pOld, pNew) {
+      // TODO
+    }
 
     function keypressed(event) {
       switch (event.key) {
@@ -157,6 +177,21 @@ export default class customControls extends THREE.EventDispatcher {
         case 'Escape':
           _this._state = STATE.NONE;
           break;
+        case config.stateZoom:
+          _this._state = STATE.ZOOM;
+          break;
+        case config.stateMove:
+          _this._state = STATE.PAN;
+          break;
+        case config.stateSlice:
+          _this._state = STATE.SLICE;
+          break;
+        case config.stateWindow:
+          _this._state = STATE.WINDOW;
+          break;
+        case config.stateProb:
+          _this._state = STATE.SETPROB;
+          break;
 
         case config.stackUp:
           _this.scrollStack(true);
@@ -166,11 +201,13 @@ export default class customControls extends THREE.EventDispatcher {
           _this.scrollStack(false);
           break;
       }
+      updateDOM();
     }
 
     function keyup(event) {
       //remove this key from the list of pressed keys
       pressedKeys.set(event.keyCode, false);
+      updateDOM();
     }
 
     function isDown(keyCode) {
@@ -180,45 +217,86 @@ export default class customControls extends THREE.EventDispatcher {
     function mousedown(event) {
       switch (event.which) { // which button of the mouse is pressed
 
-        case config.mouseClickProbe:
-          _this._state = STATE.SETPROB;
+        case 1:
+          switch (_this._state) {
+            case STATE.PAN:
+              _this._state = STATE.PANNING;
+              break;
+            case STATE.ZOOM:
+              _this._state = STATE.ZOOMING;
+              break;
+            case STATE.SLICE:
+              _this._state = STATE.SLICING;
+              break;
+            case STATE.SETPROB:
+              _this._state = STATE.SETTINGPROB;
+              break;
+            case STATE.WINDOW:
+              _this._state = STATE.WINDOWING;
+              break;
+          }
           break;
 
-        case config.mouseClickPan:
-          _this._state = STATE.PAN;
+        case 2:
+          _this._state = STATE.PANNING;
           event.preventDefault();
           break;
 
-        case config.mouseClickWindow:
-          _this._state = STATE.WINDOW;
+        case 3:
+          _this._state = STATE.WINDOWING;
           break;
       }
       oldMousePosition.x = event.clientX;
       oldMousePosition.y = event.clientY;
 
       document.addEventListener('mousemove', mousemove, false);
+      updateDOM();
     }
 
     function mouseup(event) {
-      _this._state = STATE.NONE;
+      switch (_this._state) {
+        case STATE.PANNING:
+          _this._state = STATE.PAN;
+          break;
+        case STATE.ZOOMING:
+          _this._state = STATE.ZOOM;
+          break;
+        case STATE.SLICING:
+          _this._state = STATE.SLICE;
+          break;
+        case STATE.SETTINGPROB:
+          _this._state = STATE.SETPROB;
+          break;
+        case STATE.WINDOWING:
+          _this._state = STATE.WINDOW;
+          break;
+        default:
+          _this._state = STATE.NONE;
+      }
       document.removeEventListener('mousemove', mousemove, false);
+      updateDOM();
     }
 
     function mousemove(event) {
       newMousePosition.x = event.clientX;
       newMousePosition.y = event.clientY;
       switch (_this._state) {
-        case STATE.PAN:
+        case STATE.PANNING:
           _this.pan(oldMousePosition, newMousePosition);
           break;
-        case STATE.SETPROB:
-          //TODO
+        case STATE.ZOOMING:
+          zoomByDrag(oldMousePosition, newMousePosition);
           break;
-        case STATE.WINDOW:
-          // TODO
+        case STATE.SLICING:
+          sliceByDrag(oldMousePosition, newMousePosition);
+          break;
+        case STATE.SETTINGPROB:
+          _this.prob(newMousePosition);
+          break;
+        case STATE.WINDOWING:
+          windowByDrag(oldMousePosition, newMousePosition);
           break;
       }
-
       oldMousePosition = newMousePosition;
       newMousePosition = new THREE.Vector2();
     }
@@ -238,21 +316,90 @@ export default class customControls extends THREE.EventDispatcher {
         event.preventDefault();
     }
 
+    function updateDOM() {
+      document.getElementById('button-control-pan').removeAttribute("disabled");
+      document.getElementById('button-control-zoom').removeAttribute("disabled");
+      document.getElementById('button-control-slice').removeAttribute("disabled");
+      document.getElementById('button-control-window').removeAttribute("disabled");
+      document.getElementById('button-control-prob').removeAttribute("disabled");
+
+      document.getElementById('label-control-pan').classList.add("disabled");
+      document.getElementById('label-control-zoom').classList.add("disabled");
+      document.getElementById('label-control-slice').classList.add("disabled");
+      document.getElementById('label-control-window').classList.add("disabled");
+      document.getElementById('label-control-prob').classList.add("disabled");
+      switch (_this._state) {
+        case STATE.PAN:
+        case STATE.PANNING:
+          document.getElementById('button-control-pan').setAttribute("disabled", "true");
+          document.getElementById('label-control-pan').classList.remove("disabled");
+          break;
+        case STATE.SETPROB:
+        case STATE.SETTINGPROB:
+          document.getElementById('button-control-prob').setAttribute("disabled", "true");
+          document.getElementById('label-control-prob').classList.remove("disabled");
+          break;
+        case STATE.WINDOW:
+        case STATE.WINDOWING:
+          document.getElementById('button-control-window').setAttribute("disabled", "true");
+          document.getElementById('label-control-window').classList.remove("disabled");
+          break;
+        case STATE.ZOOM:
+        case STATE.ZOOMING:
+          document.getElementById('button-control-zoom').setAttribute("disabled", "true");
+          document.getElementById('label-control-zoom').classList.remove("disabled");
+          break;
+        case STATE.SLICE:
+        case STATE.SLICING:
+          document.getElementById('button-control-slice').setAttribute("disabled", "true");
+          document.getElementById('label-control-slice').classList.remove("disabled");
+          break;
+      }
+    }
+
+    function setState(evt) {
+      switch (evt.srcElement.id) {
+        case 'button-control-pan':
+          _this._state = STATE.PAN;
+          break;
+        case 'button-control-zoom':
+          _this._state = STATE.ZOOM;
+          break;
+        case 'button-control-slice':
+          _this._state = STATE.SLICE;
+          break;
+        case 'button-control-window':
+          _this._state = STATE.WINDOW;
+          break;
+        case 'button-control-prob':
+          _this._state = STATE.SETPROB;
+          break;
+      }
+      updateDOM();
+      evt.preventDefault();
+    }
+
     function addEvents() {
-      document.addEventListener('mousedown', mousedown, false);
+      domElement.addEventListener('mousedown', mousedown, false);
       document.addEventListener('mouseup', mouseup, false);
       document.addEventListener('wheel', mousewheel, false);
-      document.addEventListener('contextmenu', contextMenu, false); // Right click
+      domElement.addEventListener('contextmenu', contextMenu, false); // Right click
       document.addEventListener('keypress', keypressed, false); // Keys
       document.addEventListener('keyup', keyup, false); // Keys
       document.addEventListener('keydown', keydown, false); // Keys
+
+      document.getElementById('button-control-pan').addEventListener('click', setState);
+      document.getElementById('button-control-zoom').addEventListener('click', setState);
+      document.getElementById('button-control-slice').addEventListener('click', setState);
+      document.getElementById('button-control-window').addEventListener('click', setState);
+      document.getElementById('button-control-prob').addEventListener('click', setState);
     }
 
     function clearEvents() {
-      document.removeEventListener('mousedown', mousedown, false);
+      domElement.removeEventListener('mousedown', mousedown, false);
       document.removeEventListener('mouseup', mouseup, false);
       document.removeEventListener('wheel', mousewheel, false);
-      document.removeEventListener('contextmenu', contextMenu, false); // Right click
+      domElement.removeEventListener('contextmenu', contextMenu, false); // Right click
       document.removeEventListener('keypress', keypressed, false); // Keys
       document.removeEventListener('keyup', keyup, false); // Keys
       document.removeEventListener('keydown', keydown, false); // Keys

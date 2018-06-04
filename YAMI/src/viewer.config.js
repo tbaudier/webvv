@@ -27,6 +27,13 @@ module.exports = {
   // Shortcuts KeyCodes
   // (holding input must be saved as KeyCode)
 
+  // set state
+  stateMove: 'm',
+  stateZoom: 'z',
+  stateWindow: 'w',
+  stateProb: 'p',
+  stateSlice: 's',
+
   zoomIn: '+',
   zoomIn2: 'i',
   zoomOut: '-',
@@ -35,10 +42,6 @@ module.exports = {
 
   stackUp: 'ArrowUp',
   stackDown: 'ArrowDown',
-
-  mouseClickProbe: 1, //left click
-  mouseClickPan: 2, //middle click
-  mouseClickWindow: 3, // rightClick
 
   resetCamera: 'r',
 }

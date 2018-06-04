@@ -6,6 +6,14 @@ body, html {
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
 }
 
+button:disabled{
+  background-color: #00fa9a;
+}
+
+.disabled{
+  color : grey;
+}
+
 .float-right{
   float : right;
 }
@@ -43,7 +51,7 @@ body, html {
   font-weight: bold;
 }
 
-.data-content {
+.data-content, .small {
   font-size : 0.8em;
 }
 
