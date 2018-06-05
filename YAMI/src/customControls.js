@@ -5,7 +5,7 @@ const config = require('./viewer.config');
 //const Map = require("collections/map");
 
 export default class customControls extends THREE.EventDispatcher {
-  constructor(camera, stack, domElement, chgPtr) {
+  constructor(camera, stack, cross, domElement, chgPtr) {
     super();
     let _this = this;
 
@@ -14,7 +14,6 @@ export default class customControls extends THREE.EventDispatcher {
     let STATE = {
       NONE: 0,
       SETPROB: 1,
-      SETTINGPROB: 2,
       PAN: 3,
       PANNING: 4,
       WINDOW: 5,
@@ -42,6 +41,7 @@ export default class customControls extends THREE.EventDispatcher {
     // Public attributes
     this.camera = camera;
     this.stack = stack;
+    this.cross = cross;
     this.domElement = (domElement !== undefined) ? domElement : document;
     this.target = new THREE.Vector3();
 
@@ -132,16 +132,23 @@ export default class customControls extends THREE.EventDispatcher {
     }
 
     this.changeWindow = function(deltaWidth, deltaCenter, factor) {
-      _this.stack.slice.windowWidth += deltaWidth*factor;
+      // Window width on X
+      _this.stack.slice.windowWidth += deltaWidth * factor;
       _this.stack.slice.windowWidth = Math.min(Math.max(_this.stack.slice.windowWidth, 1), _this.stack._stack.minMax[1] - _this.stack._stack.minMax[0]);
+      // Window center on -Y
+      _this.stack.slice.windowCenter -= deltaCenter * factor;
+      _this.stack.slice.windowCenter = Math.min(Math.max(_this.stack.slice.windowCenter, _this.stack._stack.minMax[0]), _this.stack._stack.minMax[1]);
 
-      _this.stack.slice.windowCenter += deltaCenter*factor;
-      _this.stack.slice.windowCenter = Math.min(Math.max(_this.stack.slice.windowCenter, _this.stack._stack.minMax[0]),  _this.stack._stack.minMax[1]);
       changePtr.hasChanged = true;
     }
 
-    this.prob = function(mousePosition) {
-      //TODO
+    this.prob = function(event) {
+      let rect = domElement.getBoundingClientRect();
+      let x = event.clientX - rect.left;
+      let y = event.clientY - rect.top;
+      cross.horizontal.style.top = y+"px";
+      cross.vertical.style.left = x+"px";
+      //TODO read the value
     }
 
     ///////////
@@ -237,12 +244,11 @@ export default class customControls extends THREE.EventDispatcher {
             case STATE.SLICE:
               _this._state = STATE.SLICING;
               break;
-            case STATE.SETPROB:
-              _this._state = STATE.SETTINGPROB;
-              break;
             case STATE.WINDOW:
               _this._state = STATE.WINDOWING;
               break;
+            default:
+              _this.prob(event);
           }
           break;
 
@@ -277,9 +283,6 @@ export default class customControls extends THREE.EventDispatcher {
         case STATE.SLICING:
           _this._state = STATE.SLICE;
           break;
-        case STATE.SETTINGPROB:
-          _this._state = STATE.SETPROB;
-          break;
         case STATE.WINDOWING:
           if (event.which == 3) {
             _this._state = STATE.NONE;
@@ -307,12 +310,11 @@ export default class customControls extends THREE.EventDispatcher {
         case STATE.SLICING:
           sliceByDrag(oldMousePosition, newMousePosition);
           break;
-        case STATE.SETTINGPROB:
-          _this.prob(newMousePosition);
-          break;
         case STATE.WINDOWING:
           windowByDrag(oldMousePosition, newMousePosition);
           break;
+        default:
+          _this.prob(event);
       }
       oldMousePosition = newMousePosition;
       newMousePosition = new THREE.Vector2();
@@ -351,11 +353,6 @@ export default class customControls extends THREE.EventDispatcher {
           document.getElementById('button-control-pan').setAttribute("disabled", "true");
           document.getElementById('label-control-pan').classList.remove("disabled");
           break;
-        case STATE.SETPROB:
-        case STATE.SETTINGPROB:
-          document.getElementById('button-control-prob').setAttribute("disabled", "true");
-          document.getElementById('label-control-prob').classList.remove("disabled");
-          break;
         case STATE.WINDOW:
         case STATE.WINDOWING:
           document.getElementById('button-control-window').setAttribute("disabled", "true");
@@ -370,6 +367,11 @@ export default class customControls extends THREE.EventDispatcher {
         case STATE.SLICING:
           document.getElementById('button-control-slice').setAttribute("disabled", "true");
           document.getElementById('label-control-slice').classList.remove("disabled");
+          break;
+        case STATE.SETPROB:
+        default :
+          document.getElementById('button-control-prob').setAttribute("disabled", "true");
+          document.getElementById('label-control-prob').classList.remove("disabled");
           break;
       }
     }

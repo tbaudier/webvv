@@ -29,6 +29,11 @@ let camera; // @type {THREE.OrthographicCamera}
 let controls; // @type {AMI.TrackballOrthoControl}e;
 let camera2;
 
+let cross = {
+  vertical: null,
+  horizontal: null
+};
+
 function init() {
   // canvas and THREE.js renderer
   canvas = document.getElementById('r3d');
@@ -102,9 +107,11 @@ window.onload = function() {
       stack1.unit = information["fusion"].unit;
       sceneManager.addLayerStack(stack1, "fusion");
     }
+    
+    createCross();
 
     // setup controls and shortcuts
-    controls = new CustomControls(camera, stackHelper, canvas, changePtr);
+    controls = new CustomControls(camera, stackHelper, cross, canvas, changePtr);
     camera.controls = controls;
     // setup camera
     let worldbb = sceneManager.worldBB;
@@ -173,6 +180,27 @@ window.onload = function() {
         document.getElementById("general-info-panel").appendChild(div);
       }
     }
+  }
+
+  function createCross() {
+    cross.horizontal = document.createElement('div');
+    cross.horizontal.style.borderTop = '1px solid';
+    cross.horizontal.style.borderColor = config.crossColor;
+    cross.horizontal.style.position = 'absolute';
+    cross.horizontal.style.top = '50%';
+    cross.horizontal.style.width = '100%';
+    cross.horizontal.style.height = '0px';
+
+    cross.vertical = document.createElement('div');
+    cross.vertical.style.borderLeft = '1px solid';
+    cross.vertical.style.borderColor = config.crossColor;
+    cross.vertical.style.position = 'absolute';
+    cross.vertical.style.left = '50%';
+    cross.vertical.style.width = '0px';
+    cross.vertical.style.height = '100%';
+
+    canvas.appendChild(cross.horizontal);
+    canvas.appendChild(cross.vertical);
   }
 
 };

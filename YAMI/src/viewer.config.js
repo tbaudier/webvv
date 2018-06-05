@@ -15,6 +15,8 @@ module.exports = {
   bgColor: 0x00FF00,
   bgAlpha: 0,
 
+  // Color of the cross (prob) (in string hexa as '#RRGGBBAA') (with alpha or not)
+  crossColor : '#00FF0044',
 
   // User controls
 
