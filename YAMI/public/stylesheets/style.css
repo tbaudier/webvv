@@ -83,6 +83,7 @@ button::first-letter{
   align-items: center;
   justify-content: center;
   position: relative;
+  overflow : hidden;
 }
 
 .viewer-canvas canvas{

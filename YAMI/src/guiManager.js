@@ -1,3 +1,6 @@
+// Window presets managment
+const lutWindowManager = require('./lutWindowManager');
+
 function f() {
 
   function buildGUI(scene, camera, changes) {
@@ -43,6 +46,16 @@ function f() {
     });
     //stackFolder.add(stackHelper.slice, 'interpolation', { No:0, Yes:1}).listen();
     //stackFolder.add(stackHelper.slice, 'interpolation', 0, 1).step(1).listen();
+    let windowPreset = {window:""};
+    let lutUpdate = stackFolder.add(
+      windowPreset, 'window', lutWindowManager.listPresets());
+    lutUpdate.onChange(function(value) {
+      let preset = lutWindowManager.getPresetValue(windowPreset.window);
+      stackHelper.slice.windowWidth = preset[0];
+      stackHelper.slice.windowCenter = preset[1];
+      changes.hasChanged = true;
+    });
+    /*
     let lutUpdate = stackFolder.add(
       stackHelper.slice.lut, 'lut', stackHelper.slice.lut.lutsAvailable());
     lutUpdate.onChange(function(value) {
@@ -53,7 +66,7 @@ function f() {
     lutDiscrete.onChange(function(value) {
       stackHelper.slice.lutTexture = stackHelper.slice.lut.texture;
       changes.hasChanged = true;
-    });
+    });*/
 
     let index = stackFolder.add(
       stackHelper, 'index', 0, stack.dimensionsIJK.z - 1).step(1).listen().onChange(_ => {

@@ -30,7 +30,6 @@ export default class customControls extends THREE.EventDispatcher {
 
 
     let EPS = 0.000001;
-    //let _changed = true;
 
     let oldMousePosition = new THREE.Vector2();
     let newMousePosition = new THREE.Vector2();
@@ -47,15 +46,13 @@ export default class customControls extends THREE.EventDispatcher {
 
     this.noZoom = false;
     this.noPan = false;
-    this.noRotate = true; //not implemented yet
+
+    this._raycaster = new THREE.Raycaster();
+    this._mouse = new THREE.Vector2();
 
     // Public methods
     this.handleResize = function() {};
-    this.update = function() {
-      if (_this._changed)
-        _this.camera.updateProjectionMatrix();
-      this.camera.lookAt(this.target);
-    };
+    this.update = function() {};
 
     this.setAsResetState = function() {
       //  this.save = camera.clone();
@@ -95,7 +92,6 @@ export default class customControls extends THREE.EventDispatcher {
       pan.add(_temp.copy(_eye).cross(_this.camera.up).setLength(x));
       _this.camera.position.add(pan);
       _this.target.add(pan);
-      _this._changed = true;
       changePtr.hasChanged = true;
     }
 
@@ -107,12 +103,46 @@ export default class customControls extends THREE.EventDispatcher {
       let speed = config.zoomSpeed;
       if (mouseFactor !== undefined)
         speed = mouseFactor + 1;
-
+      // expl : 1.2 is a 120% zoom (zoom in),  0.8 is a 80% zoom (zoom out)
       let factor = (directionIn) ? 1 / speed : speed;
 
       if (Math.abs(factor - 1.0) > EPS && factor > 0.0) {
+        let target1 = null;
+        let target2 = null;
+        // save cross position in 3D space
+
+        let rectCanvas = domElement.getBoundingClientRect();
+        let rectX = cross.vertical.getBoundingClientRect();
+        let rectY = cross.horizontal.getBoundingClientRect();
+
+        _this._mouse.x = ((rectX.left - rectCanvas.left) / rectCanvas.width) * 2 - 1;
+        _this._mouse.y = -((rectY.top - rectCanvas.top) / rectCanvas.height) * 2 + 1;
+
+        _this._raycaster.setFromCamera(_this._mouse, _this.camera);
+        //_this._raycaster.ray.position = _this._raycaster.ray.origin;
+        console.log(_this._raycaster.ray);
+        console.log(_this._raycaster);
+
+
+        let intersectsTarget = this._raycaster.intersectObject(this.stack);
+        console.log(intersectsTarget);
+        if (intersectsTarget.length > 0) {
+          target1 = new THREE.Vector3();
+          target1.copy(intersectsTarget[0].point);
+        }
+        // actually zoom
         this.camera.zoom /= factor;
-        _this._changed = true;
+        this.camera.updateProjectionMatrix();
+        // make as the cross did not move
+        intersectsTarget = this._raycaster.intersectObject(this.stack);
+        if (intersectsTarget.length > 0) {
+          target2 = new THREE.Vector3();
+          target2.copy(intersectsTarget[0].point);
+        }
+
+        console.log(target1);
+        console.log(target2);
+
         changePtr.hasChanged = true;
       }
     }
@@ -146,8 +176,8 @@ export default class customControls extends THREE.EventDispatcher {
       let rect = domElement.getBoundingClientRect();
       let x = event.clientX - rect.left;
       let y = event.clientY - rect.top;
-      cross.horizontal.style.top = y+"px";
-      cross.vertical.style.left = x+"px";
+      cross.horizontal.style.top = y + "px";
+      cross.vertical.style.left = x + "px";
       //TODO read the value
     }
 
@@ -369,7 +399,7 @@ export default class customControls extends THREE.EventDispatcher {
           document.getElementById('label-control-slice').classList.remove("disabled");
           break;
         case STATE.SETPROB:
-        default :
+        default:
           document.getElementById('button-control-prob').setAttribute("disabled", "true");
           document.getElementById('label-control-prob').classList.remove("disabled");
           break;
