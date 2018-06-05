@@ -54,7 +54,7 @@ void main(void) {
   if(!uUseFusion || baseColorFusion.w < uThreshold){
     gl_FragColor = baseColorBG;
   }else{
-    gl_FragColor = mix( baseColorBG, baseColorFusion, uOpacityMin+uOpacityMax*baseColorFusion.w);
+    gl_FragColor = mix( baseColorBG, baseColorFusion, uOpacityMin+(uOpacityMax-uOpacityMin)*baseColorFusion.w);
   }
   return;
 }
