@@ -118,6 +118,7 @@ export default class sceneManager {
       }
 
       _this.uniforms["background"] = stackHelperI.slice._uniforms;
+
       meshes["background"] = stackHelperI;
       // add it to its 3D scene
       scenes["background"].add(stackHelperI);
@@ -209,11 +210,12 @@ export default class sceneManager {
       // create material && mesh then add it to sceneLayers[i]
       let uniformsLayer = DataShaderUni.uniforms();
       uniformsLayer.uTextureSize.value = stack.textureSize;
-      uniformsLayer.uOffset.value = [-translation.x,-translation.y,-translation.z];
+      uniformsLayer.uOffset.value = [-translation.x, -translation.y, -translation.z];
       uniformsLayer.uTextureContainer.value = texture;
       uniformsLayer.uWorldToData.value = stack.lps2IJK;
       uniformsLayer.uNumberOfChannels.value = stack.numberOfChannels;
       uniformsLayer.uBitsAllocated.value = stack.bitsAllocated;
+      uniformsLayer.uPixelType.value = stack.pixelType;
       uniformsLayer.uPackedPerPixel.value = stack.packedPerPixel;
       uniformsLayer.uWindowCenterWidth.value = [stack.windowCenter, stack.windowWidth];
       uniformsLayer.uWindowCenterWidth.unit = stack.unit; // this is not in AMI class, used for display

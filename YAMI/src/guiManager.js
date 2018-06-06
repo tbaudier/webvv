@@ -29,15 +29,13 @@ function f() {
 
     let stackFolder = gui.addFolder('Main image');
     stackFolder.add(
-        stackHelper.slice, 'windowWidth', 1, stack.minMax[1] - stack.minMax[0])
-      .step(1).listen().onChange(_ => {
+        stackHelper.slice, 'windowWidth', 0, stack.minMax[1] - stack.minMax[0]).listen().onChange((value) => {
         changes.hasChanged = true;
       });
 
     //stackHelper.slice.intensityAuto = false;
     stackFolder.add(
-        stackHelper.slice, 'windowCenter', stack.minMax[0], stack.minMax[1])
-      .step(1).listen().onChange(_ => {
+        stackHelper.slice, 'windowCenter', stack.minMax[0], stack.minMax[1]).listen().onChange(_ => {
         changes.hasChanged = true;
       });
     //stackFolder.add(stackHelper.slice, 'intensityAuto').listen();
@@ -47,15 +45,15 @@ function f() {
     //stackFolder.add(stackHelper.slice, 'interpolation', { No:0, Yes:1}).listen();
     //stackFolder.add(stackHelper.slice, 'interpolation', 0, 1).step(1).listen();
     let windowPreset = {window:""};
-    let lutUpdate = stackFolder.add(
+    let lutWindowUpdate = stackFolder.add(
       windowPreset, 'window', lutWindowManager.listPresets());
-    lutUpdate.onChange(function(value) {
+    lutWindowUpdate.onChange(function(value) {
       let preset = lutWindowManager.getPresetValue(windowPreset.window);
       stackHelper.slice.windowWidth = preset[0];
       stackHelper.slice.windowCenter = preset[1];
       changes.hasChanged = true;
     });
-    /*
+/*
     let lutUpdate = stackFolder.add(
       stackHelper.slice.lut, 'lut', stackHelper.slice.lut.lutsAvailable());
     lutUpdate.onChange(function(value) {
