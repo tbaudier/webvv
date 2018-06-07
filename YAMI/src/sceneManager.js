@@ -318,7 +318,7 @@ export default class sceneManager {
         // fusion
         if (textureTargets["fusion"] !== null) {
           meshes["fusion"].geometry.dispose();
-          meshes["fusion"].geometry = _this.stackHelper.slice.geometry; //.clone().translate(0, 0, 130);
+          meshes["fusion"].geometry = _this.stackHelper.slice.geometry;
           meshes["fusion"].geometry.verticesNeedUpdate = true;
         }
         // overlay

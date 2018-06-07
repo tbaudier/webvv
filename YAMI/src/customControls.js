@@ -61,11 +61,6 @@ export default class customControls extends THREE.EventDispatcher {
 
     this.reset = function() {
       //TODO
-      /*
-      console.log(this.camera);
-      console.log("reset try");
-      this.camera = this.save.clone();
-      */
       changePtr.hasChanged = true;
     };
 
@@ -408,7 +403,7 @@ export default class customControls extends THREE.EventDispatcher {
     }
 
     function setState(evt) {
-      switch (evt.srcElement.id) {
+      switch (evt.target.id) {
         case 'button-control-pan':
           _this._state = STATE.PAN;
           break;

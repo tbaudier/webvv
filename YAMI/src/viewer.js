@@ -1,4 +1,4 @@
-/* globals Stats, dat, AMI*/
+/* globals Stats, dat, AMI, THREE */
 
 // Viewer config file
 const config = require('./viewer.config');
@@ -24,10 +24,8 @@ let changePtr = { // a pointer to pass the "haschanged" value by reference
   hasChanged: true
 };
 
-let stackHelper; // @type {AMI.StackHelper}
 let camera; // @type {THREE.OrthographicCamera}
-let controls; // @type {AMI.TrackballOrthoControl}e;
-let camera2;
+let controls; // @type {AMI.TrackballOrthoControl};
 
 let cross = {
   vertical: null,
@@ -56,18 +54,6 @@ function init() {
     canvas.clientWidth / -2, canvas.clientWidth / 2,
     canvas.clientHeight / 2, canvas.clientHeight / -2,
     0.1, 10000);
-  /*
-  // Test with a 3D free camera
-    camera2 =
-      new THREE.PerspectiveCamera(
-        90, canvas.offsetWidth / canvas.offsetHeight,
-        1, 10000000);
-    camera2.position.x = 0;
-    camera2.position.y = 0;
-    camera2.position.z = -405;
-    camera2.lookAt( new THREE.Vector3(0,0,-400) );
-    console.log(camera2.position.z);
-    let controls2 = new THREE.OrbitControls(camera2, canvas);*/
 }
 
 window.onload = function() {
@@ -92,10 +78,11 @@ window.onload = function() {
     // prepare for slice visualization
     // first stack of first series
     let stack = seriesContainer["image"][0].mergeSeries(seriesContainer["image"])[0].stack[0];
+    let stackFusion;
     // we add the "unit" attribute to the stacks
     stack.unit = information["image"].unit;
     // we create the main stackHelper (easy manipulation of stacks)
-    stackHelper = new AMI.StackHelper(stack);
+    let stackHelper = new AMI.StackHelper(stack);
     stackHelper.bbox.visible = false;
     stackHelper.border.visible = false;
 
@@ -103,11 +90,17 @@ window.onload = function() {
     sceneManager.setMainStackHelper(stackHelper);
     // and add the stacks we have loaded to the 3D scene
     if (seriesContainer["fusion"]) {
-      let stack1 = seriesContainer["fusion"][0].mergeSeries(seriesContainer["fusion"])[0].stack[0];
-      stack1.unit = information["fusion"].unit;
-      sceneManager.addLayerStack(stack1, "fusion");
+      stackFusion = seriesContainer["fusion"][0].mergeSeries(seriesContainer["fusion"])[0].stack[0];
+      stackFusion.unit = information["fusion"].unit;
+      sceneManager.addLayerStack(stackFusion, "fusion");
     }
-    
+
+    // Cleaning the imported (now useless) raw data
+    stack._rawData = null;
+    stackFusion._rawData = null;
+    stack._frame = null;
+    stackFusion._frame = null;
+
     createCross();
 
     // setup controls and shortcuts

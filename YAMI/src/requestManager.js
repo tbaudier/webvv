@@ -137,10 +137,6 @@ function requestManager() {
         jsonParameters = JSON.parse(jsonResponse);
         parseInformationData(jsonParameters, files);
       })
-      /*
-            .then(_=>{
-              return loader.load(jsonParameters.)
-            })*/
       // IMAGE
       .then(_ => {
         return fetchAndLoadData(jsonParameters, files, "image");
