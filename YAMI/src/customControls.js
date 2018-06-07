@@ -26,7 +26,7 @@ export default class customControls extends THREE.EventDispatcher {
     let pressedKeys = new Map();
 
     let _state = STATE.NONE;
-    //let _prevState = STATE.NONE;
+    let _buttonState = STATE.NONE;
 
 
     let EPS = 0.000001;
@@ -43,6 +43,7 @@ export default class customControls extends THREE.EventDispatcher {
     this.cross = cross;
     this.domElement = (domElement !== undefined) ? domElement : document;
     this.target = new THREE.Vector3();
+    this.crossTarget = new THREE.Vector3();
 
     this.noZoom = false;
     this.noPan = false;
@@ -73,8 +74,12 @@ export default class customControls extends THREE.EventDispatcher {
 
       if (this.noPan)
         return;
+
       let x = p2.x - p1.x;
       let y = p2.y - p1.y;
+      //update cross
+      cross.vertical.style.left = (cross.vertical.getBoundingClientRect().left - domElement.getBoundingClientRect().left + x) + "px";
+      cross.horizontal.style.top = (cross.horizontal.getBoundingClientRect().top - domElement.getBoundingClientRect().top + y) + "px";
       // relative movment [-1,1]
       x /= domElement.offsetWidth;
       y /= domElement.offsetHeight;
@@ -107,9 +112,9 @@ export default class customControls extends THREE.EventDispatcher {
       let factor = (directionIn) ? 1 / speed : speed;
 
       if (Math.abs(factor - 1.0) > EPS && factor > 0.0) {
+
+        // move to simulate a zoom around cross
         let target1 = null;
-        let target2 = null;
-        // save cross position in 3D space
 
         let rectCanvas = domElement.getBoundingClientRect();
         let rectX = cross.vertical.getBoundingClientRect();
@@ -119,33 +124,29 @@ export default class customControls extends THREE.EventDispatcher {
         _this._mouse.y = -((rectY.top - rectCanvas.top) / rectCanvas.height) * 2 + 1;
 
         _this._raycaster.setFromCamera(_this._mouse, _this.camera);
-        //_this._raycaster.ray.position = _this._raycaster.ray.origin;
-        console.log(_this._raycaster.ray);
-        console.log(_this._raycaster);
 
-
-        let intersectsTarget = this._raycaster.intersectObject(this.stack);
-        console.log(intersectsTarget);
+        let intersectsTarget = this._raycaster.intersectObject(this.stack._slice.children[0]);
         if (intersectsTarget.length > 0) {
           target1 = new THREE.Vector3();
           target1.copy(intersectsTarget[0].point);
         }
+
         // actually zoom
         this.camera.zoom /= factor;
         this.camera.updateProjectionMatrix();
-        // make as the cross did not move
-        intersectsTarget = this._raycaster.intersectObject(this.stack);
-        if (intersectsTarget.length > 0) {
-          target2 = new THREE.Vector3();
-          target2.copy(intersectsTarget[0].point);
-        }
 
-        console.log(target1);
-        console.log(target2);
+        // and correct the position
+        updateCrossTarget();
+        if (target1 !== null) {
+          target1.sub(_this.crossTarget);
+          _this.camera.position.add(target1);
+          _this.target.add(target1);
+        }
 
         changePtr.hasChanged = true;
       }
     }
+
     this.scrollStack = function(directionTop) {
       if (directionTop) {
         if (stack.index >= stack._stack.dimensionsIJK.z - 1) {
@@ -178,7 +179,24 @@ export default class customControls extends THREE.EventDispatcher {
       let y = event.clientY - rect.top;
       cross.horizontal.style.top = y + "px";
       cross.vertical.style.left = x + "px";
+
+      updateCrossTarget();
+
       //TODO read the value
+    }
+
+    function updateCrossTarget() {
+      let rectCanvas = domElement.getBoundingClientRect();
+      let rectX = cross.vertical.getBoundingClientRect();
+      let rectY = cross.horizontal.getBoundingClientRect();
+
+      _this._mouse.x = ((rectX.left - rectCanvas.left) / rectCanvas.width) * 2 - 1;
+      _this._mouse.y = -((rectY.top - rectCanvas.top) / rectCanvas.height) * 2 + 1;
+      _this._raycaster.setFromCamera(_this._mouse, _this.camera);
+      let intersectsTarget = _this._raycaster.intersectObject(_this.stack._slice.children[0]);
+      if (intersectsTarget.length > 0) {
+        _this.crossTarget.copy(intersectsTarget[0].point);
+      }
     }
 
     ///////////
@@ -222,21 +240,27 @@ export default class customControls extends THREE.EventDispatcher {
       switch (event.key) {
         case 'Escape':
           _this._state = STATE.NONE;
+          _this._buttonState = _this._state;
           break;
         case config.stateZoom:
           _this._state = STATE.ZOOM;
+          _this._buttonState = _this._state;
           break;
         case config.stateMove:
           _this._state = STATE.PAN;
+          _this._buttonState = _this._state;
           break;
         case config.stateSlice:
           _this._state = STATE.SLICE;
+          _this._buttonState = _this._state;
           break;
         case config.stateWindow:
           _this._state = STATE.WINDOW;
+          _this._buttonState = _this._state;
           break;
         case config.stateProb:
           _this._state = STATE.SETPROB;
+          _this._buttonState = _this._state;
           break;
 
         case config.stackUp:
@@ -299,30 +323,7 @@ export default class customControls extends THREE.EventDispatcher {
     }
 
     function mouseup(event) {
-      switch (_this._state) {
-        case STATE.PANNING:
-          if (event.which == 2) {
-            _this._state = STATE.NONE;
-          } else {
-            _this._state = STATE.PAN;
-          }
-          break;
-        case STATE.ZOOMING:
-          _this._state = STATE.ZOOM;
-          break;
-        case STATE.SLICING:
-          _this._state = STATE.SLICE;
-          break;
-        case STATE.WINDOWING:
-          if (event.which == 3) {
-            _this._state = STATE.NONE;
-          } else {
-            _this._state = STATE.WINDOW;
-          }
-          break;
-        default:
-          _this._state = STATE.NONE;
-      }
+      _this._state = _this._buttonState;
       document.removeEventListener('mousemove', mousemove, false);
       updateDOM();
     }
@@ -424,6 +425,7 @@ export default class customControls extends THREE.EventDispatcher {
           _this._state = STATE.SETPROB;
           break;
       }
+      _this._buttonState = _this._state;
       updateDOM();
       evt.preventDefault();
     }
@@ -496,8 +498,8 @@ export default class customControls extends THREE.EventDispatcher {
     ///////////
 
     addEvents();
+    updateCrossTarget();
 
-    this.camera.position.z = 1;
     this.handleResize();
     this.update();
     this.setAsResetState();

@@ -16,6 +16,7 @@ function lutWindowManager() {
 
   function listPresets() {
     let presetsNames = [];
+    presetsNames.push('Custom');
     for(let i in presets){
       presetsNames.push(i);
     }

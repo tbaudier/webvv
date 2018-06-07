@@ -23,48 +23,51 @@ function f() {
       orientation: 'default',
       convention: 'radio',
     };
+    let windowPreset = {
+      window: 'Custom'
+    };
 
     let customContainer = document.getElementById('my-gui-container');
     customContainer.appendChild(gui.domElement);
 
     let stackFolder = gui.addFolder('Main image');
     stackFolder.add(
-        stackHelper.slice, 'windowWidth', 0, stack.minMax[1] - stack.minMax[0]).listen().onChange((value) => {
-        changes.hasChanged = true;
-      });
-
-    //stackHelper.slice.intensityAuto = false;
+      stackHelper.slice, 'windowWidth', 0, stack.minMax[1] - stack.minMax[0]).listen().onChange((value) => {
+      windowPreset.window = 'Custom';
+      changes.hasChanged = true;
+    });
     stackFolder.add(
-        stackHelper.slice, 'windowCenter', stack.minMax[0], stack.minMax[1]).listen().onChange(_ => {
-        changes.hasChanged = true;
-      });
+      stackHelper.slice, 'windowCenter', stack.minMax[0], stack.minMax[1]).listen().onChange(_ => {
+      windowPreset.window = 'Custom';
+      changes.hasChanged = true;
+    });
     //stackFolder.add(stackHelper.slice, 'intensityAuto').listen();
     stackFolder.add(stackHelper.slice, 'invert').onChange(_ => {
       changes.hasChanged = true;
     });
     //stackFolder.add(stackHelper.slice, 'interpolation', { No:0, Yes:1}).listen();
     //stackFolder.add(stackHelper.slice, 'interpolation', 0, 1).step(1).listen();
-    let windowPreset = {window:""};
     let lutWindowUpdate = stackFolder.add(
-      windowPreset, 'window', lutWindowManager.listPresets());
+      windowPreset, 'window', lutWindowManager.listPresets()).listen();
     lutWindowUpdate.onChange(function(value) {
+      if (value === "Custom") return;
       let preset = lutWindowManager.getPresetValue(windowPreset.window);
       stackHelper.slice.windowWidth = preset[0];
       stackHelper.slice.windowCenter = preset[1];
       changes.hasChanged = true;
     });
-/*
-    let lutUpdate = stackFolder.add(
-      stackHelper.slice.lut, 'lut', stackHelper.slice.lut.lutsAvailable());
-    lutUpdate.onChange(function(value) {
-      stackHelper.slice.lutTexture = stackHelper.slice.lut.texture;
-      changes.hasChanged = true;
-    });
-    let lutDiscrete = stackFolder.add(stackHelper.slice.lut, 'discrete', false);
-    lutDiscrete.onChange(function(value) {
-      stackHelper.slice.lutTexture = stackHelper.slice.lut.texture;
-      changes.hasChanged = true;
-    });*/
+    /*
+        let lutUpdate = stackFolder.add(
+          stackHelper.slice.lut, 'lut', stackHelper.slice.lut.lutsAvailable());
+        lutUpdate.onChange(function(value) {
+          stackHelper.slice.lutTexture = stackHelper.slice.lut.texture;
+          changes.hasChanged = true;
+        });
+        let lutDiscrete = stackFolder.add(stackHelper.slice.lut, 'discrete', false);
+        lutDiscrete.onChange(function(value) {
+          stackHelper.slice.lutTexture = stackHelper.slice.lut.texture;
+          changes.hasChanged = true;
+        });*/
 
     let index = stackFolder.add(
       stackHelper, 'index', 0, stack.dimensionsIJK.z - 1).step(1).listen().onChange(_ => {
