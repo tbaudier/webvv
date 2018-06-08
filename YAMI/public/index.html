@@ -2,91 +2,91 @@
 <html lang="en">
 
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-	<title>YAMI - Medical Viewer</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <title>YAMI - Medical Viewer</title>
 
-	<link rel="stylesheet" type="text/css" href="stylesheets/style.css">
+  <link rel="stylesheet" type="text/css" href="stylesheets/style.css">
   <!-- useless font ?
-	<script type="text/javascript" src="https://use.edgefonts.net/source-code-pro.js"></script> <!-- font -->
-	<script type="text/javascript" src="https://cdn.rawgit.com/K3D-tools/dat.gui/master/build/dat.gui.min.js"></script> <!-- gui -->
-	<!-- previous import to be replaced with
-	<script type="text/javascript" src="https://cdn.rawgit.com/dataarts/dat.gui/master/build/dat.gui.min.js"></script> <!-- gui -->
-	<script type="text/javascript" src="https://cdn.rawgit.com/mrdoob/stats.js/master/build/stats.min.js"></script> <!-- stats (fps) -->
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/92/three.min.js"></script> <!-- 3D -->
+  <script type="text/javascript" src="https://use.edgefonts.net/source-code-pro.js"></script> <!-- font -->
+  <script type="text/javascript" src="https://cdn.rawgit.com/K3D-tools/dat.gui/master/build/dat.gui.min.js"></script> <!-- gui -->
+  <!-- previous import to be replaced with
+  <script type="text/javascript" src="https://cdn.rawgit.com/dataarts/dat.gui/master/build/dat.gui.min.js"></script> <!-- gui -->
+  <script type="text/javascript" src="https://cdn.rawgit.com/mrdoob/stats.js/master/build/stats.min.js"></script> <!-- stats (fps) -->
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/92/three.min.js"></script> <!-- 3D -->
 
-	<!-- AMI -->
-	<script type="text/javascript" src="lib/ami.min.js"></script> <!-- AMI -->
+  <!-- AMI -->
+  <script type="text/javascript" src="lib/ami.min.js"></script> <!-- AMI -->
 </head>
 
 <body>
-	<div class="wrapper">
-		<h1 class="title">YAMI - Medical Viewer</h1>
-		<h2 id="sub-title">Study - patient</h2>
+  <div class="wrapper">
+    <h1 class="title">YAMI - Medical Viewer</h1>
+    <h2 id="sub-title">Study - patient</h2>
 
-		<div class="align-left">
-			<div class="general-panel">
-				<div id="general-info-panel" class="align-left">
-					<h3>Data</h3>
-				</div>
-				<hr/>
-				<div id="controls-panel" class="align-left">
-					<h3>Basic controls</h3>
+    <div class="align-left">
+      <div class="general-panel">
+        <div id="general-info-panel" class="align-left">
+          <h3>Data</h3>
+        </div>
+        <hr/>
+        <div id="controls-panel" class="align-left">
+          <h3>Basic controls</h3>
 
-					<button id="button-control-prob">Prob</button> <span  id="label-control-prob" class="small disabled">Click</span><br/>
-					<hr>
+          <button id="button-control-prob">Prob</button> <span  id="label-control-prob" class="small disabled">Click</span><br/>
+          <hr>
 
-					<button id="button-control-pan">Move</button> <span  id="label-control-pan" class="small disabled">Click and Drag</span> <br/>
-					<span class="small">Move : click on Wheel</span>
-					<hr>
+          <button id="button-control-pan">Move</button> <span  id="label-control-pan" class="small disabled">Click and Drag</span> <br/>
+          <span class="small">Move : click on Wheel</span>
+          <hr>
 
-					<button id="button-control-zoom">Zoom</button> <span  id="label-control-zoom" class="small disabled">Click and Drag</span> <br/>
-					<span class="small">Zoom In :  + , i , Ctrl + Wheel down<br/></span>
-					<span class="small">Zoom Out : - , o , Cltr + Wheel up <br/></span>
-					<hr>
+          <button id="button-control-zoom">Zoom</button> <span  id="label-control-zoom" class="small disabled">Click and Drag</span> <br/>
+          <span class="small">Zoom In :  + , i , Ctrl + Wheel down<br/></span>
+          <span class="small">Zoom Out : - , o , Cltr + Wheel up <br/></span>
+          <hr>
 
-					<button id="button-control-slice">Slices</button> <span  id="label-control-slice" class="small disabled">Click and Drag</span> <br/>
-					<span class="small">Slice Up :   ↑ , Wheel Up <br/></span>
-					<span class="small">Slice Down : ↓ , Wheel Down <br/></span>
-					<hr>
+          <button id="button-control-slice">Slices</button> <span  id="label-control-slice" class="small disabled">Click and Drag</span> <br/>
+          <span class="small">Slice Up :   ↑ , Wheel Up <br/></span>
+          <span class="small">Slice Down : ↓ , Wheel Down <br/></span>
+          <hr>
 
-					<button id="button-control-window">Window</button> <span  id="label-control-window" class="small disabled">Click and Drag</span> <br/>
-					<span class="small">Windowing : Right Click</span>
-					<hr>
-				</div>
-			</div>
+          <button id="button-control-window">Window</button> <span  id="label-control-window" class="small disabled">Click and Drag</span> <br/>
+          <span class="small">Windowing : Right Click</span>
+          <hr>
+        </div>
+      </div>
 
-			<div class="viewer-panel">
-				<div class="viewer-canvas" id="r3d">
-					<div id="top" class="direction"></div>
-					<div id="bottom" class="direction"></div>
-					<div id="left" class="direction"></div>
-					<div id="right" class="direction"></div>
-				</div>
+      <div class="viewer-panel">
+        <div class="viewer-canvas" id="r3d">
+          <div id="top" class="direction"></div>
+          <div id="bottom" class="direction"></div>
+          <div id="left" class="direction"></div>
+          <div id="right" class="direction"></div>
+        </div>
 
-				<div class="under-viewer">
-					<div class="mid-width" id="my-lut-container">
-						<div id="my-lut-canvases">
-							<!-- Colormaps -->
-						</div>
-					</div><!--
+        <div class="under-viewer">
+          <div class="mid-width" id="my-lut-container">
+            <div id="my-lut-canvases">
+              <!-- Colormaps -->
+            </div>
+          </div><!--
 
-					--><div class="mid-width">
-						prob data<br/>
-						Here data about the prob and values
+          --><div class="mid-width">
+            prob data<br/>
+            Here data about the prob and values
 
-					</div>
-				</div>
+          </div>
+        </div>
 
-			</div>
-		</div>
+      </div>
+    </div>
 
-		<div class="gui-panel" id="my-gui-container">
-			<!-- GUI -->
-		</div>
+    <div class="gui-panel" id="my-gui-container">
+      <!-- GUI -->
+    </div>
 
-	</div>
-	<script type="text/javascript" src="bundle.js"></script>
+  </div>
+  <script type="text/javascript" src="bundle.js"></script>
 
 </body>
 
