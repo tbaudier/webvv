@@ -35,20 +35,23 @@ function requestManager() {
    */
   function jsonHttpRequest(url) {
     return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
+        const xhr = new XMLHttpRequest();
 
-      xhr.overrideMimeType("application/json");
-      xhr.onload = () => {
-        if (xhr.status == "200") {
-          resolve(xhr.responseText)
-        } else {
-          reject(xhr.statusText)
-        }
-      };
-      xhr.onerror = () => reject(xhr.statusText);
-      xhr.open("GET", url);
-      xhr.send();
-    });
+        xhr.overrideMimeType("application/json");
+        xhr.onload = () => {
+          if (xhr.status == "200") {
+            resolve(xhr.responseText)
+          } else {
+            reject(xhr.statusText)
+          }
+        };
+        xhr.onerror = () => reject(xhr.statusText);
+        xhr.open("GET", url);
+        xhr.send();
+      })
+      .catch((e) => {
+        reject(e)
+      });
   }
 
   /**
@@ -57,20 +60,23 @@ function requestManager() {
    */
   function binaryHttpRequest(url) {
     return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
+        const xhr = new XMLHttpRequest();
 
-      xhr.responseType = "blob"; //force the HTTP response, response-type header to be blob
-      xhr.onload = () => {
-        if (xhr.status == "200") {
-          resolve(xhr.response)
-        } else {
-          reject(xhr.statusText)
-        }
-      };
-      xhr.onerror = () => reject(xhr.statusText);
-      xhr.open("GET", url);
-      xhr.send();
-    });
+        xhr.responseType = "blob"; //force the HTTP response, response-type header to be blob
+        xhr.onload = () => {
+          if (xhr.status == "200") {
+            resolve(xhr.response)
+          } else {
+            reject(xhr.statusText)
+          }
+        };
+        xhr.onerror = () => reject(xhr.statusText);
+        xhr.open("GET", url);
+        xhr.send();
+      })
+      .catch((e) => {
+        reject(e)
+      });
   }
 
   /**
@@ -98,6 +104,9 @@ function requestManager() {
             // and add it to the array
             let filename = jsonData[categoryName]["data"][0][i].split('/').pop();
             subCategoryFiles.push(new File([response], jsonData[categoryName]["data"][time][i].split('/').pop()));
+          })
+          .catch((e) => {
+            reject(e)
           });
       }
 
@@ -117,7 +126,7 @@ function requestManager() {
    * @param {function} handleSeriesFunct a callback function that takes a param (seriesContainer)
    * seriesContainer format : {image : [array of IMG], fusion : [array of IMG], ...}
    */
-  function readMultipleFiles(loader, handleSeriesFunct) {
+  function readMultipleFiles(loader, handleSeriesFunct, handleError) {
 
     let seriesContainer = {};
 
@@ -156,6 +165,7 @@ function requestManager() {
       .catch((error) => {
         console.log("An error has occured:");
         console.log(error);
+        handleError();
       });
 
     function fetchAndLoadData(jsonParameters, files, category) {
@@ -176,6 +186,9 @@ function requestManager() {
           .then(_ => {
             resolve();
           })
+          .catch((e) => {
+            reject(e)
+          });
       });
     }
 
@@ -215,7 +228,8 @@ function requestManager() {
           });
         })
         .then(function(serie) {
-          seriesContainer[category] = [];
+          if (typeof seriesContainer[category] === 'undefined')
+            seriesContainer[category] = [];
           seriesContainer[category].push(serie);
         })
         .catch(function(error) {
@@ -244,6 +258,9 @@ function requestManager() {
               url: file[formatName].name,
               buffer
             };
+          })
+          .catch((e) => {
+            reject(e)
           })
         );
       }

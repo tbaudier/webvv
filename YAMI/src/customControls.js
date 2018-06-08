@@ -7,10 +7,13 @@ const config = require('./viewer.config');
 export default class customControls extends THREE.EventDispatcher {
   constructor(camera, stack, cross, domElement, chgPtr) {
     super();
+    // a simple handler to access "this." attributes from functions not declared as "this."function (aka private)
     let _this = this;
 
+    // a pointer to pass the "haschanged" value by reference { hasChanged: true };
     let changePtr = chgPtr;
 
+    // enum of possible states
     let STATE = {
       NONE: 0,
       SETPROB: 1,
@@ -23,63 +26,69 @@ export default class customControls extends THREE.EventDispatcher {
       SLICE: 9,
       SLICING: 10,
     };
+    // a map of booleans to know which key is down at the moment
     let pressedKeys = new Map();
 
+    // state to determine what the present action is
     let _state = STATE.NONE;
+    // state to determine what button was selected before doing this action
+    // useful to remember the right state even if the user use a shortcut to do another action
     let _buttonState = STATE.NONE;
 
-
-    let EPS = 0.000001;
-
+    // drag and drop helpers
     let oldMousePosition = new THREE.Vector2();
     let newMousePosition = new THREE.Vector2();
 
-    let _eye = new THREE.Vector3();
+    // temp vector to be used for calculations
     let _temp = new THREE.Vector3();
 
     // Public attributes
-    this.camera = camera;
-    this.stack = stack;
-    this.cross = cross;
-    this.domElement = (domElement !== undefined) ? domElement : document;
+    this.camera = camera; // as a THREE.js camera (or AMI camera)
+    this.stack = stack; // as a StackHelper, only the main stack
+    this.cross = cross; // cross cursor (dom element)
+    this.domElement = (domElement !== undefined) ? domElement : document; // canvas
+    this.crossTarget = new THREE.Vector3(); // 3D position of cross cursor (in World)
+
+    this.noZoom = false; // possibility to disable zooming
+    this.noPan = false; // possibility to disable panning
+
+    this._raycaster = new THREE.Raycaster(); // three js raycaster, only initialized once
+    this._mouse = new THREE.Vector2(); // mouse position retalive to canvas x and y in [-1;1]
+
+    // Useless
+    // without that AMI calls missing objects, but we don't need it in our workflow
     this.target = new THREE.Vector3();
-    this.crossTarget = new THREE.Vector3();
-
-    this.noZoom = false;
-    this.noPan = false;
-
-    this._raycaster = new THREE.Raycaster();
-    this._mouse = new THREE.Vector2();
-
-    // Public methods
     this.handleResize = function() {};
     this.update = function() {};
+    // end of useless
 
+
+    // Public methods
     this.setAsResetState = function() {
-      //  this.save = camera.clone();
+      // TODO
     };
-
     this.reset = function() {
       //TODO
       changePtr.hasChanged = true;
     };
 
+    // Moves the camera corresponding to a mouse movement from p1 to p2
     this.pan = function(p1, p2) {
-      _eye.subVectors(_this.camera.position, _this.target);
-
       if (this.noPan)
         return;
 
       let x = p2.x - p1.x;
       let y = p2.y - p1.y;
-      //update cross
+      // update graphical cross
       cross.vertical.style.left = (cross.vertical.getBoundingClientRect().left - domElement.getBoundingClientRect().left + x) + "px";
       cross.horizontal.style.top = (cross.horizontal.getBoundingClientRect().top - domElement.getBoundingClientRect().top + y) + "px";
-      // relative movment [-1,1]
+      // update 3D cross
+      updateCrossTarget();
+      // relative movement [-1,1]
       x /= domElement.offsetWidth;
       y /= domElement.offsetHeight;
 
-      // Scale movement to keep clicked/dragged position under cursor
+      // Scale 2D movement to keep 3D world
       let scale_x = (_this.camera.right - _this.camera.left) / _this.camera.zoom;
       let scale_y = (_this.camera.top - _this.camera.bottom) / _this.camera.zoom;
       x *= scale_x;
@@ -89,9 +98,8 @@ export default class customControls extends THREE.EventDispatcher {
       // vertical component
       pan.copy(_this.camera.up).setLength(y);
       // horizontal component
-      pan.add(_temp.copy(_eye).cross(_this.camera.up).setLength(x));
+      pan.add(_temp.copy(_this.camera._right).setLength(-x));
       _this.camera.position.add(pan);
-      _this.target.add(pan);
       changePtr.hasChanged = true;
     }
 
@@ -99,27 +107,20 @@ export default class customControls extends THREE.EventDispatcher {
     this.zoom = function(directionIn, mouseFactor) {
       if (this.noZoom)
         return;
-
+      // get the speed from the config
       let speed = config.zoomSpeed;
       if (mouseFactor !== undefined)
-        speed = mouseFactor + 1;
+        speed = mouseFactor + 1; // and correct the speed if it's a mouse zoom (drag and not wheel)
+      // factor > 1 to zoom in, factor < 1 to zoom out
       // expl : 1.2 is a 120% zoom (zoom in),  0.8 is a 80% zoom (zoom out)
       let factor = (directionIn) ? 1 / speed : speed;
 
-      if (Math.abs(factor - 1.0) > EPS && factor > 0.0) {
+      if (factor > 0.0) {
 
-        // move to simulate a zoom around cross
+        // cross position stuff
         let target1 = null;
-
-        let rectCanvas = domElement.getBoundingClientRect();
-        let rectX = cross.vertical.getBoundingClientRect();
-        let rectY = cross.horizontal.getBoundingClientRect();
-
-        _this._mouse.x = ((rectX.left - rectCanvas.left) / rectCanvas.width) * 2 - 1;
-        _this._mouse.y = -((rectY.top - rectCanvas.top) / rectCanvas.height) * 2 + 1;
-
+        updateMousePosition();
         _this._raycaster.setFromCamera(_this._mouse, _this.camera);
-
         let intersectsTarget = this._raycaster.intersectObject(this.stack._slice.children[0]);
         if (intersectsTarget.length > 0) {
           target1 = new THREE.Vector3();
@@ -129,13 +130,12 @@ export default class customControls extends THREE.EventDispatcher {
         // actually zoom
         this.camera.zoom /= factor;
         this.camera.updateProjectionMatrix();
+        updateCrossTarget();
 
         // and correct the position
-        updateCrossTarget();
         if (target1 !== null) {
           target1.sub(_this.crossTarget);
           _this.camera.position.add(target1);
-          _this.target.add(target1);
         }
 
         changePtr.hasChanged = true;
@@ -180,18 +180,24 @@ export default class customControls extends THREE.EventDispatcher {
       //TODO read the value
     }
 
+    // Update the 3D position of the cross from its 2D position on the screen
     function updateCrossTarget() {
+      updateMousePosition();
+
+      _this._raycaster.setFromCamera(_this._mouse, _this.camera);
+      let intersectsTarget = _this._raycaster.intersectObject(_this.stack._slice.children[0]);
+      if (intersectsTarget.length > 0) {
+        _this.crossTarget.copy(intersectsTarget[0].point);
+      }
+    }
+    // update the vector _mouse from the position of the mouse on the screen
+    function updateMousePosition() {
       let rectCanvas = domElement.getBoundingClientRect();
       let rectX = cross.vertical.getBoundingClientRect();
       let rectY = cross.horizontal.getBoundingClientRect();
 
       _this._mouse.x = ((rectX.left - rectCanvas.left) / rectCanvas.width) * 2 - 1;
       _this._mouse.y = -((rectY.top - rectCanvas.top) / rectCanvas.height) * 2 + 1;
-      _this._raycaster.setFromCamera(_this._mouse, _this.camera);
-      let intersectsTarget = _this._raycaster.intersectObject(_this.stack._slice.children[0]);
-      if (intersectsTarget.length > 0) {
-        _this.crossTarget.copy(intersectsTarget[0].point);
-      }
     }
 
     ///////////
@@ -282,7 +288,7 @@ export default class customControls extends THREE.EventDispatcher {
     function mousedown(event) {
       switch (event.which) { // which button of the mouse is pressed
 
-        case 1:
+        case 1:  // left click
           switch (_this._state) {
             case STATE.PAN:
               _this._state = STATE.PANNING;
@@ -301,12 +307,12 @@ export default class customControls extends THREE.EventDispatcher {
           }
           break;
 
-        case 2:
+        case 2: // middle click
           _this._state = STATE.PANNING;
           event.preventDefault();
           break;
 
-        case 3:
+        case 3:  //right click
           _this._state = STATE.WINDOWING;
           break;
       }
@@ -426,6 +432,7 @@ export default class customControls extends THREE.EventDispatcher {
     }
 
     function addEvents() {
+      // some event are better on the canvas, and others on the whole document.
       domElement.addEventListener('mousedown', mousedown, false);
       document.addEventListener('mouseup', mouseup, false);
       document.addEventListener('wheel', mousewheel, false);

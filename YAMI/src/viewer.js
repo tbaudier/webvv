@@ -64,7 +64,11 @@ window.onload = function() {
   // it loads and parses the images
   let loader = new AMI.VolumeLoader(canvas);
   // Reads the GET params, reads the JSON and load the files
-  requestManager.readMultipleFiles(loader, handleSeries);
+  requestManager.readMultipleFiles(loader, handleSeries, handleError);
+
+  function handleError() {
+    canvas.innerHTML = "An error has occured.<br/>Check the JS console for more info.";
+  }
 
   /**
    * Visualize incoming data
@@ -86,6 +90,10 @@ window.onload = function() {
     stackHelper.bbox.visible = false;
     stackHelper.border.visible = false;
 
+    // Cleaning the imported (now useless) raw data
+    //stack._rawData = null;
+    //stack._frame = null;
+
     // and add the stacks we have loaded to the 3D scene
     sceneManager.setMainStackHelper(stackHelper);
     // and add the stacks we have loaded to the 3D scene
@@ -93,13 +101,11 @@ window.onload = function() {
       stackFusion = seriesContainer["fusion"][0].mergeSeries(seriesContainer["fusion"])[0].stack[0];
       stackFusion.unit = information["fusion"].unit;
       sceneManager.addLayerStack(stackFusion, "fusion");
-    }
 
-    // Cleaning the imported (now useless) raw data
-    stack._rawData = null;
-    stackFusion._rawData = null;
-    stack._frame = null;
-    stackFusion._frame = null;
+      // Cleaning the imported (now useless) raw data
+      stackFusion._rawData = null;
+      stackFusion._frame = null;
+    }
 
     createCross();
 
