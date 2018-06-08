@@ -1,7 +1,5 @@
 import FusionShaderFrag from './shaders/shaders.layer.fragment';
 import FusionShaderUni from './shaders/shaders.layer.uniform';
-import DataShaderFrag from './shaders/shaders.data.fragment';
-import DataShaderUni from './shaders/shaders.data.uniform';
 import LutHelper from './customLutHelper';
 // Viewer config file
 const config = require('./viewer.config');
@@ -207,10 +205,12 @@ export default class sceneManager {
 
       let translation = _this.stackHelper._stack.worldCenter().clone();
       translation.sub(stack.worldCenter());
+      stack.regMatrix = new THREE.Matrix4().makeTranslation(translation.x, translation.y, translation.z);
+      stack.computeIJK2LPS();
+
       // create material && mesh then add it to sceneLayers[i]
-      let uniformsLayer = DataShaderUni.uniforms();
+      let uniformsLayer = AMI.DataUniformShader.uniforms();
       uniformsLayer.uTextureSize.value = stack.textureSize;
-      uniformsLayer.uOffset.value = [-translation.x, -translation.y, -translation.z];
       uniformsLayer.uTextureContainer.value = texture;
       uniformsLayer.uWorldToData.value = stack.lps2IJK;
       uniformsLayer.uNumberOfChannels.value = stack.numberOfChannels;
@@ -237,7 +237,7 @@ export default class sceneManager {
       _this.uniforms[stackname] = uniformsLayer;
 
       // generate shaders on-demand!
-      let fs = new DataShaderFrag(uniformsLayer);
+      let fs = new AMI.DataFragmentShader(uniformsLayer);
       let vs = new AMI.DataVertexShader();
       let materialLayer = new THREE.ShaderMaterial({
         side: THREE.DoubleSide,
