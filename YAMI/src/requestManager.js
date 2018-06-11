@@ -50,7 +50,7 @@ function requestManager() {
         xhr.send();
       })
       .catch((e) => {
-        reject(e)
+        console.log(e)
       });
   }
 
@@ -75,7 +75,7 @@ function requestManager() {
         xhr.send();
       })
       .catch((e) => {
-        reject(e)
+        console.log(e)
       });
   }
 

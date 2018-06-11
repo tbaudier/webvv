@@ -127,6 +127,15 @@ button::first-letter{
   border : solid grey 1px;
 }
 
+#my-lut-container {
+  display : inline-block;
+  width : 300px;
+}
+
+#data-prob{
+  text-align : right;
+  font-size: 0.8em;
+}
 /*
 
 #VJSProbe {

@@ -80,9 +80,10 @@ window.onload = function() {
     // write information on the page
     writeInformation(information);
     // prepare for slice visualization
+    let stackList = {};
     // first stack of first series
     let stack = seriesContainer["image"][0].mergeSeries(seriesContainer["image"])[0].stack[0];
-    let stackFusion;
+    stackList["image"] = stack;
     // we add the "unit" attribute to the stacks
     stack.unit = information["image"].unit;
     // we create the main stackHelper (easy manipulation of stacks)
@@ -91,26 +92,27 @@ window.onload = function() {
     stackHelper.border.visible = false;
 
     // Cleaning the imported (now useless) raw data
-    //stack._rawData = null;
-    //stack._frame = null;
+    cleanStack(stack);
 
     // and add the stacks we have loaded to the 3D scene
     sceneManager.setMainStackHelper(stackHelper);
     // and add the stacks we have loaded to the 3D scene
     if (seriesContainer["fusion"]) {
+      let stackFusion;
       stackFusion = seriesContainer["fusion"][0].mergeSeries(seriesContainer["fusion"])[0].stack[0];
       stackFusion.unit = information["fusion"].unit;
       sceneManager.addLayerStack(stackFusion, "fusion");
+      stackList["fusion"] = stackFusion;
 
       // Cleaning the imported (now useless) raw data
-      stackFusion._rawData = null;
-      stackFusion._frame = null;
+      cleanStack(stackFusion);
     }
 
     createCross();
 
+
     // setup controls and shortcuts
-    controls = new CustomControls(camera, stackHelper, cross, canvas, changePtr);
+    controls = new CustomControls(camera, stackHelper, stackList, canvas, changePtr);
     camera.controls = controls;
     // setup camera
     let worldbb = sceneManager.worldBB;
@@ -136,7 +138,7 @@ window.onload = function() {
     camera.fitBox(2); // here 2 means 'best of width & height' (0 'width', 1 'height')
 
     guiManager.updateLabels(camera.directionsLabel, stack.modality);
-    guiManager.buildGUI(sceneManager, camera, changePtr);
+    guiManager.buildGUI(sceneManager, camera, changePtr, canvas);
 
     //Set the "Resize" listener
     window.addEventListener('resize', onWindowResize, false);
@@ -145,13 +147,24 @@ window.onload = function() {
     // And start animating
     animationManager.startAnimating(config.fps,
       function() {
-        controls.update();
         if (changePtr.hasChanged) {
-          sceneManager.render(renderer, camera);
+        sceneManager.render(renderer, camera);
+          controls.update();
+          guiManager.updateCross(cross, controls._mouse);
+          guiManager.updateProb(controls.values, information);
           changePtr.hasChanged = false;
         }
         stats.update();
       });
+
+  }
+
+
+  function cleanStack(aStack) {
+    //  let length = aStack._frame.length;
+    aStack._rawData = null;
+    // we cannot clean _frame for the moment... needed to read the prob value...
+    //aStack._frame = new Array(length);
   }
   /**
    * Handle window resize

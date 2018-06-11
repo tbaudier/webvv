@@ -1,20 +1,25 @@
 // Window presets managment
 const lutWindowManager = require('./lutWindowManager');
+// Viewer config file
+const config = require('./viewer.config');
 
 function f() {
 
-  function buildGUI(scene, camera, changes) {
+  let canvas;
+
+  function buildGUI(scene, camera, changes, domElement) {
     let sceneManager = scene;
     let stackHelper = scene.stackHelper;
     let stack = scene.stackHelper._stack;
     let fusionUni = scene.uniforms.fusion;
+    canvas = domElement;
 
     let changePrt = changes;
 
     let gui = new dat.GUI({
       autoPlace: false,
     });
-
+    
     // probe
     let camUtils = {
       invertRows: false,
@@ -162,9 +167,25 @@ function f() {
     left.innerHTML = labels[3];
   }
 
+  function updateProb(values, info) {
+    let text = "";
+    for(let prop in values){
+      text += prop + " : " + values[prop] + " " + info[prop].unit + " <br/>";
+    }
+    document.getElementById("data-prob").innerHTML = text;
+  }
+
+  function updateCross(cross, coords) {
+    // update graphical cross
+    cross.horizontal.style.top = coords.y + "px";
+    cross.vertical.style.left = coords.x + "px";
+  }
+
   return {
     buildGUI: buildGUI,
-    updateLabels: updateLabels
+    updateLabels: updateLabels,
+    updateProb: updateProb,
+    updateCross: updateCross
   }
 }
 

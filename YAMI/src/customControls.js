@@ -5,7 +5,7 @@ const config = require('./viewer.config');
 //const Map = require("collections/map");
 
 export default class customControls extends THREE.EventDispatcher {
-  constructor(camera, stack, cross, domElement, chgPtr) {
+  constructor(camera, stackCtrl, stacks, domElement, chgPtr) {
     super();
     // a simple handler to access "this." attributes from functions not declared as "this."function (aka private)
     let _this = this;
@@ -44,24 +44,30 @@ export default class customControls extends THREE.EventDispatcher {
 
     // Public attributes
     this.camera = camera; // as a THREE.js camera (or AMI camera)
-    this.stack = stack; // as a StackHelper, only the main stack
-    this.cross = cross; // cross cursor (dom element)
+    this.stack = stackCtrl; // as a StackHelper, only the main stack
+    this.stackValues = stacks;
     this.domElement = (domElement !== undefined) ? domElement : document; // canvas
     this.crossTarget = new THREE.Vector3(); // 3D position of cross cursor (in World)
+    this.values = {};
 
     this.noZoom = false; // possibility to disable zooming
     this.noPan = false; // possibility to disable panning
 
     this._raycaster = new THREE.Raycaster(); // three js raycaster, only initialized once
-    this._mouse = new THREE.Vector2(); // mouse position retalive to canvas x and y in [-1;1]
+    this._mouseRelative = new THREE.Vector2(); // mouse position retalive to canvas x and y in [-1;1]
+    this._mouse = new THREE.Vector2(domElement.offsetWidth / 2, domElement.offsetHeight / 2);
 
     // Useless
     // without that AMI calls missing objects, but we don't need it in our workflow
     this.target = new THREE.Vector3();
     this.handleResize = function() {};
-    this.update = function() {};
     // end of useless
 
+
+    this.update = function() {
+      updateCrossTarget();
+      updateProbValue();
+    };
 
     // Public methods
     this.setAsResetState = function() {
@@ -80,10 +86,9 @@ export default class customControls extends THREE.EventDispatcher {
       let x = p2.x - p1.x;
       let y = p2.y - p1.y;
       // update graphical cross
-      cross.vertical.style.left = (cross.vertical.getBoundingClientRect().left - domElement.getBoundingClientRect().left + x) + "px";
-      cross.horizontal.style.top = (cross.horizontal.getBoundingClientRect().top - domElement.getBoundingClientRect().top + y) + "px";
-      // update 3D cross
-      updateCrossTarget();
+      _this._mouse.x += x;
+      _this._mouse.y += y;
+
       // relative movement [-1,1]
       x /= domElement.offsetWidth;
       y /= domElement.offsetHeight;
@@ -119,8 +124,8 @@ export default class customControls extends THREE.EventDispatcher {
 
         // cross position stuff
         let target1 = null;
-        updateMousePosition();
-        _this._raycaster.setFromCamera(_this._mouse, _this.camera);
+        updateMouseRelativePosition();
+        _this._raycaster.setFromCamera(_this._mouseRelative, _this.camera);
         let intersectsTarget = this._raycaster.intersectObject(this.stack._slice.children[0]);
         if (intersectsTarget.length > 0) {
           target1 = new THREE.Vector3();
@@ -144,15 +149,15 @@ export default class customControls extends THREE.EventDispatcher {
 
     this.scrollStack = function(directionTop) {
       if (directionTop) {
-        if (stack.index >= stack._stack.dimensionsIJK.z - 1) {
+        if (this.stack.index >= this.stack._stack.dimensionsIJK.z - 1) {
           return false;
         }
-        stack.index += 1;
+        this.stack.index += 1;
       } else {
-        if (stack.index <= 0) {
+        if (this.stack.index <= 0) {
           return false;
         }
-        stack.index -= 1;
+        this.stack.index -= 1;
       }
       changePtr.hasChanged = true;
     }
@@ -172,32 +177,46 @@ export default class customControls extends THREE.EventDispatcher {
       let rect = domElement.getBoundingClientRect();
       let x = event.clientX - rect.left;
       let y = event.clientY - rect.top;
-      cross.horizontal.style.top = y + "px";
-      cross.vertical.style.left = x + "px";
+      _this._mouse.x = x;
+      _this._mouse.y = y;
 
-      updateCrossTarget();
+      changePtr.hasChanged = true;
+    }
 
-      //TODO read the value
+    function updateProbValue() {
+      _this.values.image = getProbValue(_this.stackValues["image"]);
+      _this.values.fusion = getProbValue(_this.stackValues["fusion"]);
+
+      changePtr.hasChanged = true;
+    }
+
+    function getProbValue(stack) {
+
+      let dataCoordinates = AMI.UtilsCore.worldToData(stack.lps2IJK, _this.crossTarget);
+      // update value
+      let value = AMI.UtilsCore.getPixelData(stack, dataCoordinates);
+
+      return AMI.UtilsCore.rescaleSlopeIntercept(
+        value,
+        stack.rescaleSlope,
+        stack.rescaleIntercept);
     }
 
     // Update the 3D position of the cross from its 2D position on the screen
     function updateCrossTarget() {
-      updateMousePosition();
-
-      _this._raycaster.setFromCamera(_this._mouse, _this.camera);
+      updateMouseRelativePosition();
+      _this._raycaster.setFromCamera(_this._mouseRelative, _this.camera);
       let intersectsTarget = _this._raycaster.intersectObject(_this.stack._slice.children[0]);
       if (intersectsTarget.length > 0) {
         _this.crossTarget.copy(intersectsTarget[0].point);
       }
     }
     // update the vector _mouse from the position of the mouse on the screen
-    function updateMousePosition() {
+    function updateMouseRelativePosition() {
       let rectCanvas = domElement.getBoundingClientRect();
-      let rectX = cross.vertical.getBoundingClientRect();
-      let rectY = cross.horizontal.getBoundingClientRect();
 
-      _this._mouse.x = ((rectX.left - rectCanvas.left) / rectCanvas.width) * 2 - 1;
-      _this._mouse.y = -((rectY.top - rectCanvas.top) / rectCanvas.height) * 2 + 1;
+      _this._mouseRelative.x = (_this._mouse.x / rectCanvas.width) * 2 - 1;
+      _this._mouseRelative.y = -(_this._mouse.y / rectCanvas.height) * 2 + 1;
     }
 
     ///////////
@@ -288,7 +307,7 @@ export default class customControls extends THREE.EventDispatcher {
     function mousedown(event) {
       switch (event.which) { // which button of the mouse is pressed
 
-        case 1:  // left click
+        case 1: // left click
           switch (_this._state) {
             case STATE.PAN:
               _this._state = STATE.PANNING;
@@ -312,7 +331,7 @@ export default class customControls extends THREE.EventDispatcher {
           event.preventDefault();
           break;
 
-        case 3:  //right click
+        case 3: //right click
           _this._state = STATE.WINDOWING;
           break;
       }
@@ -462,48 +481,13 @@ export default class customControls extends THREE.EventDispatcher {
       clearEvents();
     };
 
-    // /**
-    //  * On mouse move callback
-    //  */
-    // function onMouseMove(event) {
-    //   if (ctrlDown) {
-    //     if (drag.start.x === null) {
-    //       drag.start.x = event.clientX;
-    //       drag.start.y = event.clientY;
-    //     }
-    //     let threshold = 15;
-    //
-    //     stackHelper.slice.intensityAuto = false;
-    //
-    //     let dynamicRange = stack.minMax[1] - stack.minMax[0];
-    //     dynamicRange /= threeD.clientWidth;
-    //
-    //     if (Math.abs(event.clientX - drag.start.x) > threshold) {
-    //       // window width
-    //       stackHelper.slice.windowWidth +=
-    //         dynamicRange * (event.clientX - drag.start.x);
-    //       drag.start.x = event.clientX;
-    //     }
-    //
-    //     if (Math.abs(event.clientY - drag.start.y) > threshold) {
-    //       // window center
-    //       stackHelper.slice.windowCenter -=
-    //         dynamicRange * (event.clientY - drag.start.y);
-    //       drag.start.y = event.clientY;
-    //     }
-    //   }
-    // }
-    // document.addEventListener('mousemove', onMouseMove);
-
     //////////////
     // Code executed in constructor
     ///////////
 
     addEvents();
-    updateCrossTarget();
 
     this.handleResize();
-    this.update();
     this.setAsResetState();
   }
 
