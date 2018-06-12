@@ -19,7 +19,7 @@ function f() {
     let gui = new dat.GUI({
       autoPlace: false,
     });
-    
+
     // probe
     let camUtils = {
       invertRows: false,
@@ -61,14 +61,13 @@ function f() {
       stackHelper.slice.windowCenter = preset[1];
       changes.hasChanged = true;
     });
-    /*
         let lutUpdate = stackFolder.add(
-          stackHelper.slice.lut, 'lut', stackHelper.slice.lut.lutsAvailable());
+          stackHelper.slice.lut, 'lut', stackHelper.slice.lut.lutsAvailable()).name("Lut Color");
         lutUpdate.onChange(function(value) {
           stackHelper.slice.lutTexture = stackHelper.slice.lut.texture;
           changes.hasChanged = true;
         });
-        let lutDiscrete = stackFolder.add(stackHelper.slice.lut, 'discrete', false);
+    /*    let lutDiscrete = stackFolder.add(stackHelper.slice.lut, 'discrete', false);
         lutDiscrete.onChange(function(value) {
           stackHelper.slice.lutTexture = stackHelper.slice.lut.texture;
           changes.hasChanged = true;

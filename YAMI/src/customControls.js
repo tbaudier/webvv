@@ -162,12 +162,12 @@ export default class customControls extends THREE.EventDispatcher {
       changePtr.hasChanged = true;
     }
 
-    this.changeWindow = function(deltaWidth, deltaCenter, factor) {
+    this.changeWindow = function(deltaWidth, deltaCenter) {
       // Window width on X
-      _this.stack.slice.windowWidth += deltaWidth * factor;
+      _this.stack.slice.windowWidth += deltaWidth * config.windowingSpeedFactor;
       _this.stack.slice.windowWidth = Math.min(Math.max(_this.stack.slice.windowWidth, 1), _this.stack._stack.minMax[1] - _this.stack._stack.minMax[0]);
       // Window center on -Y
-      _this.stack.slice.windowCenter -= deltaCenter * factor;
+      _this.stack.slice.windowCenter -= deltaCenter * config.windowingSpeedFactor;
       _this.stack.slice.windowCenter = Math.min(Math.max(_this.stack.slice.windowCenter, _this.stack._stack.minMax[0]), _this.stack._stack.minMax[1]);
 
       changePtr.hasChanged = true;
@@ -184,8 +184,9 @@ export default class customControls extends THREE.EventDispatcher {
     }
 
     function updateProbValue() {
-      _this.values.image = getProbValue(_this.stackValues["image"]);
-      _this.values.fusion = getProbValue(_this.stackValues["fusion"]);
+      for (let prop in _this.stackValues)
+        if (_this.stackValues.hasOwnProperty(prop))
+          _this.values[prop] = getProbValue(_this.stackValues[prop]);
 
       changePtr.hasChanged = true;
     }
@@ -232,7 +233,7 @@ export default class customControls extends THREE.EventDispatcher {
     }
 
     function windowByDrag(pOld, pNew) {
-      _this.changeWindow(pNew.x - pOld.x, pNew.y - pOld.y, 10);
+      _this.changeWindow(pNew.x - pOld.x, pNew.y - pOld.y);
     }
 
     function keypressed(event) {

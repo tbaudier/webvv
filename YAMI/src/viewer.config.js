@@ -25,6 +25,7 @@ module.exports = {
   zoomSpeed: 1.1, // factor of zooming, must be greater than 1.
   zoomInIsWheelDown: true, // direction of wheel zooming
   stackTopIsWheelDown: true, // direction of wheel stacking/changing index
+  windowingSpeedFactor: 10,
 
   // Shortcuts KeyCodes
   // (holding input must be saved as KeyCode)
