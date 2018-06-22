@@ -171,7 +171,7 @@ export default class sceneManager {
       ]);
       lut.luts = LutHelper.presetLuts();
       luts[stackname] = lut;
-      lut.lut = "blue";
+      lut.lut = "spectrum";
 
       let sceneTexture = new THREE.WebGLRenderTarget(canvas.clientWidth, canvas.clientHeight, {
         minFilter: THREE.NearestFilter,

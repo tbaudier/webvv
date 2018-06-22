@@ -15,8 +15,8 @@ export default class customControls extends THREE.EventDispatcher {
 
     // enum of possible states
     let STATE = {
-      NONE: 0,
       SETPROB: 1,
+      SETTINGPROB: 2,
       PAN: 3,
       PANNING: 4,
       WINDOW: 5,
@@ -30,10 +30,10 @@ export default class customControls extends THREE.EventDispatcher {
     let pressedKeys = new Map();
 
     // state to determine what the present action is
-    let _state = STATE.NONE;
+    this._state = STATE.SETPROB;
     // state to determine what button was selected before doing this action
     // useful to remember the right state even if the user use a shortcut to do another action
-    let _buttonState = STATE.NONE;
+    _this._buttonState = STATE.SETPROB;
 
     // drag and drop helpers
     let oldMousePosition = new THREE.Vector2();
@@ -74,7 +74,7 @@ export default class customControls extends THREE.EventDispatcher {
       // TODO
     };
     this.reset = function() {
-      //TODO
+      console.log("here we are supposed to reset")
       changePtr.hasChanged = true;
     };
 
@@ -173,6 +173,64 @@ export default class customControls extends THREE.EventDispatcher {
       changePtr.hasChanged = true;
     }
 
+    this.localWindowing = function() {
+      let rectCanvas = domElement.getBoundingClientRect();
+      let mouseHoverRelative = new THREE.Vector2();
+      let hoverTarget = new THREE.Vector3();
+      let hoverCoordinates = new THREE.Vector3();
+      let stack = _this.stack._stack;
+
+      mouseHoverRelative.x = ((oldMousePosition.x - rectCanvas.left) / rectCanvas.width) * 2 - 1;
+      mouseHoverRelative.y = -((oldMousePosition.y - rectCanvas.top) / rectCanvas.height) * 2 + 1;
+
+      _this._raycaster.setFromCamera(mouseHoverRelative, _this.camera);
+      let intersectsTarget = _this._raycaster.intersectObject(_this.stack._slice.children[0]);
+      if (intersectsTarget.length > 0) {
+        hoverTarget.copy(intersectsTarget[0].point);
+      }
+
+      hoverCoordinates
+        .copy(hoverTarget)
+        .applyMatrix4(stack.lps2IJK)
+        .addScalar(0.5)
+        .floor();
+
+      let minMax = null;
+      let temp = new THREE.Vector3().copy(hoverCoordinates);
+
+      for (let x = -config.localWindowingSize + 1; x < config.localWindowingSize; x++) {
+        temp.x = temp.x + 1;
+        temp.y = hoverCoordinates.y;
+        temp.z = hoverCoordinates.z;
+        for (let y = -config.localWindowingSize + 1; y < config.localWindowingSize; y++) {
+          temp.y = temp.y + 1;
+          temp.z = hoverCoordinates.z;
+          for (let z = -config.localWindowingSize + 1; z < config.localWindowingSize; z++) {
+            temp.z = temp.z + 1;
+            let value = AMI.UtilsCore.getPixelData(stack, temp);
+            if (value)
+              if (minMax) {
+                if (minMax[0] > value) {
+                  minMax[0] = value;
+                }
+                if (minMax[1] < value) {
+                  minMax[1] = value;
+                }
+              } else {
+                minMax = [value, value];
+              }
+          }
+        }
+      }
+      minMax[0] = AMI.UtilsCore.rescaleSlopeIntercept(minMax[0], stack.rescaleSlope, stack.rescaleIntercept);
+      minMax[1] = AMI.UtilsCore.rescaleSlopeIntercept(minMax[1], stack.rescaleSlope, stack.rescaleIntercept);
+
+      _this.stack.slice.windowWidth = minMax[1] - minMax[0] + 1;
+      _this.stack.slice.windowCenter = (minMax[0] + minMax[1]) / 2;
+
+      changePtr.hasChanged = true;
+    }
+
     this.prob = function(event) {
       let rect = domElement.getBoundingClientRect();
       let x = event.clientX - rect.left;
@@ -188,12 +246,28 @@ export default class customControls extends THREE.EventDispatcher {
         if (_this.stackValues.hasOwnProperty(prop))
           _this.values[prop] = getProbValue(_this.stackValues[prop]);
 
+
       changePtr.hasChanged = true;
     }
 
     function getProbValue(stack) {
 
-      let dataCoordinates = AMI.UtilsCore.worldToData(stack.lps2IJK, _this.crossTarget);
+      //let dataCoordinates = AMI.UtilsCore.worldToData(stack.lps2IJK, _this.crossTarget);
+      // we use the same method as in AMI but keeping floating values :
+      let dataCoordinates = new THREE.Vector3()
+        .copy(_this.crossTarget)
+        .applyMatrix4(stack.lps2IJK)
+        .addScalar(0.5);
+      /*
+            console.log("Here : ");
+            console.log(_this.crossTarget);
+            console.log(dataCoordinates);
+      */
+      //display it to the user now
+
+      // then we round : same rounding in the shaders
+      dataCoordinates.floor();
+
       // update value
       let value = AMI.UtilsCore.getPixelData(stack, dataCoordinates);
 
@@ -251,6 +325,9 @@ export default class customControls extends THREE.EventDispatcher {
         case config.resetCamera:
           _this.reset();
           break;
+        case config.localWindowing:
+          _this.localWindowing();
+          break;
       }
     }
 
@@ -260,7 +337,7 @@ export default class customControls extends THREE.EventDispatcher {
 
       switch (event.key) {
         case 'Escape':
-          _this._state = STATE.NONE;
+          _this._state = STATE.SETPROB;
           _this._buttonState = _this._state;
           break;
         case config.stateZoom:
@@ -322,8 +399,10 @@ export default class customControls extends THREE.EventDispatcher {
             case STATE.WINDOW:
               _this._state = STATE.WINDOWING;
               break;
-            default:
+            case STATE.SETPROB:
+              _this._state = STATE.SETTINGPROB;
               _this.prob(event);
+              break;
           }
           break;
 
@@ -339,13 +418,11 @@ export default class customControls extends THREE.EventDispatcher {
       oldMousePosition.x = event.clientX;
       oldMousePosition.y = event.clientY;
 
-      document.addEventListener('mousemove', mousemove, false);
       updateDOM();
     }
 
     function mouseup(event) {
       _this._state = _this._buttonState;
-      document.removeEventListener('mousemove', mousemove, false);
       updateDOM();
     }
 
@@ -365,11 +442,11 @@ export default class customControls extends THREE.EventDispatcher {
         case STATE.WINDOWING:
           windowByDrag(oldMousePosition, newMousePosition);
           break;
-        default:
+        case STATE.SETTINGPROB:
           _this.prob(event);
+          break;
       }
-      oldMousePosition = newMousePosition;
-      newMousePosition = new THREE.Vector2();
+      oldMousePosition = newMousePosition.clone();
     }
 
     function mousewheel(event) {
@@ -421,6 +498,7 @@ export default class customControls extends THREE.EventDispatcher {
           document.getElementById('label-control-slice').classList.remove("disabled");
           break;
         case STATE.SETPROB:
+        case STATE.SETTINGPROB:
         default:
           document.getElementById('button-control-prob').setAttribute("disabled", "true");
           document.getElementById('label-control-prob').classList.remove("disabled");
@@ -461,6 +539,9 @@ export default class customControls extends THREE.EventDispatcher {
       document.addEventListener('keyup', keyup, false); // Keys
       document.addEventListener('keydown', keydown, false); // Keys
 
+
+      document.addEventListener('mousemove', mousemove, false);
+
       document.getElementById('button-control-pan').addEventListener('click', setState);
       document.getElementById('button-control-zoom').addEventListener('click', setState);
       document.getElementById('button-control-slice').addEventListener('click', setState);
@@ -476,6 +557,14 @@ export default class customControls extends THREE.EventDispatcher {
       document.removeEventListener('keypress', keypressed, false); // Keys
       document.removeEventListener('keyup', keyup, false); // Keys
       document.removeEventListener('keydown', keydown, false); // Keys
+
+      document.removeEventListener('mousemove', mousemove, false);
+
+      document.getElementById('button-control-pan').removeEventListener('click', setState);
+      document.getElementById('button-control-zoom').removeEventListener('click', setState);
+      document.getElementById('button-control-slice').removeEventListener('click', setState);
+      document.getElementById('button-control-window').removeEventListener('click', setState);
+      document.getElementById('button-control-prob').removeEventListener('click', setState);
     }
 
     this.dispose = function() {

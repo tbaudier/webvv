@@ -26,6 +26,8 @@ module.exports = {
   zoomInIsWheelDown: true, // direction of wheel zooming
   stackTopIsWheelDown: true, // direction of wheel stacking/changing index
   windowingSpeedFactor: 10,
+  // local windowing prob side will be 2 * size -1 (in dataCoordinates)
+  localWindowingSize : 10,
 
   // Shortcuts KeyCodes
   // (holding input must be saved as KeyCode)
@@ -36,6 +38,8 @@ module.exports = {
   stateWindow: 'w',
   stateProb: 'p',
   stateSlice: 's',
+
+  localWindowing: 'l',
 
   zoomIn: '+',
   zoomIn2: 'i',
