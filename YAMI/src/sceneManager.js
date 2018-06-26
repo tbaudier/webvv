@@ -4,64 +4,94 @@ import LutHelper from './customLutHelper';
 // Viewer config file
 const config = require('./viewer.config');
 
+/**
+ * This class manage 3D objects, textures, renders, image fusion...<br/>
+ * You might want to change the structure of object attributes to use this class outside of YAMI project.
+ * @class
+ * @alias SceneManager
+ */
 export default class sceneManager {
+
+  /**
+   * Create a SceneManager, and prepare its renderer to a given DOM Element.
+   * @constructor
+   * @param  {Element} canvasElement DOM element to replace with the visualization
+   */
   constructor(canvasElement) {
+    /** World bouding box, use to "bestfit" the camera */
     let worldBB = [0, 0, 0, 0, 0, 0]; // xmin, xmax, ymin, ymax, zmin, zmax
 
     let _this = this;
 
     let canvas = canvasElement;
-
+    /** object having the scenes (THREE.Scene) created */
     let scenes = {
       background: null,
       fusion: null,
       overlay: null,
       struct: [],
     };
-
+    /** object having the luts scales (CustomLutHelper) created */
     let luts = {
       background: null,
       fusion: null,
       overlay: null,
       struct: [],
     }
-
+    /** object having the texture where each scene is rendered. This texture will be mixed after that to do the final render */
     let textureTargets = {
       background: null,
       fusion: null,
       overlay: null,
       struct: [],
     }
-
+    /** object having the 3D meshes. Background mesh is a AMI.StackHelper, other are THREE.Mesh */
     let meshes = {
       background: null,
       fusion: null,
       overlay: null,
       struct: [],
     }
-
-    let translations = {
-      background: null,
-      fusion: null,
-      overlay: null,
-      struct: [],
-    }
-
+    /**
+     * World bouding box, use to "bestfit" the camera<br/>
+     * Array : [xmin, xmax, ymin, ymax, zmin, zmax]
+     * @memberof SceneManager
+     */
     this.worldBB = worldBB;
+    /**
+     * object having the Uniforms object (AMI.DataUniformShader). <i>Constants sent with the shader. cf OpenGL</i>
+     * @memberof SceneManager
+     * @see AMI.DataUniformShader
+     */
     this.uniforms = {};
+    /**
+     * Access to the StackHelper of the background
+     * @memberof SceneManager
+     */
     this.stackHelper;
+    /**
+     * object having the luts scales (CustomLutHelper) created
+     * @memberof SceneManager
+     * @see CustomLutHelper
+     */
     this.luts = luts;
+    /**
+     * The Uniform object (FusionShaderUni) of the mix
+     * @memberof SceneManager
+     * @see FusionShaderUni
+     */
     this.uniformsMix;
 
-
-    // mixing : sceneBG+sceneLayers[0] then scenesMix[i]+sceneLayers[i+1]
-    // final mix is last element of scenesMix
     let sceneMix;
     let materialMix;
     let mesheMix;
 
     initBG();
 
+    /**
+     * Call this method when the DOM element is resized.<br/>
+     * Here we resize every texture target to keep them at the size of the DOM element.
+     */
     this.resize = function() {
       // background
       textureTargets["background"].setSize(canvas.clientWidth, canvas.clientHeight);
@@ -74,12 +104,15 @@ export default class sceneManager {
       // RT structs
       for (let text of textureTargets["struct"])
         text.setSize(canvas.clientWidth, canvas.clientHeight);
-
     }
 
+    /**
+     * Render each scene to its texture target from the point of view of Camera and then mix them.
+     *
+     * @param  {THREE.WebGLRenderer} renderer The Renderer to use (settings, background...)
+     * @param  {THREE.Camera} camera Camera to use (point of view)
+     */
     this.render = function(renderer, camera) {
-      update(); // TODO ailleurs
-
       // background
       renderer.render(scenes["background"], camera, textureTargets["background"], true);
       // fusion
@@ -97,9 +130,9 @@ export default class sceneManager {
       renderer.render(sceneMix, camera);
     }
 
-    /*
-     * Adds a stack to the scene and defines it as the main stack
-     * @param {AMI.StackHelper} Main stackhelper containing the stack.
+    /**
+     * Adds a stack to the scene and defines it as the main stack (background)
+     * @param {AMI.StackHelper} stackHelperI stackhelper containing the stack.
      */
     this.setMainStackHelper = function(stackHelperI) {
       // keep the main stack in memory
@@ -151,12 +184,14 @@ export default class sceneManager {
       textureTargets["background"].setSize(canvas.clientWidth, canvas.clientHeight);
     }
 
-
     /**
+     * Adds a new stack (Different from the main stack where you should use setMainStackHelper).<br/>
      *
+     * @param  {AMI.Stack} stack     description
+     * @param  {string} stackname the name of the stack (now it must be "fusion", "ROI" or "overlay", otherwise the stack will not be added)
      */
     this.addLayerStack = function(stack, stackname) {
-      if (!(stackname == "fusion" || stackname == "overlay"))
+      if (!(stackname == "fusion" || stackname == "overlay" || stackname == "ROI"))
         return;
       // Constructions
       let scene = new THREE.Scene();
@@ -257,6 +292,9 @@ export default class sceneManager {
       updateMixUniforms();
     }
 
+    /**
+     * Create the mix layer
+     */
     function setMixLayer() {
       sceneMix = new THREE.Scene();
 
@@ -278,7 +316,6 @@ export default class sceneManager {
       // go the LPS space
       mesh.applyMatrix(_this.stackHelper.stack._ijk2LPS);
       sceneMix.add(mesh);
-      update();
     }
 
     function updateMixUniforms() {
@@ -295,7 +332,11 @@ export default class sceneManager {
     }
 
 
-    function update() {
+    /**
+     * update    <br/>
+     * Must be called before <i>this.render</i>
+     */
+    this.update = function() {
       function updateLuts() {
         luts["background"].updateLevels(_this.uniforms["background"].uWindowCenterWidth);
         // fusion
@@ -355,6 +396,10 @@ export default class sceneManager {
       updateLuts();
     }
 
+    /**
+     * Update the world bouding box, having the current BB and the BB of a new object added to the scene
+     * @param  {array} otherBB bouding box of the new object as [xmin, xmax, ymin, ymax, zmin, zmax]
+     */
     function updateWorldBB(otherBB) {
       for (let i = 0; i < worldBB.length; i++) {
         if (i % 2 == 0) { // we are on a min

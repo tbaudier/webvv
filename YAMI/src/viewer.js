@@ -1,11 +1,18 @@
 /* globals Stats, dat, AMI, THREE */
+/**
+ * This  module is the coordination between YAMI classes and modules. <br/>
+ * If you use YAMI on your own project, you should probably write your own module instead of this one.
+ *
+ * @module Viewer
+ *
+ */
 
 // Viewer config file
 const config = require('./viewer.config');
 // Managment of JSON request, and parsing
 const requestManager = require('./requestManager');
 // FPS managment
-const animationManager = require('./animator');
+import animationManager from './animator';
 // GUI managment
 const guiManager = require('./guiManager');
 // Controls
@@ -14,11 +21,13 @@ import CustomControls from './customControls';
 import SceneManager from './sceneManager';
 
 // standard global variables
+
 let renderer; // @type {THREE.WebGLRenderer}
 let canvas; // HTML container
 let stats; // @type {Stats}
 
 let sceneManager; // @type {sceneManager}
+let animator;
 
 let changePtr = { // a pointer to pass the "haschanged" value by reference
   hasChanged: true
@@ -27,12 +36,21 @@ let changePtr = { // a pointer to pass the "haschanged" value by reference
 let camera; // @type {THREE.OrthographicCamera}
 let controls; // @type {AMI.TrackballOrthoControl};
 
+/**
+ * Dom Elements of the cross
+ * @private
+ */
 let cross = {
   vertical: null,
   horizontal: null
 };
 
+/**
+ * init - Basic first part of initialization
+ * @private
+ */
 function init() {
+  animator = new animationManager();
   // canvas and THREE.js renderer
   canvas = document.getElementById('r3d');
   renderer = new THREE.WebGLRenderer({
@@ -56,6 +74,10 @@ function init() {
     0.1, 10000);
 }
 
+
+/**
+ * Our code begin on the "onload" function. We instanciate each needed objects to make YAMI works.
+ */
 window.onload = function() {
   // init threeJS and the scene
   init();
@@ -66,12 +88,23 @@ window.onload = function() {
   // Reads the GET params, reads the JSON and load the files
   requestManager.readMultipleFiles(loader, handleSeries, handleError);
 
+
+  /**
+   * handleError - This function is called if requestManager encounters an error
+   * @callback handleError
+   * @global
+   */
   function handleError() {
     canvas.innerHTML = "An error has occured.<br/>Check the JS console for more info.";
   }
 
   /**
-   * Visualize incoming data
+   * handleSeries - This function is called after requestManager succeed. Visualize incoming data.
+   *
+   * @callback handleSeries
+   * @global
+   * @param  {Object} seriesContainer seriesContainer format : {image : [array of IMG], fusion : [array of IMG], ...}
+   * @param  {Object} information     object containing other information contained in the input json.
    */
   function handleSeries(seriesContainer, information) {
     // cleanup the loader and its progress bar
@@ -108,8 +141,8 @@ window.onload = function() {
       cleanStack(stackFusion);
     }
 
+    // create the DOM Element of the cross
     createCross();
-
 
     // setup controls and shortcuts
     controls = new CustomControls(camera, stackHelper, stackList, canvas, changePtr);
@@ -137,6 +170,9 @@ window.onload = function() {
     camera.update();
     camera.fitBox(2); // here 2 means 'best of width & height' (0 'width', 1 'height')
 
+    // set the camera and other status as default (go back to this when press R)
+    controls.setAsResetState();
+
     guiManager.updateLabels(camera.directionsLabel, stack.modality);
     guiManager.buildGUI(sceneManager, camera, changePtr, canvas);
 
@@ -145,10 +181,11 @@ window.onload = function() {
     onWindowResize();
 
     // And start animating
-    animationManager.startAnimating(config.fps,
+    animator.startAnimating(config.fps,
       function() {
         if (changePtr.hasChanged) {
-        sceneManager.render(renderer, camera);
+          sceneManager.update();
+          sceneManager.render(renderer, camera);
           controls.update();
           guiManager.updateCross(cross, controls._mouse);
           guiManager.updateProb(controls.values, information);
@@ -159,15 +196,19 @@ window.onload = function() {
 
   }
 
-
+  /**
+   * cleanStack - clean useless data in a stack, to avoid overused memory
+   *
+   * @param  {AMI.Stack} aStack stack to clean
+   */
   function cleanStack(aStack) {
-    //  let length = aStack._frame.length;
     aStack._rawData = null;
+
     // we cannot clean _frame for the moment... needed to read the prob value...
-    //aStack._frame = new Array(length);
+    //aStack._frame = null;
   }
   /**
-   * Handle window resize
+   * onWindowResize - Handle window resize
    */
   function onWindowResize() {
     camera.canvas = {
@@ -179,7 +220,7 @@ window.onload = function() {
     changePtr.hasChanged = true;
   }
   /**
-   * Handle general information
+   * writeInformation - Handle general information
    */
   function writeInformation(jsonData) {
     document.getElementById("sub-title").innerHTML = "[" + jsonData.data.study + "] " + jsonData.data.patient;
@@ -194,6 +235,9 @@ window.onload = function() {
     }
   }
 
+  /**
+   * createCross - Create the Dom Elements of the cross
+   */
   function createCross() {
     cross.horizontal = document.createElement('div');
     cross.horizontal.style.borderTop = '1px solid';

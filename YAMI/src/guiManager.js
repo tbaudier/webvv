@@ -3,10 +3,25 @@ const lutWindowManager = require('./lutWindowManager');
 // Viewer config file
 const config = require('./viewer.config');
 
+/**
+ * Create and manager the Graphic User Interface elements <br/>
+ * Such has menus, green cross, labels...
+ *
+ * @module GUIManager
+ */
 function f() {
 
   let canvas;
 
+  /**
+   * Build the first elments of the GUI.
+   *
+   * @param  {SceneManager} scene  the scene manager
+   * @param  {AMI.Camera} camera   the camera
+   * @param  {object} changes    pointer to changes as <i>changes.hasChanged = true</i>
+   * @param  {Element} domElement DOM Element
+   * @memberof module:GUIManager
+   */
   function buildGUI(scene, camera, changes, domElement) {
     let sceneManager = scene;
     let stackHelper = scene.stackHelper;
@@ -150,6 +165,15 @@ function f() {
     });
   }
 
+  /**
+   * Update the labels of each side, from the camera modality
+   *
+   * @param  {string[]} labels   a 1*6 array for existing directions
+   * @param  {string} modality modality of the stack
+   * @see AMI.Camera
+   * @see AMI.Stack
+   * @memberof module:GUIManager
+   */
   function updateLabels(labels, modality) {
     if (modality === 'CR' || modality === 'DX') return;
 
@@ -166,6 +190,13 @@ function f() {
     left.innerHTML = labels[3];
   }
 
+  /**
+   * Update the displayed value of the prob, with the new values given
+   *
+   * @param  {Object} values object as {background : value of the BG, fusion : value of the fusion...}
+   * @param  {Object} info object having the stacks information, including data units.
+   * @memberof module:GUIManager
+   */
   function updateProb(values, info) {
     let text = "";
     for(let prop in values){
@@ -174,6 +205,13 @@ function f() {
     document.getElementById("data-prob").innerHTML = text;
   }
 
+  /**
+   * Move the green cross to a new position
+   *
+   * @param  {Object} cross  Object containing the DOM Elements of the cross
+   * @param  {THREE.Vector2} coords mouse position relative to the DOM Element (in px)
+   * @memberof module:GUIManager
+   */
   function updateCross(cross, coords) {
     // update graphical cross
     cross.horizontal.style.top = coords.y + "px";

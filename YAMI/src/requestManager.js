@@ -1,9 +1,19 @@
+/**
+ * This module manages HTTP requests and data loading<br/>
+ * Note that most of these methods (all but readMultipleFiles) are not visible from outside
+ * because not currently useful from outside, but they exist and can be made visible easly (adding them
+* to the return clause).
+ *
+ * @module RequestManager
+ */
 function requestManager() {
   /**
-   * Filter array of data by extension
-   * extension {String}
-   * item {Object}
-   * @return {Boolean}
+   * Returns true if an object has the requested extension, false otherwise.
+   *
+   * @param  {string} extension requested extension (as string)
+   * @param  {object} item object having a <i>extension</i> attribute (string) to compare
+   * @return {Boolean} true if item has the same extension (ignoring case)
+   * @memberof module:RequestManager
    */
   function _filterByExtension(extension, item) {
     if (item.extension.toUpperCase() === extension.toUpperCase()) {
@@ -15,6 +25,7 @@ function requestManager() {
   /**
    * Returns parameters given in URL (as GET parameters)
    * @return {Object} a dictionnary params['paramName'] = 'paramValue'
+   * @memberof module:RequestManager
    */
   function getGETparameters() {
     let params = [];
@@ -31,7 +42,10 @@ function requestManager() {
 
   /**
    * Makes a json request to a given URL
-   * @return {Promise} Promise object represents the content of the json request
+   *
+   * @param  {string} url url to the json to fetch
+   * @return {Promise} Promise object representing the content of the response of the json request
+   * @memberof module:RequestManager
    */
   function jsonHttpRequest(url) {
     return new Promise((resolve, reject) => {
@@ -56,7 +70,10 @@ function requestManager() {
 
   /**
    * Makes a binary request to a given URL
-   * @return {Promise} Promise object represents the binary content of the http request
+   *
+   * @param  {string} url url to the binary file to fetch
+   * @return {Promise} Promise object represents the binary content of the response of the http request
+   * @memberof module:RequestManager
    */
   function binaryHttpRequest(url) {
     return new Promise((resolve, reject) => {
@@ -81,7 +98,12 @@ function requestManager() {
 
   /**
    * Fetches binary files given a json containing 'category : [url1, url2,...]'
+   *
+   * @param  {Object} jsonData   parsed input json
+   * @param  {Object} files      container object where the result is written
+   * @param  {string} categoryName name of the fetched category
    * @return {Promise} Promise object represents the array of fetched files.
+   * @memberof module:RequestManager
    */
   function fetchCategoryFiles(jsonData, files, categoryName) {
     return new Promise((resolve, reject) => {
@@ -120,11 +142,13 @@ function requestManager() {
   }
 
   /**
-   * Parse incoming files
-   * Reads an URL of a json (given in GET param), and parse files indicated in this json
-   * @param {AMI.VolumeLoader} loader AMI given loader
-   * @param {function} handleSeriesFunct a callback function that takes a param (seriesContainer)
+   * Parse incoming files<br/>
+   * Reads an URL of a json (given in GET param), and parse files indicated in this json<br/>
    * seriesContainer format : {image : [array of IMG], fusion : [array of IMG], ...}
+   * @param  {AMI.VolumeLoader} loader AMI given loader
+   * @param  {handleSeries} handleSeriesFunct  a callback function that takes a param (seriesContainer)
+   * @param  {handleError} handleError        a callback function when an error is thrown
+   * @memberof module:RequestManager
    */
   function readMultipleFiles(loader, handleSeriesFunct, handleError) {
 
@@ -168,6 +192,15 @@ function requestManager() {
         handleError();
       });
 
+    /**
+     * Takes a json object as input, fetch corresponding data and loads them.
+     *
+     * @param  {Object} jsonParameters parsed input json
+     * @param  {Object} files      container object where the result is written
+     * @param  {string} categoryName name of the fetched category
+     * @return {Promise} Promise object representing the loaded data
+     * @memberof module:RequestManager
+     */
     function fetchAndLoadData(jsonParameters, files, category) {
       return new Promise((resolve, reject) => {
         Promise.resolve()
@@ -192,6 +225,12 @@ function requestManager() {
       });
     }
 
+    /**
+     * Create the information object
+     *
+     * @param  {Object} json          input json object
+     * @param  {Object} futureContainer output json object
+     */
     function parseInformationData(json, futureContainer) {
       futureContainer["information"] = {};
       futureContainer["information"]["data"] = json["information"];

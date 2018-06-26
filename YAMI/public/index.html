@@ -7,13 +7,15 @@
   <title>YAMI - Medical Viewer</title>
 
   <link rel="stylesheet" type="text/css" href="stylesheets/style.css">
-  <!-- useless font ?
-  <script type="text/javascript" src="https://use.edgefonts.net/source-code-pro.js"></script> <!-- font -->
-  <script type="text/javascript" src="https://cdn.rawgit.com/K3D-tools/dat.gui/master/build/dat.gui.min.js"></script> <!-- gui -->
-  <!-- previous import to be replaced with
-  <script type="text/javascript" src="https://cdn.rawgit.com/dataarts/dat.gui/master/build/dat.gui.min.js"></script> <!-- gui -->
-  <script type="text/javascript" src="https://cdn.rawgit.com/mrdoob/stats.js/master/build/stats.min.js"></script> <!-- stats (fps) -->
+
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/92/three.min.js"></script> <!-- 3D -->
+  <!-- Follow the dat.gui repository, today it has a known bug : you cannot mannualy set a value to a field with ".listen()".
+  We use this .listen() on windowWidth and WindowCenter on the GUI (on the right of the window). Input values cannot be written.
+  -->
+  <script type="text/javascript" src="https://cdn.rawgit.com/dataarts/dat.gui/master/build/dat.gui.min.js"></script> <!-- gui -->
+  <!-- Following import is not necessary. Can be deleted. (and delete references to it in viewer.js)
+  -->
+  <script type="text/javascript" src="https://cdn.rawgit.com/mrdoob/stats.js/master/build/stats.min.js"></script> <!-- stats (fps) -->
 
   <!-- AMI -->
   <script type="text/javascript" src="lib/ami.min.js"></script> <!-- AMI -->
@@ -71,13 +73,13 @@
         </div>
 
         <div class="under-viewer">
-          <div class="" id="my-lut-container">
+          <div id="data-prob"></div>
+
+          <div id="my-lut-container">
             <div id="my-lut-canvases">
               <!-- Colormaps -->
             </div>
-          </div><!--
-
-          --><div id="data-prob" class="mid-width"></div>
+          </div>
         </div>
 
       </div>

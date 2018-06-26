@@ -1,3 +1,4 @@
+/* global settings */
 body, html {
   margin: 0;
   height: 100%;
@@ -6,13 +7,16 @@ body, html {
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
 }
 
+/* Color of the button of the active mode */
 button:disabled{
   background-color: #00fa9a;
 }
+/* Underlining the first letter of the button because it's the shortcut keys
+If the shortcut key changes, it may be wise not to undeline it*/
 button::first-letter{
   text-decoration: underline;
 }
-
+/* color of a "disabled" text */
 .disabled{
   color : grey;
 }
@@ -31,11 +35,7 @@ button::first-letter{
   text-align: center;
 }
 
-.mid-width {
-  display: inline-block;
-  width: 50%;
-}
-
+/* Three main panels (left, mid and right) */
 .general-panel, .viewer-panel, .gui-panel {
   display: inline-block;
   margin: 0;
@@ -50,7 +50,7 @@ button::first-letter{
   padding : 10px;
 }
 
-.data-label {
+.general-panel .data-label {
   font-weight: bold;
 }
 
@@ -133,50 +133,7 @@ button::first-letter{
 }
 
 #data-prob{
+  float : right;
   text-align : right;
   font-size: 0.8em;
 }
-/*
-
-#VJSProbe {
-  position: absolute;
-  bottom:0;
-  left: 0;
-  width: 260px;
-  height: 45px;
-  font-family: monospace;
-  padding: 10px;
-  background-color: rgba(249, 249, 249, .7);
-}
-
-#my-lut-container {
-  position: fixed;
-  left: 50%;
-  transform: translate(-50%, 0);
-  z-index: 1;
-  color: #F9F9F9;
-  //display: flex;
-}
-
-#my-lut-container > #my-lut-canvases {
-  position: relative;
-}
-
-#my-lut-min {
-  margin-right: 10px;
-}
-
-#my-lut-max {
-  margin-left: 10px;
-}
-
-#my-lut-container > #my-lut-canvases > :first-child {
-  background: repeating-linear-gradient(-45deg, #353535, #353535 5px, black 5px, black 10px);
-}
-
-#my-lut-container > #my-lut-canvases > :nth-child(2) {
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-*/

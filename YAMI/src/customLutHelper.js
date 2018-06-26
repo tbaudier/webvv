@@ -1,8 +1,8 @@
 /**
- * This class is a customization of AMI.LutHelper
- */
-/**
- * @module helpers/lut
+ * This class is a customization of AMI.LutHelper.<br/>
+ * This customization has been made to allow to write values on the sides of the scale.
+ * @module CustomLutHelper
+ * @see AMI.LutHelper
  */
 export default class HelpersLut {
   constructor(domTarget,

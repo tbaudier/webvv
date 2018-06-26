@@ -1,4 +1,4 @@
-/**
+/*
  * Inspired by AMI.TrackballOrthoControl
  */
 const config = require('./viewer.config');
@@ -41,6 +41,8 @@ export default class customControls extends THREE.EventDispatcher {
 
     // temp vector to be used for calculations
     let _temp = new THREE.Vector3();
+    let cameraResetState;
+    let mouseCursorResetState;
 
     // Public attributes
     this.camera = camera; // as a THREE.js camera (or AMI camera)
@@ -71,10 +73,17 @@ export default class customControls extends THREE.EventDispatcher {
 
     // Public methods
     this.setAsResetState = function() {
-      // TODO
+      cameraResetState = this.camera.clone();
+      mouseCursorResetState = this._mouse.clone();
     };
+
     this.reset = function() {
-      console.log("here we are supposed to reset")
+      camera.copy(cameraResetState);
+      // TODO reset l'orientation aussi lel
+      /*
+      camera.orientation = cameraResetState.orientation;
+      this.stack.orientation = camera.orientation; */
+      this._mouse.copy(mouseCursorResetState);
       changePtr.hasChanged = true;
     };
 
@@ -198,14 +207,18 @@ export default class customControls extends THREE.EventDispatcher {
       let minMax = null;
       let temp = new THREE.Vector3().copy(hoverCoordinates);
 
-      for (let x = -config.localWindowingSize + 1; x < config.localWindowingSize; x++) {
+      let localWindowSize = Math.floor(config.localWindowingSize / this.camera.zoom);
+      if (config.maxLocalWindowingSize < localWindowSize)
+        localWindowSize = config.maxLocalWindowingSize;
+
+      for (let x = -localWindowSize + 1; x < localWindowSize; x++) {
         temp.x = temp.x + 1;
         temp.y = hoverCoordinates.y;
         temp.z = hoverCoordinates.z;
-        for (let y = -config.localWindowingSize + 1; y < config.localWindowingSize; y++) {
+        for (let y = -localWindowSize + 1; y < localWindowSize; y++) {
           temp.y = temp.y + 1;
           temp.z = hoverCoordinates.z;
-          for (let z = -config.localWindowingSize + 1; z < config.localWindowingSize; z++) {
+          for (let z = -localWindowSize + 1; z < localWindowSize; z++) {
             temp.z = temp.z + 1;
             let value = AMI.UtilsCore.getPixelData(stack, temp);
             if (value)
@@ -222,13 +235,15 @@ export default class customControls extends THREE.EventDispatcher {
           }
         }
       }
-      minMax[0] = AMI.UtilsCore.rescaleSlopeIntercept(minMax[0], stack.rescaleSlope, stack.rescaleIntercept);
-      minMax[1] = AMI.UtilsCore.rescaleSlopeIntercept(minMax[1], stack.rescaleSlope, stack.rescaleIntercept);
+      if (minMax) {
+        minMax[0] = AMI.UtilsCore.rescaleSlopeIntercept(minMax[0], stack.rescaleSlope, stack.rescaleIntercept);
+        minMax[1] = AMI.UtilsCore.rescaleSlopeIntercept(minMax[1], stack.rescaleSlope, stack.rescaleIntercept);
 
-      _this.stack.slice.windowWidth = minMax[1] - minMax[0] + 1;
-      _this.stack.slice.windowCenter = (minMax[0] + minMax[1]) / 2;
+        _this.stack.slice.windowWidth = minMax[1] - minMax[0] + 1;
+        _this.stack.slice.windowCenter = (minMax[0] + minMax[1]) / 2;
 
-      changePtr.hasChanged = true;
+        changePtr.hasChanged = true;
+      }
     }
 
     this.prob = function(event) {
