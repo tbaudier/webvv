@@ -81,13 +81,7 @@ export default class customControls extends THREE.EventDispatcher {
     this.reset = function() {
       camera.copy(cameraResetState);
 
-      camera.orientation = cameraResetState.orientation;
-      _this.camera.update();
-      _this.camera.fitBox(2);
-      _this.stack.orientation = _this.camera.stackOrientation;
-
-      let indexMax = _this.stack.orientationMaxIndex;
-      _this.stack.index = Math.floor(indexMax / 2);
+      this.setView(cameraResetState.orientation);
 
       guiManager.updateIndex();
 
@@ -317,6 +311,17 @@ export default class customControls extends THREE.EventDispatcher {
       _this._mouseRelative.y = -(_this._mouse.y / rectCanvas.height) * 2 + 1;
     }
 
+    function updateMouseFromTarget() {
+      let rectCanvas = domElement.getBoundingClientRect();
+      let temp = new THREE.Vector3();
+      temp.copy(_this.crossTarget);
+      temp.project(_this.camera);
+      _this._mouseRelative.x = temp.x;
+      _this._mouseRelative.y = temp.y;
+      _this._mouse.x = (_this._mouseRelative.x + 1) * (rectCanvas.width / 2);
+      _this._mouse.y = (_this._mouseRelative.y + 1) * (rectCanvas.height / 2);
+    }
+
     this.setView = function(orientation) {
       _this.camera.orientation = orientation;
       _this.camera.update();
@@ -325,6 +330,9 @@ export default class customControls extends THREE.EventDispatcher {
 
       let indexMax = _this.stack.orientationMaxIndex;
       _this.stack.index = Math.floor(indexMax / 2);
+
+      updateMouseFromTarget();
+
       changePtr.hasChanged = true;
     }
 
