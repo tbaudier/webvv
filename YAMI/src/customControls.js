@@ -2,7 +2,8 @@
  * Inspired by AMI.TrackballOrthoControl
  */
 const config = require('./viewer.config');
-//const Map = require("collections/map");
+// GUI managment
+const guiManager = require('./guiManager');
 
 export default class customControls extends THREE.EventDispatcher {
   constructor(camera, stackCtrl, stacks, domElement, chgPtr) {
@@ -79,10 +80,17 @@ export default class customControls extends THREE.EventDispatcher {
 
     this.reset = function() {
       camera.copy(cameraResetState);
-      // TODO reset l'orientation aussi lel
-      /*
+
       camera.orientation = cameraResetState.orientation;
-      this.stack.orientation = camera.orientation; */
+      _this.camera.update();
+      _this.camera.fitBox(2);
+      _this.stack.orientation = _this.camera.stackOrientation;
+
+      let indexMax = _this.stack.orientationMaxIndex;
+      _this.stack.index = Math.floor(indexMax / 2);
+
+      guiManager.updateIndex();
+
       this._mouse.copy(mouseCursorResetState);
       changePtr.hasChanged = true;
     };
@@ -158,7 +166,7 @@ export default class customControls extends THREE.EventDispatcher {
 
     this.scrollStack = function(directionTop) {
       if (directionTop) {
-        if (this.stack.index >= this.stack._stack.dimensionsIJK.z - 1) {
+        if (this.stack.index >= _this.stack.orientationMaxIndex - 1) {
           return false;
         }
         this.stack.index += 1;
@@ -307,6 +315,17 @@ export default class customControls extends THREE.EventDispatcher {
 
       _this._mouseRelative.x = (_this._mouse.x / rectCanvas.width) * 2 - 1;
       _this._mouseRelative.y = -(_this._mouse.y / rectCanvas.height) * 2 + 1;
+    }
+
+    this.setView = function(orientation) {
+      _this.camera.orientation = orientation;
+      _this.camera.update();
+      _this.camera.fitBox(2);
+      _this.stack.orientation = _this.camera.stackOrientation;
+
+      let indexMax = _this.stack.orientationMaxIndex;
+      _this.stack.index = Math.floor(indexMax / 2);
+      changePtr.hasChanged = true;
     }
 
     ///////////
@@ -544,6 +563,25 @@ export default class customControls extends THREE.EventDispatcher {
       evt.preventDefault();
     }
 
+    function setView(evt) {
+      let orientation = 'default';
+      switch (evt.target.id) {
+        case 'button-axial':
+          orientation = 'axial';
+          break;
+        case 'button-coronal':
+          orientation = 'coronal';
+          break;
+        case 'button-sagittal':
+          orientation = 'sagittal';
+          break;
+      }
+      _this.setView(orientation);
+      guiManager.updateIndex();
+
+      evt.preventDefault();
+    }
+
     function addEvents() {
       // some event are better on the canvas, and others on the whole document.
       domElement.addEventListener('mousedown', mousedown, false);
@@ -562,6 +600,10 @@ export default class customControls extends THREE.EventDispatcher {
       document.getElementById('button-control-slice').addEventListener('click', setState);
       document.getElementById('button-control-window').addEventListener('click', setState);
       document.getElementById('button-control-prob').addEventListener('click', setState);
+
+      document.getElementById('button-axial').addEventListener('click', setView);
+      document.getElementById('button-coronal').addEventListener('click', setView);
+      document.getElementById('button-sagittal').addEventListener('click', setView);
     }
 
     function clearEvents() {
@@ -580,6 +622,10 @@ export default class customControls extends THREE.EventDispatcher {
       document.getElementById('button-control-slice').removeEventListener('click', setState);
       document.getElementById('button-control-window').removeEventListener('click', setState);
       document.getElementById('button-control-prob').removeEventListener('click', setState);
+
+      document.getElementById('button-axial').removeEventListener('click', setView);
+      document.getElementById('button-coronal').removeEventListener('click', setView);
+      document.getElementById('button-sagittal').removeEventListener('click', setView);
     }
 
     this.dispose = function() {

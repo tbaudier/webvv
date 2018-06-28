@@ -10,8 +10,12 @@ const config = require('./viewer.config');
  * @module GUIManager
  */
 function f() {
-
   let canvas;
+  let indexDOM;
+  let stackHelper;
+  let stackFolder;
+
+  var changePtr;
 
   /**
    * Build the first elments of the GUI.
@@ -24,12 +28,12 @@ function f() {
    */
   function buildGUI(scene, camera, changes, domElement) {
     let sceneManager = scene;
-    let stackHelper = scene.stackHelper;
+    stackHelper = scene.stackHelper;
     let stack = scene.stackHelper._stack;
     let fusionUni = scene.uniforms.fusion;
     canvas = domElement;
 
-    let changePrt = changes;
+    changePtr = changes;
 
     let gui = new dat.GUI({
       autoPlace: false,
@@ -50,7 +54,7 @@ function f() {
     let customContainer = document.getElementById('my-gui-container');
     customContainer.appendChild(gui.domElement);
 
-    let stackFolder = gui.addFolder('Main image');
+    stackFolder = gui.addFolder('Main image');
     stackFolder.add(
       stackHelper.slice, 'windowWidth', 0, stack.minMax[1] - stack.minMax[0]).listen().onChange((value) => {
       windowPreset.window = 'Custom';
@@ -88,8 +92,8 @@ function f() {
           changes.hasChanged = true;
         });*/
 
-    let index = stackFolder.add(
-      stackHelper, 'index', 0, stack.dimensionsIJK.z - 1).step(1).listen().onChange(_ => {
+    indexDOM = stackFolder.add(
+      stackHelper, 'index', 0, stackHelper.orientationMaxIndex - 1).step(1).listen().onChange(_ => {
       changes.hasChanged = true;
     });
     stackFolder.open();
@@ -139,7 +143,7 @@ function f() {
       updateLabels(camera.directionsLabel, stack.modality);
       changes.hasChanged = true;
     });
-
+/*
     let orientationUpdate = cameraFolder.add(
       camUtils, 'orientation', ['default', 'axial', 'coronal', 'sagittal']);
     orientationUpdate.onChange(function(value) {
@@ -162,7 +166,7 @@ function f() {
       camera.fitBox(2);
       updateLabels(camera.directionsLabel, stack.modality);
       changes.hasChanged = true;
-    });
+    });*/
   }
 
   /**
@@ -218,11 +222,20 @@ function f() {
     cross.vertical.style.left = coords.x + "px";
   }
 
+  function updateIndex(){
+    stackFolder.remove(indexDOM);
+    indexDOM = stackFolder.add(
+      stackHelper, 'index', 0, stackHelper.orientationMaxIndex - 1).step(1).listen().onChange(_ => {
+      changePtr.hasChanged = true;
+    });
+  }
+
   return {
     buildGUI: buildGUI,
     updateLabels: updateLabels,
     updateProb: updateProb,
-    updateCross: updateCross
+    updateCross: updateCross,
+    updateIndex: updateIndex
   }
 }
 

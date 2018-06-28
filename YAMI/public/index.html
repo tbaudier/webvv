@@ -8,17 +8,21 @@
 
   <link rel="stylesheet" type="text/css" href="stylesheets/style.css">
 
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/92/three.min.js"></script> <!-- 3D -->
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/92/three.min.js"></script>
+  <!-- 3D -->
   <!-- Follow the dat.gui repository, today it has a known bug : you cannot mannualy set a value to a field with ".listen()".
   We use this .listen() on windowWidth and WindowCenter on the GUI (on the right of the window). Input values cannot be written.
   -->
-  <script type="text/javascript" src="https://cdn.rawgit.com/dataarts/dat.gui/master/build/dat.gui.min.js"></script> <!-- gui -->
+  <script type="text/javascript" src="https://cdn.rawgit.com/dataarts/dat.gui/master/build/dat.gui.min.js"></script>
+  <!-- gui -->
   <!-- Following import is not necessary. Can be deleted. (and delete references to it in viewer.js)
   -->
-  <script type="text/javascript" src="https://cdn.rawgit.com/mrdoob/stats.js/master/build/stats.min.js"></script> <!-- stats (fps) -->
+  <script type="text/javascript" src="https://cdn.rawgit.com/mrdoob/stats.js/master/build/stats.min.js"></script>
+  <!-- stats (fps) -->
 
   <!-- AMI -->
-  <script type="text/javascript" src="lib/ami.min.js"></script> <!-- AMI -->
+  <script type="text/javascript" src="lib/ami.min.js"></script>
+  <!-- AMI -->
 </head>
 
 <body>
@@ -35,24 +39,24 @@
         <div id="controls-panel" class="align-left">
           <h3>Basic controls</h3>
 
-          <button id="button-control-prob">Prob</button> <span  id="label-control-prob" class="small disabled">Click</span><br/>
+          <button id="button-control-prob">Prob</button> <span id="label-control-prob" class="small disabled">Click</span><br/>
           <hr>
 
-          <button id="button-control-pan">Move</button> <span  id="label-control-pan" class="small disabled">Click and Drag</span> <br/>
+          <button id="button-control-pan">Move</button> <span id="label-control-pan" class="small disabled">Click and Drag</span> <br/>
           <span class="small">Move : click on Wheel</span>
           <hr>
 
-          <button id="button-control-zoom">Zoom</button> <span  id="label-control-zoom" class="small disabled">Click and Drag</span> <br/>
+          <button id="button-control-zoom">Zoom</button> <span id="label-control-zoom" class="small disabled">Click and Drag</span> <br/>
           <span class="small">Zoom In :  + , i , Ctrl + Wheel down<br/></span>
           <span class="small">Zoom Out : - , o , Cltr + Wheel up <br/></span>
           <hr>
 
-          <button id="button-control-slice">Slices</button> <span  id="label-control-slice" class="small disabled">Click and Drag</span> <br/>
+          <button id="button-control-slice">Slices</button> <span id="label-control-slice" class="small disabled">Click and Drag</span> <br/>
           <span class="small">Slice Up :   ↑ , Wheel Up <br/></span>
           <span class="small">Slice Down : ↓ , Wheel Down <br/></span>
           <hr>
 
-          <button id="button-control-window">Window</button> <span  id="label-control-window" class="small disabled">Click and Drag</span> <br/>
+          <button id="button-control-window">Window</button> <span id="label-control-window" class="small disabled">Click and Drag</span> <br/>
           <span class="small">Windowing : Right Click</span>
           <hr>
 
@@ -72,7 +76,12 @@
           <div id="right" class="direction"></div>
         </div>
 
-        <div class="under-viewer">
+        <div>
+          <div>
+            <button id="button-axial">Axial</button>
+            <button id="button-coronal">Coronal</button>
+            <button id="button-sagittal">Sagittal</button>
+          </div>
           <div id="data-prob"></div>
 
           <div id="my-lut-container">

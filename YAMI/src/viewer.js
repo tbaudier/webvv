@@ -147,6 +147,7 @@ window.onload = function() {
     // setup controls and shortcuts
     controls = new CustomControls(camera, stackHelper, stackList, canvas, changePtr);
     camera.controls = controls;
+
     // setup camera
     let worldbb = sceneManager.worldBB;
     let lpsDims = new THREE.Vector3(
@@ -167,8 +168,10 @@ window.onload = function() {
     camera.directions = [stack.xCosine, stack.yCosine, stack.zCosine];
     camera.box = box;
     camera.canvas = canvasConfig;
+    camera.orientation = 'axial';
     camera.update();
     camera.fitBox(2); // here 2 means 'best of width & height' (0 'width', 1 'height')
+    stackHelper.orientation = camera.stackOrientation;
 
     // set the camera and other status as default (go back to this when press R)
     controls.setAsResetState();
