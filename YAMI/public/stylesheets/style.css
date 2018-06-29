@@ -74,7 +74,7 @@ button::first-letter{
   text-align: left;
 }
 
-.viewer-canvas {
+#r3d {
   height: 500px;
   max-height: 500px;
   max-width: 500px;
@@ -84,10 +84,6 @@ button::first-letter{
   justify-content: center;
   position: relative;
   overflow : hidden;
-}
-
-.viewer-canvas canvas{
-  border: 1px solid white;
 }
 
 .direction {

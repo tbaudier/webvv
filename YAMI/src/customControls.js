@@ -275,12 +275,9 @@ export default class customControls extends THREE.EventDispatcher {
         .copy(_this.crossTarget)
         .applyMatrix4(stack.lps2IJK)
         .addScalar(0.5);
-      /*
-            console.log("Here : ");
-            console.log(_this.crossTarget);
-            console.log(dataCoordinates);
-      */
+
       //display it to the user now
+      // TODO for now we have a frame order leading to a wrong offset...
 
       // then we round : same rounding in the shaders
       dataCoordinates.floor();
@@ -319,7 +316,7 @@ export default class customControls extends THREE.EventDispatcher {
       _this._mouseRelative.x = temp.x;
       _this._mouseRelative.y = temp.y;
       _this._mouse.x = (_this._mouseRelative.x + 1) * (rectCanvas.width / 2);
-      _this._mouse.y = (_this._mouseRelative.y + 1) * (rectCanvas.height / 2);
+      _this._mouse.y = (-_this._mouseRelative.y + 1) * (rectCanvas.height / 2);
     }
 
     this.setView = function(orientation) {
@@ -332,7 +329,20 @@ export default class customControls extends THREE.EventDispatcher {
       _this.stack.index = Math.floor(indexMax / 2);
 
       updateMouseFromTarget();
+      guiManager.updateLabels(_this.camera.directionsLabel, _this.stack._stack.modality);
 
+      changePtr.hasChanged = true;
+    }
+
+    this.changeCanvasSize = function(size) {
+      let temp = new THREE.Vector3().copy(_this.crossTarget);
+      domElement.style.maxHeight = size + "px";
+      domElement.style.maxWidth = size + "px";
+      domElement.style.height = size + "px";
+
+      window.dispatchEvent(new Event('resize'));
+      _this.crossTarget.copy(temp);
+      updateMouseFromTarget();
       changePtr.hasChanged = true;
     }
 
@@ -590,6 +600,23 @@ export default class customControls extends THREE.EventDispatcher {
       evt.preventDefault();
     }
 
+    function setSize(evt) {
+      let size = 500;
+      switch (evt.target.id) {
+        case 'button-size-1':
+          size = 500;
+          break;
+        case 'button-size-2':
+          size = 600;
+          break;
+        case 'button-size-3':
+          size = 800;
+          break;
+      }
+      _this.changeCanvasSize(size);
+      evt.preventDefault();
+    }
+
     function addEvents() {
       // some event are better on the canvas, and others on the whole document.
       domElement.addEventListener('mousedown', mousedown, false);
@@ -612,6 +639,10 @@ export default class customControls extends THREE.EventDispatcher {
       document.getElementById('button-axial').addEventListener('click', setView);
       document.getElementById('button-coronal').addEventListener('click', setView);
       document.getElementById('button-sagittal').addEventListener('click', setView);
+
+      document.getElementById('button-size-1').addEventListener('click', setSize);
+      document.getElementById('button-size-2').addEventListener('click', setSize);
+      document.getElementById('button-size-3').addEventListener('click', setSize);
     }
 
     function clearEvents() {
@@ -634,7 +665,12 @@ export default class customControls extends THREE.EventDispatcher {
       document.getElementById('button-axial').removeEventListener('click', setView);
       document.getElementById('button-coronal').removeEventListener('click', setView);
       document.getElementById('button-sagittal').removeEventListener('click', setView);
+
+      document.getElementById('button-size-1').removeEventListener('click', setSize);
+      document.getElementById('button-size-2').removeEventListener('click', setSize);
+      document.getElementById('button-size-3').removeEventListener('click', setSize);
     }
+
 
     this.dispose = function() {
       clearEvents();
