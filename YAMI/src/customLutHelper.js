@@ -134,9 +134,12 @@ export default class HelpersLut {
 
   updateLevels(windowCenterWidth) {
     let offset = (windowCenterWidth["offset"] == null) ? 0 : -windowCenterWidth["offset"];
+    let round = function(x){
+       return Math.round(x * 100) / 100;
+    }
     this._units.innerHTML = (windowCenterWidth.unit) ? windowCenterWidth.unit : "no unit";
-    this._textLeft.innerHTML = offset + windowCenterWidth.value[0] - windowCenterWidth.value[1] / 2;
-    this._textRight.innerHTML = offset + windowCenterWidth.value[0] + windowCenterWidth.value[1] / 2;
+    this._textLeft.innerHTML = round(offset + windowCenterWidth.value[0] - windowCenterWidth.value[1] / 2);
+    this._textRight.innerHTML = round(offset + windowCenterWidth.value[0] + windowCenterWidth.value[1] / 2);
   }
 
   get texture() {

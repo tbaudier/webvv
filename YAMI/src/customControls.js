@@ -51,7 +51,7 @@ export default class customControls extends THREE.EventDispatcher {
     this.stackValues = stacks;
     this.domElement = (domElement !== undefined) ? domElement : document; // canvas
     this.crossTarget = new THREE.Vector3(); // 3D position of cross cursor (in World)
-    this.values = {};
+    this.values = {positionMM:null,positionPX:null,data:{}};
 
     this.noZoom = false; // possibility to disable zooming
     this.noPan = false; // possibility to disable panning
@@ -261,8 +261,7 @@ export default class customControls extends THREE.EventDispatcher {
     function updateProbValue() {
       for (let prop in _this.stackValues)
         if (_this.stackValues.hasOwnProperty(prop))
-          _this.values[prop] = getProbValue(_this.stackValues[prop]);
-
+          _this.values.data[prop] = getProbValue(_this.stackValues[prop]);
 
       changePtr.hasChanged = true;
     }
@@ -278,6 +277,8 @@ export default class customControls extends THREE.EventDispatcher {
 
       //display it to the user now
       // TODO for now we have a frame order leading to a wrong offset...
+      _this.values.positionMM = _this.crossTarget;
+      _this.values.positionPX = new THREE.Vector3().copy(dataCoordinates);
 
       // then we round : same rounding in the shaders
       dataCoordinates.floor();

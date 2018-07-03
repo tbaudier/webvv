@@ -240,6 +240,7 @@ export default class sceneManager {
 
       let translation = _this.stackHelper._stack.worldCenter().clone();
       translation.sub(stack.worldCenter());
+      console.log(translation);
       stack.regMatrix = new THREE.Matrix4().makeTranslation(translation.x, translation.y, translation.z);
       stack.computeIJK2LPS();
 

@@ -12,7 +12,7 @@ module.exports = {
   fps: 30,
   /** <b>/!\</b> Seems to only be linear ('1' = trilinear interpolation) & is a big slow down for low perf computers. <i>Performance related</i> */
   interpolation: 0,
-  interpolationNM: 1,
+  interpolationNM: 0,
   /** Reset the intensity to 'best' values after every change (including changing the slide index) */
   autoIntensity: false,
   /** Background Color (behind the image borders) ( in hexa as 0x46BFB0 ) */

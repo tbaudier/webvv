@@ -80,12 +80,12 @@ function f() {
       stackHelper.slice.windowCenter = preset[1];
       changes.hasChanged = true;
     });
-        let lutUpdate = stackFolder.add(
-          stackHelper.slice.lut, 'lut', stackHelper.slice.lut.lutsAvailable()).name("Lut Color");
-        lutUpdate.onChange(function(value) {
-          stackHelper.slice.lutTexture = stackHelper.slice.lut.texture;
-          changes.hasChanged = true;
-        });
+    let lutUpdate = stackFolder.add(
+      stackHelper.slice.lut, 'lut', stackHelper.slice.lut.lutsAvailable()).name("Lut Color");
+    lutUpdate.onChange(function(value) {
+      stackHelper.slice.lutTexture = stackHelper.slice.lut.texture;
+      changes.hasChanged = true;
+    });
     /*    let lutDiscrete = stackFolder.add(stackHelper.slice.lut, 'discrete', false);
         lutDiscrete.onChange(function(value) {
           stackHelper.slice.lutTexture = stackHelper.slice.lut.texture;
@@ -143,30 +143,30 @@ function f() {
       updateLabels(camera.directionsLabel, stack.modality);
       changes.hasChanged = true;
     });
-/*
-    let orientationUpdate = cameraFolder.add(
-      camUtils, 'orientation', ['default', 'axial', 'coronal', 'sagittal']);
-    orientationUpdate.onChange(function(value) {
-      camera.orientation = value;
-      camera.update();
-      camera.fitBox(2);
-      stackHelper.orientation = camera.stackOrientation;
-      updateLabels(camera.directionsLabel, stack.modality);
+    /*
+        let orientationUpdate = cameraFolder.add(
+          camUtils, 'orientation', ['default', 'axial', 'coronal', 'sagittal']);
+        orientationUpdate.onChange(function(value) {
+          camera.orientation = value;
+          camera.update();
+          camera.fitBox(2);
+          stackHelper.orientation = camera.stackOrientation;
+          updateLabels(camera.directionsLabel, stack.modality);
 
-      index.__max = stackHelper.orientationMaxIndex;
-      stackHelper.index = Math.floor(index.__max / 2);
-      changes.hasChanged = true;
-    });
+          index.__max = stackHelper.orientationMaxIndex;
+          stackHelper.index = Math.floor(index.__max / 2);
+          changes.hasChanged = true;
+        });
 
-    let conventionUpdate = cameraFolder.add(
-      camUtils, 'convention', ['radio', 'neuro']);
-    conventionUpdate.onChange(function(value) {
-      camera.convention = value;
-      camera.update();
-      camera.fitBox(2);
-      updateLabels(camera.directionsLabel, stack.modality);
-      changes.hasChanged = true;
-    });*/
+        let conventionUpdate = cameraFolder.add(
+          camUtils, 'convention', ['radio', 'neuro']);
+        conventionUpdate.onChange(function(value) {
+          camera.convention = value;
+          camera.update();
+          camera.fitBox(2);
+          updateLabels(camera.directionsLabel, stack.modality);
+          changes.hasChanged = true;
+        });*/
   }
 
   /**
@@ -197,14 +197,28 @@ function f() {
   /**
    * Update the displayed value of the prob, with the new values given
    *
-   * @param  {Object} values object as {background : value of the BG, fusion : value of the fusion...}
+   * @param  {Object} values object as <pre>
+   *    {
+   *       positionMM:[x,y,z],
+   *       positionPX:[x,y,z],
+   *       values:{
+   *         background : value of the BG,
+   *         fusion : value of the fusion...
+   *        },
+   *      }
+   * </pre>
    * @param  {Object} info object having the stacks information, including data units.
    * @memberof module:GUIManager
    */
   function updateProb(values, info) {
     let text = "";
-    for(let prop in values){
-      text += prop + " : " + values[prop] + " " + info[prop].unit + " <br/>";
+    if (values.positionMM != null)
+      text += round(values.positionMM.x) + " / " + round(values.positionMM.y) + " / " + round(values.positionMM.z) + " mm<br/>";
+    if (values.positionPX != null)
+      text += round(values.positionPX.x) + " / " + round(values.positionPX.y) + " / " + round(values.positionPX.z) + " px<br/>";
+    text += "<br/>";
+    for (let prop in values.data) {
+      text += prop + " : " + round(values.data[prop]) + " " + info[prop].unit + " <br/>";
     }
     document.getElementById("data-prob").innerHTML = text;
   }
@@ -222,12 +236,16 @@ function f() {
     cross.vertical.style.left = coords.x + "px";
   }
 
-  function updateIndex(){
+  function updateIndex() {
     stackFolder.remove(indexDOM);
     indexDOM = stackFolder.add(
       stackHelper, 'index', 0, stackHelper.orientationMaxIndex - 1).step(1).listen().onChange(_ => {
       changePtr.hasChanged = true;
     });
+  }
+
+  function round(x){
+     return Math.round(x * 100) / 100;
   }
 
   return {
