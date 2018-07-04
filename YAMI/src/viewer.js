@@ -123,7 +123,6 @@ window.onload = function() {
     let stackHelper = new AMI.StackHelper(stack);
     stackHelper.bbox.visible = false;
     stackHelper.border.visible = false;
-console.log(stack);
     // Cleaning the imported (now useless) raw data
     cleanStack(stack);
 
@@ -136,7 +135,6 @@ console.log(stack);
       stackFusion.unit = information["fusion"].unit;
       sceneManager.addLayerStack(stackFusion, "fusion");
       stackList["fusion"] = stackFusion;
-  console.log(stackFusion);
 
       // Cleaning the imported (now useless) raw data
       cleanStack(stackFusion);

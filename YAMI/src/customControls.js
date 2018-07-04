@@ -276,7 +276,6 @@ export default class customControls extends THREE.EventDispatcher {
         .addScalar(0.5);
 
       //display it to the user now
-      // TODO for now we have a frame order leading to a wrong offset...
       _this.values.positionMM = _this.crossTarget;
       _this.values.positionPX = new THREE.Vector3().copy(dataCoordinates);
 

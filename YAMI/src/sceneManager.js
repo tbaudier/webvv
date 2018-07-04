@@ -237,12 +237,12 @@ export default class sceneManager {
         tex.flipY = true;
         texture.push(tex);
       }
-
+/*
       let translation = _this.stackHelper._stack.worldCenter().clone();
       translation.sub(stack.worldCenter());
       console.log(translation);
       stack.regMatrix = new THREE.Matrix4().makeTranslation(translation.x, translation.y, translation.z);
-      stack.computeIJK2LPS();
+      stack.computeIJK2LPS();*/
 
       // create material && mesh then add it to sceneLayers[i]
       let uniformsLayer = AMI.DataUniformShader.uniforms();
