@@ -51,7 +51,11 @@ export default class customControls extends THREE.EventDispatcher {
     this.stackValues = stacks;
     this.domElement = (domElement !== undefined) ? domElement : document; // canvas
     this.crossTarget = new THREE.Vector3(); // 3D position of cross cursor (in World)
-    this.values = {positionMM:null,positionPX:null,data:{}};
+    this.values = {
+      positionMM: null,
+      positionPX: null,
+      data: {}
+    };
 
     this.noZoom = false; // possibility to disable zooming
     this.noPan = false; // possibility to disable panning
@@ -261,12 +265,11 @@ export default class customControls extends THREE.EventDispatcher {
     function updateProbValue() {
       for (let prop in _this.stackValues)
         if (_this.stackValues.hasOwnProperty(prop))
-          _this.values.data[prop] = getProbValue(_this.stackValues[prop]);
-
+          _this.values.data[prop] = getProbValue(_this.stackValues[prop], prop === "image");
       changePtr.hasChanged = true;
     }
 
-    function getProbValue(stack) {
+    function getProbValue(stack, positionReferential = false) {
 
       //let dataCoordinates = AMI.UtilsCore.worldToData(stack.lps2IJK, _this.crossTarget);
       // we use the same method as in AMI but keeping floating values :
@@ -274,10 +277,11 @@ export default class customControls extends THREE.EventDispatcher {
         .copy(_this.crossTarget)
         .applyMatrix4(stack.lps2IJK)
         .addScalar(0.5);
-
-      //display it to the user now
-      _this.values.positionMM = _this.crossTarget;
-      _this.values.positionPX = new THREE.Vector3().copy(dataCoordinates);
+      if (positionReferential) {
+        //display it to the user now
+        _this.values.positionMM = _this.crossTarget;
+        _this.values.positionPX = new THREE.Vector3().copy(dataCoordinates);
+      }
 
       // then we round : same rounding in the shaders
       dataCoordinates.floor();
@@ -325,8 +329,21 @@ export default class customControls extends THREE.EventDispatcher {
       _this.camera.fitBox(2);
       _this.stack.orientation = _this.camera.stackOrientation;
 
-      let indexMax = _this.stack.orientationMaxIndex;
-      _this.stack.index = Math.floor(indexMax / 2);
+      switch (_this.stack.orientation) {
+        case 0: // axial
+          _this.stack.index = Math.floor(_this.values.positionPX.z - 0.5);
+          break;
+        case 1: // sagittal
+          _this.stack.index = Math.floor(_this.values.positionPX.x - 0.5);
+          break;
+        case 2: // coronal
+          _this.stack.index = Math.floor(_this.values.positionPX.y - 0.5);
+          break;
+        default:
+          let indexMax = _this.stack.orientationMaxIndex;
+          _this.stack.index = Math.floor(indexMax / 2);
+
+      }
 
       updateMouseFromTarget();
       guiManager.updateLabels(_this.camera.directionsLabel, _this.stack._stack.modality);
