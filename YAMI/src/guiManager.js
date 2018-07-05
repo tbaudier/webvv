@@ -101,6 +101,9 @@ function f() {
     // Fusion
     if (fusionUni) {
       let fusionFolder = gui.addFolder('Fusion');
+      fusionFolder.add(sceneManager.uniformsMix.uUseFusion, 'value').name("show fusion").onChange(_ => {
+        changes.hasChanged = true;
+      });
       let lutUpdateFusion = fusionFolder.add(
         sceneManager.luts.fusion, 'lut', sceneManager.luts.fusion.lutsAvailable());
       lutUpdateFusion.onChange(function(value) {
