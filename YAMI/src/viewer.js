@@ -114,7 +114,9 @@ window.onload = function() {
     writeInformation(information);
     // prepare for slice visualization
     let stackList = {};
-    // first stack of first series
+
+
+    // main image
     let stack = seriesContainer["image"][0].mergeSeries(seriesContainer["image"])[0].stack[0];
     stackList["image"] = stack;
     // we add the "unit" attribute to the stacks
@@ -129,13 +131,29 @@ window.onload = function() {
     // and add the stacks we have loaded to the 3D scene
     sceneManager.setMainStackHelper(stackHelper);
     // and add the stacks we have loaded to the 3D scene
+
+
+
+
+    // fusion
     if (seriesContainer["fusion"]) {
       let stackFusion;
       stackFusion = seriesContainer["fusion"][0].mergeSeries(seriesContainer["fusion"])[0].stack[0];
       stackFusion.unit = information["fusion"].unit;
       sceneManager.addLayerStack(stackFusion, "fusion");
       stackList["fusion"] = stackFusion;
+      // Cleaning the imported (now useless) raw data
+      cleanStack(stackFusion);
+    }
 
+    // struct
+    // TODO change format
+    if (seriesContainer["ROI"]) {
+      let stackFusion;
+      stackFusion = seriesContainer["ROI"][0].mergeSeries(seriesContainer["ROI"])[0].stack[0];
+      stackFusion.unit = information["ROI"].unit;
+      sceneManager.addLayerStack(stackFusion, "ROI");
+      stackList["ROI"] = stackFusion;
       // Cleaning the imported (now useless) raw data
       cleanStack(stackFusion);
     }

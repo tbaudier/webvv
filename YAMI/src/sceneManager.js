@@ -35,8 +35,7 @@ export default class sceneManager {
     let luts = {
       background: null,
       fusion: null,
-      overlay: null,
-      struct: [],
+      overlay: null
     }
     /** object having the texture where each scene is rendered. This texture will be mixed after that to do the final render */
     let textureTargets = {
@@ -63,7 +62,9 @@ export default class sceneManager {
      * @memberof SceneManager
      * @see AMI.DataUniformShader
      */
-    this.uniforms = {};
+    this.uniforms = {
+      struct: []
+    };
     /**
      * Access to the StackHelper of the background
      * @memberof SceneManager
@@ -123,9 +124,11 @@ export default class sceneManager {
       // overlay
       if (textureTargets["overlay"] !== null)
         renderer.render(scenes["overlay"], camera, textureTargets["overlay"], true);
+
       // RT structs
-      for (let i = 0; i < textureTargets["struct"].length; i++)
+      for (let i = 0; i < textureTargets["struct"].length; i++) {
         renderer.render(scenes["struct"][i], camera, textureTargets["struct"][i], true);
+      }
 
       renderer.render(sceneMix, camera);
     }
@@ -191,7 +194,9 @@ export default class sceneManager {
      * @param  {string} stackname the name of the stack (now it must be "fusion", "ROI" or "overlay", otherwise the stack will not be added)
      */
     this.addLayerStack = function(stack, stackname) {
-      if (!(stackname == "fusion" || stackname == "overlay" || stackname == "ROI"))
+      if (stackname == "ROI")
+        this.addLayerROI(stack, stackname);
+      if (!(stackname == "fusion" || stackname == "overlay"))
         return;
       // Constructions
       let scene = new THREE.Scene();
@@ -237,12 +242,6 @@ export default class sceneManager {
         tex.flipY = true;
         texture.push(tex);
       }
-/*
-      let translation = _this.stackHelper._stack.worldCenter().clone();
-      translation.sub(stack.worldCenter());
-      console.log(translation);
-      stack.regMatrix = new THREE.Matrix4().makeTranslation(translation.x, translation.y, translation.z);
-      stack.computeIJK2LPS();*/
 
       // create material && mesh then add it to sceneLayers[i]
       let uniformsLayer = AMI.DataUniformShader.uniforms();
@@ -290,7 +289,92 @@ export default class sceneManager {
       // Update the whole scene BB
       updateWorldBB(stack.worldBoundingBox());
 
-      updateMixUniforms();
+      updateMixShader();
+    }
+
+    this.addLayerROI = function(stack, stackname) {
+      if (stackname !== "ROI")
+        return;
+      // Constructions
+      //
+      let scene = new THREE.Scene();
+      scenes.struct = [...scenes.struct, scene];
+
+      let sceneTexture = new THREE.WebGLRenderTarget(canvas.clientWidth, canvas.clientHeight, {
+        minFilter: THREE.NearestFilter,
+        magFilter: THREE.NearestFilter,
+        format: THREE.RGBAFormat,
+      });
+      sceneTexture.setSize(canvas.clientWidth, canvas.clientHeight);
+      textureTargets.struct = [...textureTargets.struct, sceneTexture];
+
+      // Stack preparation
+      stack.prepare();
+      stack.pack();
+
+      let texture = [];
+      for (let m = 0; m < stack._rawData.length; m++) {
+        let tex = new THREE.DataTexture(
+          stack.rawData[m],
+          stack.textureSize,
+          stack.textureSize,
+          stack.textureType,
+          THREE.UnsignedByteType,
+          THREE.UVMapping,
+          THREE.ClampToEdgeWrapping,
+          THREE.ClampToEdgeWrapping,
+          THREE.NearestFilter,
+          THREE.NearestFilter);
+        tex.needsUpdate = true;
+        tex.flipY = true;
+        texture.push(tex);
+      }
+
+      // create material && mesh then add it to sceneLayers[i]
+      let uniformsLayer = AMI.DataUniformShader.uniforms();
+      uniformsLayer.uTextureSize.value = stack.textureSize;
+      uniformsLayer.uTextureContainer.value = texture;
+      uniformsLayer.uWorldToData.value = stack.lps2IJK;
+      uniformsLayer.uNumberOfChannels.value = stack.numberOfChannels;
+      uniformsLayer.uBitsAllocated.value = stack.bitsAllocated;
+      uniformsLayer.uPixelType.value = stack.pixelType;
+      uniformsLayer.uPackedPerPixel.value = stack.packedPerPixel;
+      uniformsLayer.uWindowCenterWidth.value = [stack.windowCenter, stack.windowWidth];
+      uniformsLayer.uWindowCenterWidth.unit = stack.unit; // this is not in AMI class, used for display
+      uniformsLayer.uRescaleSlopeIntercept.value = [stack.rescaleSlope, stack.rescaleIntercept];
+      uniformsLayer.uDataDimensions.value = [stack.dimensionsIJK.x,
+        stack.dimensionsIJK.y,
+        stack.dimensionsIJK.z
+      ];
+      uniformsLayer.uInterpolation.value = config.interpolationNM;
+      // we can only display positive values
+      let offset = 0;
+      if (stack._minMax[0] < 0) {
+        offset = -stack._minMax[0];
+        uniformsLayer.uWindowCenterWidth["offset"] = offset;
+      }
+      uniformsLayer.uLowerUpperThreshold.value = [stack.minMax[0] + offset, stack.minMax[1] + offset];
+      _this.uniforms.struct = [..._this.uniforms.struct, uniformsLayer];
+
+      // generate shaders on-demand!
+      let fs = new AMI.DataFragmentShader(uniformsLayer);
+      let vs = new AMI.DataVertexShader();
+      let materialLayer = new THREE.ShaderMaterial({
+        side: THREE.DoubleSide,
+        uniforms: uniformsLayer,
+        vertexShader: vs.compute(),
+        fragmentShader: fs.compute(),
+      });
+
+      let meshLayer = new THREE.Mesh(_this.stackHelper.slice.geometry, materialLayer);
+      meshes.struct = [...meshes.struct, meshLayer];
+      // go the LPS space
+      meshLayer.applyMatrix(_this.stackHelper.stack._ijk2LPS);
+      scene.add(meshLayer);
+      // Update the whole scene BB
+      updateWorldBB(stack.worldBoundingBox());
+
+      updateMixShader();
     }
 
     /**
@@ -300,7 +384,49 @@ export default class sceneManager {
       sceneMix = new THREE.Scene();
 
       _this.uniformsMix = FusionShaderUni.uniforms();
-      updateMixUniforms();
+      updateMixShader();
+      let mesh = new THREE.Mesh(_this.stackHelper.slice.geometry, materialMix);
+      mesheMix = mesh;
+      // go the LPS space
+      mesh.applyMatrix(_this.stackHelper.stack._ijk2LPS);
+      sceneMix.add(mesh);
+    }
+
+    function updateMixShader() {
+      _this.uniformsMix.uTextureBackground.value = textureTargets["background"].texture;
+      // fusion
+      if (textureTargets["fusion"] !== null)
+        _this.uniformsMix.uTextureFusion.value = textureTargets["fusion"].texture;
+      // overlay
+      if (textureTargets["overlay"] !== null)
+        _this.uniformsMix.uTextureOverlay.value = textureTargets["overlay"].texture;
+
+      // ROI
+      if (textureTargets["struct"].length > 0) {
+        _this.uniformsMix.uTexturesStruct.length = textureTargets["struct"].length;
+        _this.uniformsMix.uColorsStruct.length = textureTargets["struct"].length * 4;
+        _this.uniformsMix.uTexturesCount.value = textureTargets["struct"].length;
+        _this.uniformsMix.uTexturesStruct.value = [];
+        _this.uniformsMix.uFillingStruct.value = [];
+        _this.uniformsMix.uColorsStruct.value = config.structColors.slice(0, textureTargets["struct"].length * 4);
+        for (let i = 0; i < textureTargets["struct"].length; i++) {
+          _this.uniformsMix.uTexturesStruct.value = [..._this.uniformsMix.uTexturesStruct.value, textureTargets["struct"][i].texture];
+          _this.uniformsMix.uFillingStruct.value = [..._this.uniformsMix.uFillingStruct.value, 0];
+        }
+      } else {
+        //we must set those values to avoid intiate empty arrays (glsl error)
+        _this.uniformsMix.uTexturesStruct.length = 1;
+        _this.uniformsMix.uColorsStruct.length = 4;
+        _this.uniformsMix.uTexturesCount.value = 0;
+      }
+
+      _this.uniformsMix.uOpacityMin.value = 0.1;
+      _this.uniformsMix.uOpacityMax.value = 0.8;
+      _this.uniformsMix.uThreshold.value = 0.01;
+      _this.uniformsMix.uWidthStruct.value = 4;
+      _this.uniformsMix.uCanvasWidth.value = canvas.clientWidth;
+      _this.uniformsMix.uCanvasHeight.value = canvas.clientHeight;
+
       // generate shaders on-demand!
       let fls = new FusionShaderFrag(_this.uniformsMix);
       let vls = new AMI.LayerVertexShader();
@@ -312,24 +438,8 @@ export default class sceneManager {
         transparent: true,
       });
       materialMix = mat;
-      let mesh = new THREE.Mesh(_this.stackHelper.slice.geometry, mat);
-      mesheMix = mesh;
-      // go the LPS space
-      mesh.applyMatrix(_this.stackHelper.stack._ijk2LPS);
-      sceneMix.add(mesh);
-    }
-
-    function updateMixUniforms() {
-      _this.uniformsMix.uTextureBackground.value = textureTargets["background"].texture;
-      // fusion
-      if (textureTargets["fusion"] !== null)
-        _this.uniformsMix.uTextureFusion.value = textureTargets["fusion"].texture;
-      // overlay
-      if (textureTargets["overlay"] !== null)
-        _this.uniformsMix.uTextureOverlay.value = textureTargets["overlay"].texture;
-      _this.uniformsMix.uOpacityMin.value = 0.1;
-      _this.uniformsMix.uOpacityMax.value = 0.8;
-      _this.uniformsMix.uThreshold.value = 0.01;
+      if (mesheMix != null)
+        mesheMix.material = materialMix;
     }
 
 
@@ -349,11 +459,7 @@ export default class sceneManager {
           luts["overlay"].updateLevels(_this.uniforms["overlay"].uWindowCenterWidth);
         }
         // RT structs
-        if (luts["struct"] !== null) {
-          for (let i = 0; i < luts["struct"].length; i++) {
-            luts["struct"][i].updateLevels(_this.uniforms["struct"][i].uWindowCenterWidth);
-          }
-        }
+        //  no lut for structs
       }
 
       function updateLayers() {

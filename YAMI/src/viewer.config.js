@@ -23,6 +23,21 @@ module.exports = {
   /** Color of the cross (prob) (in string hexa as '#RRGGBBAA') (with alpha or not) */
   crossColor: '#00FF0044',
 
+  /** Colors of the default struct (after the end, it will loop) as Red-Green-Blue-Alpha in [0;1]*/
+  structColors: [
+    0, 0, 1, 1,
+    0, 1, 0, 1,
+    0, 1, 1, 1,
+    1, 0, 0, 1,
+    1, 0, 1, 1,
+    0, 0.5, 1, 1,
+    0.5, 0, 1, 1,
+    0, 1, 0.5, 1,
+    0.5, 1, 0, 1,
+    1, 0, 0.5, 1,
+    1, 0.5, 0, 1
+  ],
+
   // User controls
 
   /** Let the user right-click our app ? (Menu : Copy Image, Save image as..) */

@@ -35,6 +35,46 @@ export default class ShadersFragment {
 
     return content;
   }
+  structFunction() {
+    let content = '';
+    if (this._uniforms["uTexturesCount"].value > 0)
+      /* local var reminder :
+      vec2 texc
+      vec4 baseColorBG
+      vec4 baseColorFusion
+      */
+      content =
+      `
+    const int MAX_OVERLAYS = 100;
+      for (int i = 0; i < MAX_OVERLAYS; i++) {
+        if (i >= uTexturesCount) {
+          break;
+        }
+        vec4 baseColorStruct = texture2D(uTexturesStruct[i], texc);
+        if(uFillingStruct[i] == 0){
+          float step_u = uWidthStruct * 1.0 / uCanvasWidth;
+          float step_v = uWidthStruct * 1.0 / uCanvasHeight;
+
+          vec4 rightPixel  = texture2D(uTexturesStruct[i], texc + vec2(step_u, 0.0));
+          vec4 bottomPixel = texture2D(uTexturesStruct[i], texc + vec2(0.0, step_v));
+
+          // now manually compute the derivatives
+          float _dFdX = length(rightPixel.xyz - baseColorStruct.xyz) / step_u;
+          float _dFdY = length(bottomPixel.xyz - baseColorStruct.xyz) / step_v;
+
+          float maxDerivative = max(_dFdX, _dFdY);
+          float clampedDerivative = clamp(maxDerivative, 0., 1.);
+          baseColorStruct.r = clampedDerivative;
+        }
+
+        vec4 overlayColor = vec4(uColorsStruct[4*i],uColorsStruct[1+4*i],uColorsStruct[2+4*i],uColorsStruct[3+4*i]);
+        float opacity = baseColorStruct.r * overlayColor.a; // red canal is enough to distinguish B&W
+        gl_FragColor = mix(gl_FragColor, overlayColor, opacity);
+      }
+  `;
+
+    return content;
+  }
 
   main() {
     // need to pre-call main to fill up the functions list
@@ -56,6 +96,9 @@ void main(void) {
   }else{
     gl_FragColor = mix( baseColorBG, baseColorFusion, uOpacityMin+(uOpacityMax-uOpacityMin)*baseColorFusion.w);
   }
+
+  ${this.structFunction()}
+
   return;
 }
    `;

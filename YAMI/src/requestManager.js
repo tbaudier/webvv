@@ -178,6 +178,11 @@ function requestManager() {
       .then(_ => {
         return fetchAndLoadData(jsonParameters, files, "fusion");
       })
+      // ROI
+      // TODO changer format
+      .then(_ => {
+        return fetchAndLoadData(jsonParameters, files, "ROI");
+      })
       // Final callback
       .then((series) => {
         console.log("Files loaded.");
@@ -242,6 +247,11 @@ function requestManager() {
       if (json["fusion"])
         futureContainer["information"]["fusion"] = {
           "unit": json["fusion"]["unit"]
+        };
+        // TODO structs
+      if (json["ROI"])
+        futureContainer["information"]["ROI"] = {
+          "unit": json["ROI"]["unit"]
         };
     }
 
