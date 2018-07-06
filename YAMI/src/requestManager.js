@@ -11,7 +11,8 @@ function requestManager() {
    * Returns true if an object has the requested extension, false otherwise.
    *
    * @param  {string} extension requested extension (as string)
-   * @param  {object} item object having a <i>extension</i> attribute (string) to compare
+   * @param  {Object} item object having a <i>extension</i> attribute (string) to compare
+   * @param  {String} item.extension string to compare to extension (ignoring case)
    * @return {Boolean} true if item has the same extension (ignoring case)
    * @memberof module:RequestManager
    */

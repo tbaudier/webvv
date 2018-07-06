@@ -51,6 +51,21 @@ export default class customControls extends THREE.EventDispatcher {
     this.stackValues = stacks;
     this.domElement = (domElement !== undefined) ? domElement : document; // canvas
     this.crossTarget = new THREE.Vector3(); // 3D position of cross cursor (in World)
+    /** @property  {Object} this.values object as <pre>
+     *    {
+     *       positionMM:[x,y,z],
+     *       positionPX:[x,y,z],
+     *       values:{
+     *         background : value of the BG,
+     *         fusion : value of the fusion...
+     *        },
+     *      }
+     * </pre>
+     * @property {Number[]} this.values.positionMM array of x,y,z cross' position in millimeters
+     * @property {Number[]} this.values.positionPX array of x,y,z cross' position in pixels
+     * @property {Object} this.values.values dictionnay of layers and their value under the cross
+     * @property {Number} this.values.values.background the cross' value in the "background" layer", same goes with other layers
+     */
     this.values = {
       positionMM: null,
       positionPX: null,

@@ -20,10 +20,11 @@ function f() {
   /**
    * Build the first elments of the GUI.
    *
-   * @param  {SceneManager} scene  the scene manager
-   * @param  {AMI.Camera} camera   the camera
-   * @param  {object} changes    pointer to changes as <i>changes.hasChanged = true</i>
-   * @param  {Element} domElement DOM Element
+   * @param {SceneManager} scene  the scene manager
+   * @param {AMI.Camera} camera   the camera
+   * @param {Object} changes    pointer to changes as <i>changes.hasChanged = true</i>
+   * @param {boolean} changes.hasChanged
+   * @param {Element} domElement DOM Element
    * @memberof module:GUIManager
    */
   function buildGUI(scene, camera, changes, domElement) {
@@ -204,13 +205,18 @@ function f() {
    *    {
    *       positionMM:[x,y,z],
    *       positionPX:[x,y,z],
-   *       values:{
+   *       data:{
    *         background : value of the BG,
    *         fusion : value of the fusion...
    *        },
    *      }
    * </pre>
-   * @param  {Object} info object having the stacks information, including data units.
+   * @param {Number[]} values.positionMM array of x,y,z cross' position in millimeters
+   * @param {Number[]} values.positionPX array of x,y,z cross' position in pixels
+   * @param {Object} values.data dictionnay of layers and their value under the cross
+   * @param {Number} values.data.background the cross' value in the "background" layer", same goes with other layers
+   * @param  {Object} info dictionnay of layers having the stacks information, including data units.
+   * @param {String} info.background.unit the unit to associate with the value read in values.data.background, same goes with other layers
    * @memberof module:GUIManager
    */
   function updateProb(values, info) {
@@ -230,6 +236,8 @@ function f() {
    * Move the green cross to a new position
    *
    * @param  {Object} cross  Object containing the DOM Elements of the cross
+   * @param  {Element} cross.horizontal DOM element of the horizontal bar of the cross
+   * @param  {Element} cross.vertical DOM element of the vertical bar of the cross
    * @param  {THREE.Vector2} coords mouse position relative to the DOM Element (in px)
    * @memberof module:GUIManager
    */
@@ -239,6 +247,10 @@ function f() {
     cross.vertical.style.left = coords.x + "px";
   }
 
+  /**
+   * update the min-max index when changing the orientation
+   * @memberof module:GUIManager
+   */
   function updateIndex() {
     stackFolder.remove(indexDOM);
     indexDOM = stackFolder.add(
@@ -247,8 +259,8 @@ function f() {
     });
   }
 
-  function round(x){
-     return Math.round(x * 100) / 100;
+  function round(x) {
+    return Math.round(x * 100) / 100;
   }
 
   return {
