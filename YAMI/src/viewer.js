@@ -213,9 +213,6 @@ window.onload = function() {
         }
         stats.update();
       });
-
-    console.log(information);
-    console.log(sceneManager.uniformsMix);
   }
 
   /**

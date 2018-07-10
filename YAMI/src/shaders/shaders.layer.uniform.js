@@ -64,7 +64,7 @@ export default class ShadersUniform {
         typeGLSL: 'float',
         length: 4,
       },
-      'uStructFilling': { // array of n int where 1 = filled, 0 not only borders
+      'uStructFilling': { // array of n int where 1 = filled, 0 = only borders, -1 = not displayed
         type: 'iv1',
         value: [],
         typeGLSL: 'int',

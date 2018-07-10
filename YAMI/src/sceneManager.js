@@ -404,6 +404,7 @@ export default class sceneManager {
       // ROI
       if (textureTargets["struct"].length > 0) {
         _this.uniformsMix.uStructTextures.length = textureTargets["struct"].length;
+        _this.uniformsMix.uStructFilling.length = textureTargets["struct"].length;
         _this.uniformsMix.uStructColors.length = textureTargets["struct"].length * 4;
         _this.uniformsMix.uStructTexturesCount.value = textureTargets["struct"].length;
         _this.uniformsMix.uStructTextures.value = [];

@@ -50,26 +50,30 @@ export default class ShadersFragment {
         if (i >= uStructTexturesCount) {
           break;
         }
-        vec4 baseColorStruct = texture2D(uStructTextures[i], texc);
-        if(uStructFilling[i] == 0){
-          float step_u = uStructBorderWidth * 1.0 / uCanvasWidth;
-          float step_v = uStructBorderWidth * 1.0 / uCanvasHeight;
 
-          vec4 rightPixel  = texture2D(uStructTextures[i], texc + vec2(step_u, 0.0));
-          vec4 bottomPixel = texture2D(uStructTextures[i], texc + vec2(0.0, step_v));
+        else if(uStructFilling[i] != -1){
+          vec4 baseColorStruct = texture2D(uStructTextures[i], texc);
+          if(uStructFilling[i] == 0){
+            float step_u = uStructBorderWidth * 1.0 / uCanvasWidth;
+            float step_v = uStructBorderWidth * 1.0 / uCanvasHeight;
 
-          // now manually compute the derivatives
-          float _dFdX = length(rightPixel.xyz - baseColorStruct.xyz) / step_u;
-          float _dFdY = length(bottomPixel.xyz - baseColorStruct.xyz) / step_v;
+            vec4 rightPixel  = texture2D(uStructTextures[i], texc + vec2(step_u, 0.0));
+            vec4 bottomPixel = texture2D(uStructTextures[i], texc + vec2(0.0, step_v));
 
-          float maxDerivative = max(_dFdX, _dFdY);
-          float clampedDerivative = clamp(maxDerivative, 0., 1.);
-          baseColorStruct.r = clampedDerivative;
+            // now manually compute the derivatives
+            float _dFdX = length(rightPixel.xyz - baseColorStruct.xyz) / step_u;
+            float _dFdY = length(bottomPixel.xyz - baseColorStruct.xyz) / step_v;
+
+            float maxDerivative = max(_dFdX, _dFdY);
+            float clampedDerivative = clamp(maxDerivative, 0., 1.);
+            baseColorStruct.r = clampedDerivative;
+          }
+
+          vec4 roiColor = vec4(uStructColors[4*i],uStructColors[1+4*i],uStructColors[2+4*i],uStructColors[3+4*i]);
+          float opacity = baseColorStruct.r * roiColor.a; // red canal is enough to distinguish B&W
+          gl_FragColor = mix(gl_FragColor, roiColor, opacity);
         }
 
-        vec4 roiColor = vec4(uStructColors[4*i],uStructColors[1+4*i],uStructColors[2+4*i],uStructColors[3+4*i]);
-        float opacity = baseColorStruct.r * roiColor.a; // red canal is enough to distinguish B&W
-        gl_FragColor = mix(gl_FragColor, roiColor, opacity);
       }
   `;
 

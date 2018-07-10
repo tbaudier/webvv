@@ -25,8 +25,8 @@ module.exports = {
 
   /** Colors of the default struct (after the end, it will loop) as Red-Green-Blue-Alpha in [0;1]*/
   structColors: [
-    0, 0, 1, 1,
-    0, 1, 0, 1,
+    0, 0, 1, 0.5,
+    0, 1, 0, 0.5,
     0, 1, 1, 1,
     1, 0, 0, 1,
     1, 0, 1, 1,

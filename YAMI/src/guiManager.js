@@ -183,7 +183,35 @@ function f() {
   }
 
 
-  function buildStructGUI() {}
+  function buildStructGUI() {
+
+    for (let i = 0; i < sceneManager.uniformsMix.uStructTexturesCount.value; i++) {
+      let temp = {
+        drawn: true,
+        filled: false,
+        color: sceneManager.uniformsMix.uStructColors.value.slice(4 * i, 4 * i + 3).map((x) => { return 255*x;})
+      };
+      let structFolder = gui.addFolder('ROI ' + i);
+      structFolder.add(temp, 'drawn').name("Display").listen().onChange(_ => {
+        sceneManager.uniformsMix.uStructFilling.value[i] = temp.drawn ? (temp.filled ? 1 : 0) : -1;
+        changePtr.hasChanged = true;
+      });
+      structFolder.add(temp, 'filled').name("Filled").onChange(_ => {
+        sceneManager.uniformsMix.uStructFilling.value[i] = temp.filled ? 1 : 0;
+        temp.drawn = true;
+        changePtr.hasChanged = true;
+      });
+      structFolder.addColor(temp, 'color').name("Color").onChange(_ => {
+        sceneManager.uniformsMix.uStructColors.value[4 * i] = temp.color[0] / 255.;
+        sceneManager.uniformsMix.uStructColors.value[4 * i + 1] = temp.color[1] / 255.;
+        sceneManager.uniformsMix.uStructColors.value[4 * i + 2] = temp.color[2] / 255. ;
+        changePtr.hasChanged = true;
+      });
+      structFolder.add(sceneManager.uniformsMix.uStructColors.value, 4 * i + 3, 0, 1).name("Opacity").onChange(_ => {
+        changePtr.hasChanged = true;
+      });
+    }
+  }
 
   /**
    * Update the labels of each side, from the camera modality
