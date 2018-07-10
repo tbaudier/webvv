@@ -37,7 +37,7 @@ export default class ShadersFragment {
   }
   structFunction() {
     let content = '';
-    if (this._uniforms["uTexturesCount"].value > 0)
+    if (this._uniforms["uStructTexturesCount"].value > 0)
       /* local var reminder :
       vec2 texc
       vec4 baseColorBG
@@ -45,18 +45,18 @@ export default class ShadersFragment {
       */
       content =
       `
-    const int MAX_OVERLAYS = 100;
-      for (int i = 0; i < MAX_OVERLAYS; i++) {
-        if (i >= uTexturesCount) {
+    const int MAX_ROI = 100;
+      for (int i = 0; i < MAX_ROI; i++) {
+        if (i >= uStructTexturesCount) {
           break;
         }
-        vec4 baseColorStruct = texture2D(uTexturesStruct[i], texc);
-        if(uFillingStruct[i] == 0){
-          float step_u = uWidthStruct * 1.0 / uCanvasWidth;
-          float step_v = uWidthStruct * 1.0 / uCanvasHeight;
+        vec4 baseColorStruct = texture2D(uStructTextures[i], texc);
+        if(uStructFilling[i] == 0){
+          float step_u = uStructBorderWidth * 1.0 / uCanvasWidth;
+          float step_v = uStructBorderWidth * 1.0 / uCanvasHeight;
 
-          vec4 rightPixel  = texture2D(uTexturesStruct[i], texc + vec2(step_u, 0.0));
-          vec4 bottomPixel = texture2D(uTexturesStruct[i], texc + vec2(0.0, step_v));
+          vec4 rightPixel  = texture2D(uStructTextures[i], texc + vec2(step_u, 0.0));
+          vec4 bottomPixel = texture2D(uStructTextures[i], texc + vec2(0.0, step_v));
 
           // now manually compute the derivatives
           float _dFdX = length(rightPixel.xyz - baseColorStruct.xyz) / step_u;
@@ -67,9 +67,9 @@ export default class ShadersFragment {
           baseColorStruct.r = clampedDerivative;
         }
 
-        vec4 overlayColor = vec4(uColorsStruct[4*i],uColorsStruct[1+4*i],uColorsStruct[2+4*i],uColorsStruct[3+4*i]);
-        float opacity = baseColorStruct.r * overlayColor.a; // red canal is enough to distinguish B&W
-        gl_FragColor = mix(gl_FragColor, overlayColor, opacity);
+        vec4 roiColor = vec4(uStructColors[4*i],uStructColors[1+4*i],uStructColors[2+4*i],uStructColors[3+4*i]);
+        float opacity = baseColorStruct.r * roiColor.a; // red canal is enough to distinguish B&W
+        gl_FragColor = mix(gl_FragColor, roiColor, opacity);
       }
   `;
 
@@ -84,17 +84,14 @@ void main(void) {
   vec2 texc = vec2(((vProjectedCoords.x / vProjectedCoords.w) + 1.0 ) / 2.0,
                 ((vProjectedCoords.y / vProjectedCoords.w) + 1.0 ) / 2.0 );
 
-  // just silence warning for
-  // vec4 dummy = vPos;
-
   //The back position is the world space position stored in the texture.
-  vec4 baseColorBG = texture2D(uTextureBackground, texc);
-  vec4 baseColorFusion = texture2D(uTextureFusion, texc);
+  vec4 baseColorBG = texture2D(uBackgroundTexture, texc);
+  vec4 baseColorFusion = texture2D(uFusionTexture, texc);
 
-  if(!uUseFusion || baseColorFusion.w < uThreshold){
+  if(!uFusionUse || baseColorFusion.w < uFusionThreshold){
     gl_FragColor = baseColorBG;
   }else{
-    gl_FragColor = mix( baseColorBG, baseColorFusion, uOpacityMin+(uOpacityMax-uOpacityMin)*baseColorFusion.w);
+    gl_FragColor = mix( baseColorBG, baseColorFusion, uFusionOpacityMin+(uFusionOpacityMax-uFusionOpacityMin)*baseColorFusion.w);
   }
 
   ${this.structFunction()}

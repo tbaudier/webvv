@@ -156,7 +156,7 @@ function f() {
     // Fusion
     if (fusionUni) {
       let fusionFolder = gui.addFolder('Fusion');
-      fusionFolder.add(sceneManager.uniformsMix.uUseFusion, 'value').name("show fusion").onChange(_ => {
+      fusionFolder.add(sceneManager.uniformsMix.uFusionUse, 'value').name("show fusion").onChange(_ => {
         changePtr.hasChanged = true;
       });
       let lutUpdateFusion = fusionFolder.add(
@@ -165,15 +165,15 @@ function f() {
         fusionUni.uTextureLUT.value = sceneManager.luts.fusion.texture;
         changePtr.hasChanged = true;
       });
-      let thresholdFusion = fusionFolder.add(sceneManager.uniformsMix.uThreshold, 'value', 0, 1).name("Threshold");
+      let thresholdFusion = fusionFolder.add(sceneManager.uniformsMix.uFusionThreshold, 'value', 0, 1).name("Threshold");
       thresholdFusion.onChange(function(value) {
         changePtr.hasChanged = true;
       });
-      let opacityMinFusion = fusionFolder.add(sceneManager.uniformsMix.uOpacityMin, 'value', 0, 1).name("Opacity min");
+      let opacityMinFusion = fusionFolder.add(sceneManager.uniformsMix.uFusionOpacityMin, 'value', 0, 1).name("Opacity min");
       opacityMinFusion.onChange(function(value) {
         changePtr.hasChanged = true;
       });
-      let opacityMaxFusion = fusionFolder.add(sceneManager.uniformsMix.uOpacityMax, 'value', 0, 1).name("Opacity max");
+      let opacityMaxFusion = fusionFolder.add(sceneManager.uniformsMix.uFusionOpacityMax, 'value', 0, 1).name("Opacity max");
       opacityMaxFusion.onChange(function(value) {
         changePtr.hasChanged = true;
       });

@@ -393,45 +393,45 @@ export default class sceneManager {
     }
 
     function updateMixShader() {
-      _this.uniformsMix.uTextureBackground.value = textureTargets["background"].texture;
+      _this.uniformsMix.uBackgroundTexture.value = textureTargets["background"].texture;
       // fusion
       if (textureTargets["fusion"] !== null)
-        _this.uniformsMix.uTextureFusion.value = textureTargets["fusion"].texture;
+        _this.uniformsMix.uFusionTexture.value = textureTargets["fusion"].texture;
       // overlay
       if (textureTargets["overlay"] !== null)
-        _this.uniformsMix.uTextureOverlay.value = textureTargets["overlay"].texture;
+        _this.uniformsMix.uOverlayTexture.value = textureTargets["overlay"].texture;
 
       // ROI
       if (textureTargets["struct"].length > 0) {
-        _this.uniformsMix.uTexturesStruct.length = textureTargets["struct"].length;
-        _this.uniformsMix.uColorsStruct.length = textureTargets["struct"].length * 4;
-        _this.uniformsMix.uTexturesCount.value = textureTargets["struct"].length;
-        _this.uniformsMix.uTexturesStruct.value = [];
-        _this.uniformsMix.uFillingStruct.value = [];
-        _this.uniformsMix.uColorsStruct.value = [];
+        _this.uniformsMix.uStructTextures.length = textureTargets["struct"].length;
+        _this.uniformsMix.uStructColors.length = textureTargets["struct"].length * 4;
+        _this.uniformsMix.uStructTexturesCount.value = textureTargets["struct"].length;
+        _this.uniformsMix.uStructTextures.value = [];
+        _this.uniformsMix.uStructFilling.value = [];
+        _this.uniformsMix.uStructColors.value = [];
         // complete the struct colors and repeat the default colors if needed.
-        while(_this.uniformsMix.uColorsStruct.value.length < textureTargets["struct"].length * 4){
-          _this.uniformsMix.uColorsStruct.value =
+        while(_this.uniformsMix.uStructColors.value.length < textureTargets["struct"].length * 4){
+          _this.uniformsMix.uStructColors.value =
             [
-              ..._this.uniformsMix.uColorsStruct.value,
-              ...config.structColors.slice(0, textureTargets["struct"].length * 4 - _this.uniformsMix.uColorsStruct.value.length)
+              ..._this.uniformsMix.uStructColors.value,
+              ...config.structColors.slice(0, textureTargets["struct"].length * 4 - _this.uniformsMix.uStructColors.value.length)
             ];
         }
         for (let i = 0; i < textureTargets["struct"].length; i++) {
-          _this.uniformsMix.uTexturesStruct.value = [..._this.uniformsMix.uTexturesStruct.value, textureTargets["struct"][i].texture];
-          _this.uniformsMix.uFillingStruct.value = [..._this.uniformsMix.uFillingStruct.value, 0];
+          _this.uniformsMix.uStructTextures.value = [..._this.uniformsMix.uStructTextures.value, textureTargets["struct"][i].texture];
+          _this.uniformsMix.uStructFilling.value = [..._this.uniformsMix.uStructFilling.value, 0];
         }
       } else {
         //we must set those values to avoid intiate empty arrays (glsl error)
-        _this.uniformsMix.uTexturesStruct.length = 1;
-        _this.uniformsMix.uColorsStruct.length = 4;
-        _this.uniformsMix.uTexturesCount.value = 0;
+        _this.uniformsMix.uStructTextures.length = 1;
+        _this.uniformsMix.uStructColors.length = 4;
+        _this.uniformsMix.uStructTexturesCount.value = 0;
       }
 
-      _this.uniformsMix.uOpacityMin.value = 0.1;
-      _this.uniformsMix.uOpacityMax.value = 0.8;
-      _this.uniformsMix.uThreshold.value = 0.01;
-      _this.uniformsMix.uWidthStruct.value = 1;
+      _this.uniformsMix.uFusionOpacityMin.value = 0.1;
+      _this.uniformsMix.uFusionOpacityMax.value = 0.8;
+      _this.uniformsMix.uFusionThreshold.value = 0.01;
+      _this.uniformsMix.uStructBorderWidth.value = 1;
       _this.uniformsMix.uCanvasWidth.value = canvas.clientWidth;
       _this.uniformsMix.uCanvasHeight.value = canvas.clientHeight;
 

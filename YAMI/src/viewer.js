@@ -107,7 +107,6 @@ window.onload = function() {
    * @param  {Object} information     object containing other information contained in the input json.
    */
   function handleSeries(seriesContainer, information) {
-    console.log(seriesContainer);
     // cleanup the loader and its progress bar
     loader.free();
     loader = null;
@@ -148,8 +147,7 @@ window.onload = function() {
     }
 
     // struct
-    // TODO change format
-    for(let structNum in seriesContainer["struct"]) {
+    for (let structNum in seriesContainer["struct"]) {
       let stackStruct;
       stackStruct = seriesContainer["struct"][structNum][0].mergeSeries(seriesContainer["struct"][structNum])[0].stack[0];
       // stackStruct.unit = information["struct"].unit;
@@ -216,6 +214,8 @@ window.onload = function() {
         stats.update();
       });
 
+    console.log(information);
+    console.log(sceneManager.uniformsMix);
   }
 
   /**

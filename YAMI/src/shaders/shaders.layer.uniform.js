@@ -4,33 +4,33 @@
 export default class ShadersUniform {
   static uniforms() {
     return {
-      'uTextureBackground': {
+      'uBackgroundTexture': {
         type: 't',
         value: [],
         typeGLSL: 'sampler2D',
       },
       // Fusion
-      'uTextureFusion': {
+      'uFusionTexture': {
         type: 't',
         value: [],
         typeGLSL: 'sampler2D',
       },
-      'uOpacityMin': {
+      'uFusionOpacityMin': {
         type: 'f',
         value: 1.0,
         typeGLSL: 'float',
       },
-      'uOpacityMax': {
+      'uFusionOpacityMax': {
         type: 'f',
         value: 1.0,
         typeGLSL: 'float',
       },
-      'uThreshold': {
+      'uFusionThreshold': {
         type: 'f',
         value: 0.01,
         typeGLSL: 'float',
       },
-      'uUseFusion': {
+      'uFusionUse': {
         type: 'b',
         value: true,
         typeGLSL: 'bool',
@@ -41,36 +41,36 @@ export default class ShadersUniform {
         value: [],
         typeGLSL: 'sampler2D',
       },
-      'uUseOverlay': {
+      'uOverlayUse': {
         type: 'b',
         value: true,
         typeGLSL: 'bool',
       },
       // Struct
-      'uTexturesCount': { // n
+      'uStructTexturesCount': { // n
         type: 'i',
         value: 0,
         typeGLSL: 'int',
       },
-      'uTexturesStruct': { // array of n samplers
+      'uStructTextures': { // array of n samplers
         type: 'tv',
         value: [],
         typeGLSL: 'sampler2D',
         length: 1,
       },
-      'uColorsStruct': { // array of 4*n float each group of 4 is a color
+      'uStructColors': { // array of 4*n float each group of 4 is a color
         type: 'fv1',
         value: [],
         typeGLSL: 'float',
         length: 4,
       },
-      'uFillingStruct': { // array of n int where 1 = filled, 0 not only borders
+      'uStructFilling': { // array of n int where 1 = filled, 0 not only borders
         type: 'iv1',
         value: [],
         typeGLSL: 'int',
         length: 1,
       },
-      'uWidthStruct': { // array of 4*n float each group of 4 is a color
+      'uStructBorderWidth': { // with of the border if any
         type: 'f',
         value: 2,
         typeGLSL: 'float',
