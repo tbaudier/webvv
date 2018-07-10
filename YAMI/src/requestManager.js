@@ -103,30 +103,36 @@ function requestManager() {
    * @param  {Object} jsonData   parsed input json
    * @param  {Object} files      container object where the result is written
    * @param  {string} categoryName name of the fetched category
+   * @param  {string} structNum index of ROI if category == "struct"
    * @return {Promise} Promise object represents the array of fetched files.
    * @memberof module:RequestManager
    */
-  function fetchCategoryFiles(jsonData, files, categoryName) {
+  function fetchCategoryFiles(jsonData, files, categoryName, structNum) {
     return new Promise((resolve, reject) => {
       if (!jsonData[categoryName])
         reject("No category with this name (" + categoryName + ") in json.");
 
       let promise = Promise.resolve();
       let subCategoryFiles = [];
+      let cat;
+      if(categoryName != "struct")
+        cat = jsonData[categoryName];
+      else
+        cat = jsonData[categoryName]["data"][structNum];
 
       // TODO faire la 4D !!!
       let time = 0;
-      for (let i = 0; i < jsonData[categoryName]["data"][time].length; i++) {
+      for (let i = 0; i < cat["data"][time].length; i++) {
         promise = promise
           .then(_ => {
             // for each url, fetch the appropriate file
-            let fileURL = '/datafiles/' + jsonData.study + "/" + jsonData[categoryName]["data"][time][i];
+            let fileURL = '/datafiles/' + jsonData.study + "/" + cat["data"][time][i];
             return binaryHttpRequest(fileURL);
           })
           .then((response) => {
             // and add it to the array
-            let filename = jsonData[categoryName]["data"][0][i].split('/').pop();
-            subCategoryFiles.push(new File([response], jsonData[categoryName]["data"][time][i].split('/').pop()));
+            let filename = cat["data"][0][i].split('/').pop();
+            subCategoryFiles.push(new File([response], cat["data"][time][i].split('/').pop()));
           })
           .catch((e) => {
             reject(e)
@@ -135,7 +141,13 @@ function requestManager() {
 
       // finally we return "files" as the result
       promise = promise.then(_ => {
-        files[categoryName] = subCategoryFiles;
+        if(categoryName != "struct")
+          files[categoryName] = subCategoryFiles;
+        else{
+          if(typeof files[categoryName] === 'undefined')
+            files[categoryName] = [];
+          files[categoryName][structNum] = subCategoryFiles;
+        }
         resolve();
       });
 
@@ -159,7 +171,7 @@ function requestManager() {
     let jsonParameters;
 
     // Use Promises to keep every call synchronous
-    Promise.resolve()
+    let p = Promise.resolve()
       .then(_ => {
         // request the json, the url is read in the GET parameters
         console.log("Json request...");
@@ -171,25 +183,17 @@ function requestManager() {
         jsonParameters = JSON.parse(jsonResponse);
         parseInformationData(jsonParameters, files);
       })
-      // IMAGE
-      .then(_ => {
-        return fetchAndLoadData(jsonParameters, files, "image");
+      .then( _ => {
+        for (let prop in jsonParameters)
+          if (jsonParameters.hasOwnProperty(prop))
+            p = p.then(_ => {
+              return fetchAndLoadData(jsonParameters, files, prop);
+            });
+        p = p.then((series) => {
+          console.log("Files loaded.");
+          handleSeriesFunct(seriesContainer, files["information"]);
+        });
       })
-      // FUSION
-      .then(_ => {
-        return fetchAndLoadData(jsonParameters, files, "fusion");
-      })
-      // ROI
-      // TODO changer format
-      .then(_ => {
-        return fetchAndLoadData(jsonParameters, files, "ROI");
-      })
-      // Final callback
-      .then((series) => {
-        console.log("Files loaded.");
-        handleSeriesFunct(seriesContainer, files["information"]);
-      })
-
 
       // Error handling
       .catch((error) => {
@@ -203,14 +207,30 @@ function requestManager() {
      *
      * @param  {Object} jsonParameters parsed input json
      * @param  {Object} files      container object where the result is written
-     * @param  {string} categoryName name of the fetched category
+     * @param  {string} categoryName name of the fetched category, "information" and "study" will be ignored
      * @return {Promise} Promise object representing the loaded data
      * @memberof module:RequestManager
      */
     function fetchAndLoadData(jsonParameters, files, category) {
+      if(category === "information" || category === "study")
+        return;
       return new Promise((resolve, reject) => {
-        Promise.resolve()
-          .then(_ => {
+        let p = Promise.resolve();
+        if(category === "struct"){
+          for(let roi in jsonParameters["struct"]["data"]){
+            // TODO remember name : jsonParameters["struct"]["data"][roi]["roi"]
+            let name =  jsonParameters["struct"]["data"][roi]["roi"];
+            p = p.then(_ => {
+                console.log("struct " + name + " : Files request...");
+                return fetchCategoryFiles(jsonParameters, files, category, roi);
+            })
+            .then(_ => {
+                console.log("struct " + name + " : Files loading...");
+                return loadData(files, category, roi);
+            });
+          }
+        }else{
+          p = p.then(_ => {
             if (jsonParameters[category] !== undefined) {
               console.log(category + " : Files request...");
               return fetchCategoryFiles(jsonParameters, files, category);
@@ -221,8 +241,10 @@ function requestManager() {
               console.log(category + " : Files loading...");
               return loadData(files, category);
             }
-          })
-          .then(_ => {
+          });
+        }
+
+          p = p.then(_ => {
             resolve();
           })
           .catch((e) => {
@@ -249,15 +271,14 @@ function requestManager() {
         futureContainer["information"]["fusion"] = {
           "unit": json["fusion"]["unit"]
         };
-        // TODO structs
-      if (json["ROI"])
-        futureContainer["information"]["ROI"] = {
-          "unit": json["ROI"]["unit"]
+      if (json["struct"])
+        futureContainer["information"]["struct"] = {
+          "unit": json["struct"]["unit"]
         };
     }
 
     // Load sequence
-    function loadSequence(index, files, category) {
+    function loadSequence(index, files, category, structNum) {
       return Promise
         .resolve()
         // load the file
@@ -278,9 +299,17 @@ function requestManager() {
           });
         })
         .then(function(serie) {
-          if (typeof seriesContainer[category] === 'undefined')
-            seriesContainer[category] = [];
-          seriesContainer[category].push(serie);
+            if(category != "struct"){
+              if (typeof seriesContainer[category] === 'undefined')
+                seriesContainer[category] = [];
+              seriesContainer[category].push(serie);
+            }else{
+              if(typeof seriesContainer[category] === 'undefined')
+                seriesContainer[category] = [];
+              seriesContainer[category][structNum] = [];
+              seriesContainer[category][structNum].push(serie);
+            }
+
         })
         .catch(function(error) {
           window.console.log('Oops... something went wrong while loading the sequence...');
@@ -289,7 +318,7 @@ function requestManager() {
     }
 
     // Load group sequence
-    function loadSequenceGroup(file, category) {
+    function loadSequenceGroup(file, category, structNum) {
       const fetchSequencePromises = [];
 
       for (let formatName in file) {
@@ -321,8 +350,16 @@ function requestManager() {
           return loader.parse(rawdata);
         })
         .then(function(serie) {
-          seriesContainer[category] = [];
-          seriesContainer[category].push(serie);
+          if(category != "struct"){
+            if(typeof seriesContainer[category] === 'undefined')
+              seriesContainer[category] = [];
+            seriesContainer[category].push(serie);
+          }else{
+            if(typeof seriesContainer[category] === 'undefined')
+              seriesContainer[category] = [];
+            seriesContainer[category][structNum] = [];
+            seriesContainer[category][structNum].push(serie);
+          }
         })
         .catch(function(error) {
           window.console.log('oops... something went wrong while parsing the sequence...');
@@ -331,24 +368,29 @@ function requestManager() {
     }
 
     // Load one image/sequence/header+image group
-    function loadData(files, category) {
+    function loadData(files, category, structNum) {
       return new Promise((resolve, reject) => {
 
         const loadSequencePromiseContainer = [];
         const data = [];
         const dataGroup = {};
         let separatedFormat;
+        let cat;
+        if(category != "struct")
+          cat = files[category];
+        else
+          cat = files[category][structNum];
 
         // convert object into array
-        for (let i = 0; i < files[category].length; i++) {
-          let dataUrl = AMI.UtilsCore.parseUrl(files[category][i].name);
+        for (let i = 0; i < cat.length; i++) {
+          let dataUrl = AMI.UtilsCore.parseUrl(cat[i].name);
           if (_filterByExtension('mhd', dataUrl)) {
-            dataGroup["header"] = files[category][i];
+            dataGroup["header"] = cat[i];
             separatedFormat = true;
           } else if (_filterByExtension('raw', dataUrl)) {
-            dataGroup["data"] = files[category][i];
+            dataGroup["data"] = cat[i];
           } else {
-            data.push(files[category][i]);
+            data.push(cat[i]);
           }
         }
 
@@ -357,14 +399,14 @@ function requestManager() {
             reject("Data seems to be 'header (mhd) + data (raw)' but data can't be found !");
           } else {
             loadSequencePromiseContainer.push(
-              loadSequenceGroup(dataGroup, category)
+              loadSequenceGroup(dataGroup, category, structNum)
             );
           }
         } else {
           // load the rest of the files
           for (let i = 0; i < data.length; i++) {
             loadSequencePromiseContainer.push(
-              loadSequence(i, data, category)
+              loadSequence(i, data, category, structNum)
             );
           }
         }

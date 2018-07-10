@@ -194,7 +194,7 @@ export default class sceneManager {
      * @param  {string} stackname the name of the stack (now it must be "fusion", "ROI" or "overlay", otherwise the stack will not be added)
      */
     this.addLayerStack = function(stack, stackname) {
-      if (stackname == "ROI")
+      if (stackname == "struct")
         this.addLayerROI(stack, stackname);
       if (!(stackname == "fusion" || stackname == "overlay"))
         return;
@@ -293,7 +293,7 @@ export default class sceneManager {
     }
 
     this.addLayerROI = function(stack, stackname) {
-      if (stackname !== "ROI")
+      if (stackname !== "struct")
         return;
       // Constructions
       //
@@ -408,7 +408,15 @@ export default class sceneManager {
         _this.uniformsMix.uTexturesCount.value = textureTargets["struct"].length;
         _this.uniformsMix.uTexturesStruct.value = [];
         _this.uniformsMix.uFillingStruct.value = [];
-        _this.uniformsMix.uColorsStruct.value = config.structColors.slice(0, textureTargets["struct"].length * 4);
+        _this.uniformsMix.uColorsStruct.value = [];
+        // complete the struct colors and repeat the default colors if needed.
+        while(_this.uniformsMix.uColorsStruct.value.length < textureTargets["struct"].length * 4){
+          _this.uniformsMix.uColorsStruct.value =
+            [
+              ..._this.uniformsMix.uColorsStruct.value,
+              ...config.structColors.slice(0, textureTargets["struct"].length * 4 - _this.uniformsMix.uColorsStruct.value.length)
+            ];
+        }
         for (let i = 0; i < textureTargets["struct"].length; i++) {
           _this.uniformsMix.uTexturesStruct.value = [..._this.uniformsMix.uTexturesStruct.value, textureTargets["struct"][i].texture];
           _this.uniformsMix.uFillingStruct.value = [..._this.uniformsMix.uFillingStruct.value, 0];
@@ -423,7 +431,7 @@ export default class sceneManager {
       _this.uniformsMix.uOpacityMin.value = 0.1;
       _this.uniformsMix.uOpacityMax.value = 0.8;
       _this.uniformsMix.uThreshold.value = 0.01;
-      _this.uniformsMix.uWidthStruct.value = 4;
+      _this.uniformsMix.uWidthStruct.value = 1;
       _this.uniformsMix.uCanvasWidth.value = canvas.clientWidth;
       _this.uniformsMix.uCanvasHeight.value = canvas.clientHeight;
 

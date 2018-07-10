@@ -11,8 +11,10 @@ const config = require('./viewer.config');
  */
 function f() {
   let canvas;
+  let gui;
   let indexDOM;
   let stackHelper;
+  let sceneManager;
   let stackFolder;
 
   var changePtr;
@@ -28,7 +30,7 @@ function f() {
    * @memberof module:GUIManager
    */
   function buildGUI(scene, camera, changes, domElement) {
-    let sceneManager = scene;
+    sceneManager = scene;
     stackHelper = scene.stackHelper;
     let stack = scene.stackHelper._stack;
     let fusionUni = scene.uniforms.fusion;
@@ -36,7 +38,7 @@ function f() {
 
     changePtr = changes;
 
-    let gui = new dat.GUI({
+    gui = new dat.GUI({
       autoPlace: false,
     });
 
@@ -99,33 +101,10 @@ function f() {
     });
     stackFolder.open();
 
-    // Fusion
-    if (fusionUni) {
-      let fusionFolder = gui.addFolder('Fusion');
-      fusionFolder.add(sceneManager.uniformsMix.uUseFusion, 'value').name("show fusion").onChange(_ => {
-        changes.hasChanged = true;
-      });
-      let lutUpdateFusion = fusionFolder.add(
-        sceneManager.luts.fusion, 'lut', sceneManager.luts.fusion.lutsAvailable());
-      lutUpdateFusion.onChange(function(value) {
-        fusionUni.uTextureLUT.value = sceneManager.luts.fusion.texture;
-        changes.hasChanged = true;
-      });
-      let thresholdFusion = fusionFolder.add(sceneManager.uniformsMix.uThreshold, 'value', 0, 1).name("Threshold");
-      thresholdFusion.onChange(function(value) {
-        changes.hasChanged = true;
-      });
-      let opacityMinFusion = fusionFolder.add(sceneManager.uniformsMix.uOpacityMin, 'value', 0, 1).name("Opacity min");
-      opacityMinFusion.onChange(function(value) {
-        changes.hasChanged = true;
-      });
-      let opacityMaxFusion = fusionFolder.add(sceneManager.uniformsMix.uOpacityMax, 'value', 0, 1).name("Opacity max");
-      opacityMaxFusion.onChange(function(value) {
-        changes.hasChanged = true;
-      });
-      fusionFolder.open();
+    buildFusionGUI(fusionUni);
 
-    }
+    buildStructGUI();
+
     // camera
     let cameraFolder = gui.addFolder('Camera');
     let invertRows = cameraFolder.add(camUtils, 'invertRows');
@@ -172,6 +151,39 @@ function f() {
           changes.hasChanged = true;
         });*/
   }
+
+  function buildFusionGUI(fusionUni) {
+    // Fusion
+    if (fusionUni) {
+      let fusionFolder = gui.addFolder('Fusion');
+      fusionFolder.add(sceneManager.uniformsMix.uUseFusion, 'value').name("show fusion").onChange(_ => {
+        changePtr.hasChanged = true;
+      });
+      let lutUpdateFusion = fusionFolder.add(
+        sceneManager.luts.fusion, 'lut', sceneManager.luts.fusion.lutsAvailable());
+      lutUpdateFusion.onChange(function(value) {
+        fusionUni.uTextureLUT.value = sceneManager.luts.fusion.texture;
+        changePtr.hasChanged = true;
+      });
+      let thresholdFusion = fusionFolder.add(sceneManager.uniformsMix.uThreshold, 'value', 0, 1).name("Threshold");
+      thresholdFusion.onChange(function(value) {
+        changePtr.hasChanged = true;
+      });
+      let opacityMinFusion = fusionFolder.add(sceneManager.uniformsMix.uOpacityMin, 'value', 0, 1).name("Opacity min");
+      opacityMinFusion.onChange(function(value) {
+        changePtr.hasChanged = true;
+      });
+      let opacityMaxFusion = fusionFolder.add(sceneManager.uniformsMix.uOpacityMax, 'value', 0, 1).name("Opacity max");
+      opacityMaxFusion.onChange(function(value) {
+        changePtr.hasChanged = true;
+      });
+      fusionFolder.open();
+
+    }
+  }
+
+
+  function buildStructGUI() {}
 
   /**
    * Update the labels of each side, from the camera modality

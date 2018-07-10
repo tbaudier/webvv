@@ -107,6 +107,7 @@ window.onload = function() {
    * @param  {Object} information     object containing other information contained in the input json.
    */
   function handleSeries(seriesContainer, information) {
+    console.log(seriesContainer);
     // cleanup the loader and its progress bar
     loader.free();
     loader = null;
@@ -148,14 +149,15 @@ window.onload = function() {
 
     // struct
     // TODO change format
-    if (seriesContainer["ROI"]) {
-      let stackFusion;
-      stackFusion = seriesContainer["ROI"][0].mergeSeries(seriesContainer["ROI"])[0].stack[0];
-      stackFusion.unit = information["ROI"].unit;
-      sceneManager.addLayerStack(stackFusion, "ROI");
-      stackList["ROI"] = stackFusion;
+    for(let structNum in seriesContainer["struct"]) {
+      let stackStruct;
+      stackStruct = seriesContainer["struct"][structNum][0].mergeSeries(seriesContainer["struct"][structNum])[0].stack[0];
+      // stackStruct.unit = information["struct"].unit;
+      sceneManager.addLayerStack(stackStruct, "struct");
+      // do not add to the stacklist (stacklist is only to display pointed value);
+      //stackList["struct "+structNum] = stackStruct;
       // Cleaning the imported (now useless) raw data
-      cleanStack(stackFusion);
+      cleanStack(stackStruct);
     }
 
     // create the DOM Element of the cross

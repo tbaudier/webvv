@@ -78,7 +78,9 @@ button::first-letter{
   height: 500px;
   max-height: 500px;
   max-width: 500px;
+  border : solid 1px gray;
   margin: auto;
+  margin-bottom : 10px;
   display: flex;
   align-items: center;
   justify-content: center;
