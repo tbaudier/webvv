@@ -391,7 +391,6 @@ export default class sceneManager {
       mesh.applyMatrix(_this.stackHelper.stack._ijk2LPS);
       sceneMix.add(mesh);
     }
-
     function updateMixShader() {
       _this.uniformsMix.uBackgroundTexture.value = textureTargets["background"].texture;
       // fusion
@@ -436,19 +435,24 @@ export default class sceneManager {
       _this.uniformsMix.uCanvasWidth.value = canvas.clientWidth;
       _this.uniformsMix.uCanvasHeight.value = canvas.clientHeight;
 
-      // generate shaders on-demand!
-      let fls = new FusionShaderFrag(_this.uniformsMix);
-      let vls = new AMI.LayerVertexShader();
-      let mat = new THREE.ShaderMaterial({
-        side: THREE.DoubleSide,
-        uniforms: _this.uniformsMix,
-        vertexShader: vls.compute(),
-        fragmentShader: fls.compute(),
-        transparent: true,
-      });
-      materialMix = mat;
-      if (mesheMix != null)
-        mesheMix.material = materialMix;
+      _this.updateMixShaderSoft();
+    }
+
+    //update the shader without resetting the values
+    this.updateMixShaderSoft = function(){
+          // generate shaders on-demand!
+          let fls = new FusionShaderFrag(_this.uniformsMix);
+          let vls = new AMI.LayerVertexShader();
+          let mat = new THREE.ShaderMaterial({
+            side: THREE.DoubleSide,
+            uniforms: _this.uniformsMix,
+            vertexShader: vls.compute(),
+            fragmentShader: fls.compute(),
+            transparent: true,
+          });
+          materialMix = mat;
+          if (mesheMix != null)
+            mesheMix.material = materialMix;
     }
 
 

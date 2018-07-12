@@ -194,11 +194,13 @@ function f() {
       let structFolder = gui.addFolder('ROI ' + i);
       structFolder.add(temp, 'drawn').name("Display").listen().onChange(_ => {
         sceneManager.uniformsMix.uStructFilling.value[i] = temp.drawn ? (temp.filled ? 1 : 0) : -1;
+        sceneManager.updateMixShaderSoft();
         changePtr.hasChanged = true;
       });
       structFolder.add(temp, 'filled').name("Filled").onChange(_ => {
         sceneManager.uniformsMix.uStructFilling.value[i] = temp.filled ? 1 : 0;
         temp.drawn = true;
+        sceneManager.updateMixShaderSoft();
         changePtr.hasChanged = true;
       });
       structFolder.addColor(temp, 'color').name("Color").onChange(_ => {

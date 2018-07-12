@@ -37,45 +37,62 @@ export default class ShadersFragment {
   }
   structFunction() {
     let content = '';
-    if (this._uniforms["uStructTexturesCount"].value > 0)
       /* local var reminder :
       vec2 texc
       vec4 baseColorBG
       vec4 baseColorFusion
       */
-      content =
+      content +=
       `
-    const int MAX_ROI = 100;
-      for (int i = 0; i < MAX_ROI; i++) {
-        if (i >= uStructTexturesCount) {
-          break;
-        }
+        vec4 baseColorStruct;
+        float step_u;
+        float step_v;
+        vec4 rightPixel;
+        vec4 bottomPixel;
+        float _dFdX;
+        float _dFdY;
+        float maxDerivative;
+        float clampedDerivative;
+        vec4 roiColor;
+        float opacity;
+      `;
+      for(let i = 0 ; i < this._uniforms["uStructTexturesCount"].value ; i++){
+        if(this._uniforms["uStructFilling"].value[i] === 0){
+          // draw only borders
+          content +=
+          `
+            baseColorStruct = texture2D(uStructTextures[${i}], texc);
 
-        else if(uStructFilling[i] != -1){
-          vec4 baseColorStruct = texture2D(uStructTextures[i], texc);
-          if(uStructFilling[i] == 0){
-            float step_u = uStructBorderWidth * 1.0 / uCanvasWidth;
-            float step_v = uStructBorderWidth * 1.0 / uCanvasHeight;
+            step_u = uStructBorderWidth * 1.0 / uCanvasWidth;
+            step_v = uStructBorderWidth * 1.0 / uCanvasHeight;
 
-            vec4 rightPixel  = texture2D(uStructTextures[i], texc + vec2(step_u, 0.0));
-            vec4 bottomPixel = texture2D(uStructTextures[i], texc + vec2(0.0, step_v));
+            rightPixel  = texture2D(uStructTextures[${i}], texc + vec2(step_u, 0.0));
+            bottomPixel = texture2D(uStructTextures[${i}], texc + vec2(0.0, step_v));
 
             // now manually compute the derivatives
-            float _dFdX = length(rightPixel.xyz - baseColorStruct.xyz) / step_u;
-            float _dFdY = length(bottomPixel.xyz - baseColorStruct.xyz) / step_v;
+            _dFdX = length(rightPixel.xyz - baseColorStruct.xyz) / step_u;
+            _dFdY = length(bottomPixel.xyz - baseColorStruct.xyz) / step_v;
 
-            float maxDerivative = max(_dFdX, _dFdY);
-            float clampedDerivative = clamp(maxDerivative, 0., 1.);
+            maxDerivative = max(_dFdX, _dFdY);
+            clampedDerivative = clamp(maxDerivative, 0., 1.);
             baseColorStruct.r = clampedDerivative;
-          }
 
-          vec4 roiColor = vec4(uStructColors[4*i],uStructColors[1+4*i],uStructColors[2+4*i],uStructColors[3+4*i]);
-          float opacity = baseColorStruct.r * roiColor.a; // red canal is enough to distinguish B&W
-          gl_FragColor = mix(gl_FragColor, roiColor, opacity);
+            roiColor = vec4(uStructColors[${4*i}],uStructColors[${1+4*i}],uStructColors[${2+4*i}],uStructColors[${3+4*i}]);
+            opacity = baseColorStruct.r * roiColor.a; // red canal is enough to distinguish B&W
+            gl_FragColor = mix(gl_FragColor, roiColor, opacity);
+          `;
+        }else if(this._uniforms["uStructFilling"].value[i] === 1){
+          // draw filled
+            content +=
+            `
+              baseColorStruct = texture2D(uStructTextures[${i}], texc);
+
+              roiColor = vec4(uStructColors[${4*i}],uStructColors[${1+4*i}],uStructColors[${2+4*i}],uStructColors[${3+4*i}]);
+              opacity = baseColorStruct.r * roiColor.a; // red canal is enough to distinguish B&W
+              gl_FragColor = mix(gl_FragColor, roiColor, opacity);
+            `;
         }
-
       }
-  `;
 
     return content;
   }
