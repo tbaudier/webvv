@@ -163,7 +163,7 @@ function f() {
 
   function buildStructGUI() {
 
-    for (let i = 0; i < sceneManager.uniformsMix.uStructTexturesCount.value; i++) {
+    for (let i = sceneManager.uniformsMix.uStructTexturesCount.value-1; i >=0 ; --i) {
       let temp = {
         drawn: true,
         filled: false,
@@ -207,9 +207,9 @@ function f() {
         }
       };
       if (i != sceneManager.uniformsMix.uStructTexturesCount.value - 1)
-        structFolder.add(btn, 'Forward');
+        structFolder.add(btn, 'Forward').name("Forward ↑");
       if (i != 0)
-        structFolder.add(btn, 'Backward');
+        structFolder.add(btn, 'Backward').name("Backward ↓");;
       roiDOMs[i] = structFolder;
     }
   }
