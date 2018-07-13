@@ -13,6 +13,7 @@ function f() {
   let canvas;
   let gui;
   let indexDOM;
+  let roiDOMs = [];
   let stackHelper;
   let sceneManager;
   let stackFolder;
@@ -29,11 +30,12 @@ function f() {
    * @param {Element} domElement DOM Element
    * @memberof module:GUIManager
    */
-  function buildGUI(scene, camera, changes, domElement) {
+  function buildGUI(scene, camera, changes, domElement, info) {
     sceneManager = scene;
     stackHelper = scene.stackHelper;
     let stack = scene.stackHelper._stack;
     let fusionUni = scene.uniforms.fusion;
+    information = info;
     canvas = domElement;
 
     changePtr = changes;
@@ -126,30 +128,6 @@ function f() {
       updateLabels(camera.directionsLabel, stack.modality);
       changes.hasChanged = true;
     });
-    /*
-        let orientationUpdate = cameraFolder.add(
-          camUtils, 'orientation', ['default', 'axial', 'coronal', 'sagittal']);
-        orientationUpdate.onChange(function(value) {
-          camera.orientation = value;
-          camera.update();
-          camera.fitBox(2);
-          stackHelper.orientation = camera.stackOrientation;
-          updateLabels(camera.directionsLabel, stack.modality);
-
-          index.__max = stackHelper.orientationMaxIndex;
-          stackHelper.index = Math.floor(index.__max / 2);
-          changes.hasChanged = true;
-        });
-
-        let conventionUpdate = cameraFolder.add(
-          camUtils, 'convention', ['radio', 'neuro']);
-        conventionUpdate.onChange(function(value) {
-          camera.convention = value;
-          camera.update();
-          camera.fitBox(2);
-          updateLabels(camera.directionsLabel, stack.modality);
-          changes.hasChanged = true;
-        });*/
   }
 
   function buildFusionGUI(fusionUni) {
@@ -189,9 +167,11 @@ function f() {
       let temp = {
         drawn: true,
         filled: false,
-        color: sceneManager.uniformsMix.uStructColors.value.slice(4 * i, 4 * i + 3).map((x) => { return 255*x;})
+        color: sceneManager.uniformsMix.uStructColors.value.slice(4 * i, 4 * i + 3).map((x) => {
+          return 255 * x;
+        })
       };
-      let structFolder = gui.addFolder('ROI ' + i);
+      let structFolder = gui.addFolder("ROI : " + information["struct"]["names"][i]);
       structFolder.add(temp, 'drawn').name("Display").listen().onChange(_ => {
         sceneManager.uniformsMix.uStructFilling.value[i] = temp.drawn ? (temp.filled ? 1 : 0) : -1;
         sceneManager.updateMixShaderSoft();
@@ -206,13 +186,49 @@ function f() {
       structFolder.addColor(temp, 'color').name("Color").onChange(_ => {
         sceneManager.uniformsMix.uStructColors.value[4 * i] = temp.color[0] / 255.;
         sceneManager.uniformsMix.uStructColors.value[4 * i + 1] = temp.color[1] / 255.;
-        sceneManager.uniformsMix.uStructColors.value[4 * i + 2] = temp.color[2] / 255. ;
+        sceneManager.uniformsMix.uStructColors.value[4 * i + 2] = temp.color[2] / 255.;
         changePtr.hasChanged = true;
       });
       structFolder.add(sceneManager.uniformsMix.uStructColors.value, 4 * i + 3, 0, 1).name("Opacity").onChange(_ => {
         changePtr.hasChanged = true;
       });
+      let btn = {
+        Forward: function() {
+          sceneManager.swapLayerROI(i, true);
+          swapInfoROI(i, true);
+          changePtr.hasChanged = true;
+          updateStruct()
+        },
+        Backward: function() {
+          sceneManager.swapLayerROI(i, false);
+          swapInfoROI(i, false);
+          changePtr.hasChanged = true;
+          updateStruct()
+        }
+      };
+      if (i != sceneManager.uniformsMix.uStructTexturesCount.value - 1)
+        structFolder.add(btn, 'Forward');
+      if (i != 0)
+        structFolder.add(btn, 'Backward');
+      roiDOMs[i] = structFolder;
     }
+  }
+
+  function swapInfoROI(indexToMove, isUpward) {
+    let i1 = indexToMove;
+    let i2 = isUpward ? (i1 + 1) : (i1 - 1);
+
+    let temp = information["struct"]["names"][i1];
+    information["struct"]["names"][i1] = information["struct"]["names"][i2];
+    information["struct"]["names"][i2] = temp;
+  }
+
+
+  function updateStruct() {
+    for (let i = 0; i < roiDOMs.length; i++) {
+      gui.removeFolder(roiDOMs[i]);
+    }
+    buildStructGUI();
   }
 
   /**
@@ -257,11 +273,9 @@ function f() {
    * @param {Number[]} values.positionPX array of x,y,z cross' position in pixels
    * @param {Object} values.data dictionnay of layers and their value under the cross
    * @param {Number} values.data.background the cross' value in the "background" layer", same goes with other layers
-   * @param  {Object} info dictionnay of layers having the stacks information, including data units.
-   * @param {String} info.background.unit the unit to associate with the value read in values.data.background, same goes with other layers
    * @memberof module:GUIManager
    */
-  function updateProb(values, info) {
+  function updateProb(values) {
     let text = "";
     if (values.positionMM != null)
       text += round(values.positionMM.x) + " / " + round(values.positionMM.y) + " / " + round(values.positionMM.z) + " mm<br/>";
@@ -269,7 +283,7 @@ function f() {
       text += round(values.positionPX.x) + " / " + round(values.positionPX.y) + " / " + round(values.positionPX.z) + " px<br/>";
     text += "<br/>";
     for (let prop in values.data) {
-      text += prop + " : " + round(values.data[prop]) + " " + info[prop].unit + " <br/>";
+      text += prop + " : " + round(values.data[prop]) + " " + information[prop].unit + " <br/>";
     }
     document.getElementById("data-prob").innerHTML = text;
   }
@@ -310,7 +324,8 @@ function f() {
     updateLabels: updateLabels,
     updateProb: updateProb,
     updateCross: updateCross,
-    updateIndex: updateIndex
+    updateIndex: updateIndex,
+    updateStruct: updateStruct
   }
 }
 

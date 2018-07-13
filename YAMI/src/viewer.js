@@ -194,7 +194,7 @@ window.onload = function() {
     controls.setAsResetState();
 
     guiManager.updateLabels(camera.directionsLabel, stack.modality);
-    guiManager.buildGUI(sceneManager, camera, changePtr, canvas);
+    guiManager.buildGUI(sceneManager, camera, changePtr, canvas, information);
 
     //Set the "Resize" listener
     window.addEventListener('resize', onWindowResize, false);
@@ -208,7 +208,7 @@ window.onload = function() {
           sceneManager.render(renderer, camera);
           controls.update();
           guiManager.updateCross(cross, controls._mouse);
-          guiManager.updateProb(controls.values, information);
+          guiManager.updateProb(controls.values);
           changePtr.hasChanged = false;
         }
         stats.update();

@@ -377,6 +377,28 @@ export default class sceneManager {
       updateMixShader();
     }
 
+    this.swapLayerROI = function(indexToMove, isUpward) {
+      let i1 = indexToMove;
+      let i2 = isUpward ? (i1 + 1) : (i1 - 1);
+      // swap texture
+      let temp1 = _this.uniformsMix.uStructTextures.value[i1];
+      _this.uniformsMix.uStructTextures.value[i1] = _this.uniformsMix.uStructTextures.value[i2];
+      _this.uniformsMix.uStructTextures.value[i2] = temp1;
+      // swap color
+      for (let i = 0; i < 4; i++) {
+        let temp2 = _this.uniformsMix.uStructColors.value[i1*4+i];
+        _this.uniformsMix.uStructColors.value[i1*4+i] = _this.uniformsMix.uStructColors.value[i2*4+i];
+        _this.uniformsMix.uStructColors.value[i2*4+i] = temp2;
+      }
+
+      // swap fill
+      let temp3 = _this.uniformsMix.uStructFilling.value[i1];
+      _this.uniformsMix.uStructFilling.value[i1] = _this.uniformsMix.uStructFilling.value[i2];
+      _this.uniformsMix.uStructFilling.value[i2] = temp3;
+
+      _this.updateMixShaderSoft();
+    }
+
     /**
      * Create the mix layer
      */
@@ -391,6 +413,7 @@ export default class sceneManager {
       mesh.applyMatrix(_this.stackHelper.stack._ijk2LPS);
       sceneMix.add(mesh);
     }
+
     function updateMixShader() {
       _this.uniformsMix.uBackgroundTexture.value = textureTargets["background"].texture;
       // fusion
@@ -410,12 +433,11 @@ export default class sceneManager {
         _this.uniformsMix.uStructFilling.value = [];
         _this.uniformsMix.uStructColors.value = [];
         // complete the struct colors and repeat the default colors if needed.
-        while(_this.uniformsMix.uStructColors.value.length < textureTargets["struct"].length * 4){
-          _this.uniformsMix.uStructColors.value =
-            [
-              ..._this.uniformsMix.uStructColors.value,
-              ...config.structColors.slice(0, textureTargets["struct"].length * 4 - _this.uniformsMix.uStructColors.value.length)
-            ];
+        while (_this.uniformsMix.uStructColors.value.length < textureTargets["struct"].length * 4) {
+          _this.uniformsMix.uStructColors.value = [
+            ..._this.uniformsMix.uStructColors.value,
+            ...config.structColors.slice(0, textureTargets["struct"].length * 4 - _this.uniformsMix.uStructColors.value.length)
+          ];
         }
         for (let i = 0; i < textureTargets["struct"].length; i++) {
           _this.uniformsMix.uStructTextures.value = [..._this.uniformsMix.uStructTextures.value, textureTargets["struct"][i].texture];
@@ -439,20 +461,20 @@ export default class sceneManager {
     }
 
     //update the shader without resetting the values
-    this.updateMixShaderSoft = function(){
-          // generate shaders on-demand!
-          let fls = new FusionShaderFrag(_this.uniformsMix);
-          let vls = new AMI.LayerVertexShader();
-          let mat = new THREE.ShaderMaterial({
-            side: THREE.DoubleSide,
-            uniforms: _this.uniformsMix,
-            vertexShader: vls.compute(),
-            fragmentShader: fls.compute(),
-            transparent: true,
-          });
-          materialMix = mat;
-          if (mesheMix != null)
-            mesheMix.material = materialMix;
+    this.updateMixShaderSoft = function() {
+      // generate shaders on-demand!
+      let fls = new FusionShaderFrag(_this.uniformsMix);
+      let vls = new AMI.LayerVertexShader();
+      let mat = new THREE.ShaderMaterial({
+        side: THREE.DoubleSide,
+        uniforms: _this.uniformsMix,
+        vertexShader: vls.compute(),
+        fragmentShader: fls.compute(),
+        transparent: true,
+      });
+      materialMix = mat;
+      if (mesheMix != null)
+        mesheMix.material = materialMix;
     }
 
 

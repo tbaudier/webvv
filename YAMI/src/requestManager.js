@@ -271,10 +271,14 @@ function requestManager() {
         futureContainer["information"]["fusion"] = {
           "unit": json["fusion"]["unit"]
         };
-      if (json["struct"])
+      if (json["struct"]){
         futureContainer["information"]["struct"] = {
-          "unit": json["struct"]["unit"]
+          "unit": json["struct"]["unit"],
+          "names":[]
         };
+        for(let i = 0; i < json["struct"]["data"].length; ++i)
+          futureContainer["information"]["struct"]["names"][i] = json["struct"]["data"][i].roi;
+      }
     }
 
     // Load sequence
