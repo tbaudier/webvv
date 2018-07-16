@@ -13,6 +13,7 @@ function f() {
   let canvas;
   let gui;
   let indexDOM;
+  let information;
   let roiDOMs = [];
   let stackHelper;
   let sceneManager;
