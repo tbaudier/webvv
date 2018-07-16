@@ -52,6 +52,7 @@ function requestManager() {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
 
+        xhr.open("GET", url);
         xhr.overrideMimeType("application/json");
         xhr.onload = () => {
           if (xhr.status == "200") {
@@ -61,7 +62,6 @@ function requestManager() {
           }
         };
         xhr.onerror = () => reject(xhr.statusText);
-        xhr.open("GET", url);
         xhr.send();
       })
       .catch((e) => {
@@ -80,6 +80,7 @@ function requestManager() {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
 
+        xhr.open("GET", url);
         xhr.responseType = "blob"; //force the HTTP response, response-type header to be blob
         xhr.onload = () => {
           if (xhr.status == "200") {
@@ -89,7 +90,6 @@ function requestManager() {
           }
         };
         xhr.onerror = () => reject(xhr.statusText);
-        xhr.open("GET", url);
         xhr.send();
       })
       .catch((e) => {
