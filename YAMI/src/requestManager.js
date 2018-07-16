@@ -136,15 +136,11 @@ function requestManager() {
               return binaryHttpRequest(fileURL);
             })
             .then((response) => {
-              window.console.log("in fect Cat 6");
-              window.console.log("test1"+cat["data"][0]);
-              window.console.log("test2"+cat["data"][0][i]);
-              window.console.log("test3"+ cat["data"][0][i].split('/'));
-              window.console.log("test4"+cat["data"][0][i].split('/').pop());
               // and add it to the array
               let filename = cat["data"][0][i].split('/').pop();
               window.console.log("name :" + filename);
               subCategoryFiles.push(new File([response], cat["data"][time][i].split('/').pop()));
+              window.console.log("I did all well");
             })
             .catch((e) => {
               window.console.log("in fect Cat 7");
