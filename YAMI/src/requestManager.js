@@ -144,6 +144,8 @@ function requestManager() {
             })
             .catch((e) => {
               window.console.log("in fect Cat 7");
+              window.console.log(e);
+              window.console.log(e.stack);
               reject(e)
             });
         }
