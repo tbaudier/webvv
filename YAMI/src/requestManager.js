@@ -138,8 +138,10 @@ function requestManager() {
             .then((response) => {
               // and add it to the array
               let filename = cat["data"][time][i].split('/').pop();
-              let file = new File([response], filename);
-              if(typeof file === "undefined"){
+              let file;
+              try {
+                file = new File([response], filename);
+              } catch (e) {
                 file = response;
                 file.name = filename;
                 file.lastModifiedDate = new Date();
