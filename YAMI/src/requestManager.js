@@ -139,7 +139,7 @@ function requestManager() {
               // and add it to the array
               let filename = cat["data"][0][i].split('/').pop();
               window.console.log("name :" + filename);
-              subCategoryFiles.push(new File([response], cat["data"][time][i].split('/').pop()));
+              subCategoryFiles = [...subCategoryFiles, new File([response], cat["data"][time][i].split('/').pop())];
               window.console.log("I did all well");
             })
             .catch((e) => {
