@@ -109,11 +109,9 @@ function requestManager() {
    */
   function fetchCategoryFiles(jsonData, files, categoryName, structNum) {
     return new Promise((resolve, reject) => {
-        window.console.log("in fect Cat 1");
         if (!jsonData[categoryName])
           reject("No category with this name (" + categoryName + ") in json.");
 
-        window.console.log("in fect Cat 2");
         let promise = Promise.resolve();
         let subCategoryFiles = [];
         let cat;
@@ -122,15 +120,12 @@ function requestManager() {
         else
           cat = jsonData[categoryName]["data"][structNum];
 
-        window.console.log("in fect Cat 3");
         // TODO faire la 4D !!!
         let time = 0;
         for (let i = 0; i < cat["data"][time].length; i++) {
 
-          window.console.log("in fect Cat 4");
           promise = promise
             .then(_ => {
-              window.console.log("in fect Cat 5");
               // for each url, fetch the appropriate file
               let fileURL = '/datafiles/' + jsonData.study + "/" + cat["data"][time][i];
               return binaryHttpRequest(fileURL);
@@ -149,8 +144,6 @@ function requestManager() {
               subCategoryFiles = [...subCategoryFiles, file];
             })
             .catch((e) => {
-              window.console.log(e);
-              window.console.log(e.stack);
               reject(e)
             });
         }
