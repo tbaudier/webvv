@@ -151,6 +151,9 @@ function requestManager() {
         resolve();
       });
 
+    })
+    .catch((e) => {
+      reject(e)
     });
   }
 
@@ -294,6 +297,9 @@ function requestManager() {
               resolve(e.target.result);
             });
             myReader.readAsArrayBuffer(files[index]);
+          })
+          .catch((e) => {
+            reject(e)
           });
         })
         .then(function(buffer) {
@@ -426,6 +432,9 @@ function requestManager() {
             window.console.log(error);
             reject('oops... something went wrong while using the sequence...');
           });
+      })
+      .catch((e) => {
+        reject(e)
       });
     }
   }
