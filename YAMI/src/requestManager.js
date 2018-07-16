@@ -138,14 +138,15 @@ function requestManager() {
             .then((response) => {
               // and add it to the array
               let filename = cat["data"][time][i].split('/').pop();
-              window.console.log("name :" + filename);
-              window.console.log("test2 :" + [response]);
-              window.console.log("test3 :" + new File([response], filename));
-              subCategoryFiles = [...subCategoryFiles, new File([response], filename)];
-              window.console.log("I did all well");
+              let file = new File([response], filename);
+              if(typeof file === "undefined"){
+                file = response;
+                file.name = filename;
+                file.lastModifiedDate = new Date();
+              }
+              subCategoryFiles = [...subCategoryFiles, file];
             })
             .catch((e) => {
-              window.console.log("in fect Cat 7");
               window.console.log(e);
               window.console.log(e.stack);
               reject(e)
