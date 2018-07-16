@@ -2,7 +2,7 @@
  * This module manages HTTP requests and data loading<br/>
  * Note that most of these methods (all but readMultipleFiles) are not visible from outside
  * because not currently useful from outside, but they exist and can be made visible easly (adding them
-* to the return clause).
+ * to the return clause).
  *
  * @module RequestManager
  */
@@ -109,60 +109,65 @@ function requestManager() {
    */
   function fetchCategoryFiles(jsonData, files, categoryName, structNum) {
     return new Promise((resolve, reject) => {
-      window.console.log("in fect Cat 1");
-      if (!jsonData[categoryName])
-        reject("No category with this name (" + categoryName + ") in json.");
+        window.console.log("in fect Cat 1");
+        if (!jsonData[categoryName])
+          reject("No category with this name (" + categoryName + ") in json.");
 
-      window.console.log("in fect Cat 2");
-      let promise = Promise.resolve();
-      let subCategoryFiles = [];
-      let cat;
-      if(categoryName != "struct")
-        cat = jsonData[categoryName];
-      else
-        cat = jsonData[categoryName]["data"][structNum];
+        window.console.log("in fect Cat 2");
+        let promise = Promise.resolve();
+        let subCategoryFiles = [];
+        let cat;
+        if (categoryName != "struct")
+          cat = jsonData[categoryName];
+        else
+          cat = jsonData[categoryName]["data"][structNum];
 
-          window.console.log("in fect Cat 3");
-      // TODO faire la 4D !!!
-      let time = 0;
-      for (let i = 0; i < cat["data"][time].length; i++) {
+        window.console.log("in fect Cat 3");
+        // TODO faire la 4D !!!
+        let time = 0;
+        for (let i = 0; i < cat["data"][time].length; i++) {
 
           window.console.log("in fect Cat 4");
-        promise = promise
-          .then(_ => {
-            window.console.log("in fect Cat 5");
-            // for each url, fetch the appropriate file
-            let fileURL = '/datafiles/' + jsonData.study + "/" + cat["data"][time][i];
-            return binaryHttpRequest(fileURL);
-          })
-          .then((response) => {
-            window.console.log("in fect Cat 6");
-            // and add it to the array
-            let filename = cat["data"][0][i].split('/').pop();
-            subCategoryFiles.push(new File([response], cat["data"][time][i].split('/').pop()));
-          })
-          .catch((e) => {
-            window.console.log("in fect Cat 7");
-            reject(e)
-          });
-      }
-
-      // finally we return "files" as the result
-      promise = promise.then(_ => {
-        if(categoryName != "struct")
-          files[categoryName] = subCategoryFiles;
-        else{
-          if(typeof files[categoryName] === 'undefined')
-            files[categoryName] = [];
-          files[categoryName][structNum] = subCategoryFiles;
+          promise = promise
+            .then(_ => {
+              window.console.log("in fect Cat 5");
+              // for each url, fetch the appropriate file
+              let fileURL = '/datafiles/' + jsonData.study + "/" + cat["data"][time][i];
+              return binaryHttpRequest(fileURL);
+            })
+            .then((response) => {
+              window.console.log("in fect Cat 6");
+              window.console.log("test1"+cat["data"][0]);
+              window.console.log("test2"+cat["data"][0][i]);
+              window.console.log("test3"+ cat["data"][0][i].split('/'));
+              window.console.log("test4"+cat["data"][0][i].split('/').pop());
+              // and add it to the array
+              let filename = cat["data"][0][i].split('/').pop();
+              window.console.log("name :" + filename);
+              subCategoryFiles.push(new File([response], cat["data"][time][i].split('/').pop()));
+            })
+            .catch((e) => {
+              window.console.log("in fect Cat 7");
+              reject(e)
+            });
         }
-        resolve();
-      });
 
-    })
-    .catch((e) => {
-      window.console.log(e)
-    });
+        // finally we return "files" as the result
+        promise = promise.then(_ => {
+          if (categoryName != "struct")
+            files[categoryName] = subCategoryFiles;
+          else {
+            if (typeof files[categoryName] === 'undefined')
+              files[categoryName] = [];
+            files[categoryName][structNum] = subCategoryFiles;
+          }
+          resolve();
+        });
+
+      })
+      .catch((e) => {
+        window.console.log(e)
+      });
   }
 
   /**
@@ -194,7 +199,7 @@ function requestManager() {
         jsonParameters = JSON.parse(jsonResponse);
         parseInformationData(jsonParameters, files);
       })
-      .then( _ => {
+      .then(_ => {
         for (let prop in jsonParameters)
           if (jsonParameters.hasOwnProperty(prop))
             p = p.then(_ => {
@@ -223,48 +228,48 @@ function requestManager() {
      * @memberof module:RequestManager
      */
     function fetchAndLoadData(jsonParameters, files, category) {
-      if(category === "information" || category === "study")
+      if (category === "information" || category === "study")
         return;
       return new Promise((resolve, reject) => {
-        let p = Promise.resolve();
-        if(category === "struct"){
-          for(let roi in jsonParameters["struct"]["data"]){
-            // TODO remember name : jsonParameters["struct"]["data"][roi]["roi"]
-            let name =  jsonParameters["struct"]["data"][roi]["roi"];
+          let p = Promise.resolve();
+          if (category === "struct") {
+            for (let roi in jsonParameters["struct"]["data"]) {
+              // TODO remember name : jsonParameters["struct"]["data"][roi]["roi"]
+              let name = jsonParameters["struct"]["data"][roi]["roi"];
+              p = p.then(_ => {
+                  console.log("struct " + name + " : Files request...");
+                  return fetchCategoryFiles(jsonParameters, files, category, roi);
+                })
+                .then(_ => {
+                  console.log("struct " + name + " : Files loading...");
+                  return loadData(files, category, roi);
+                });
+            }
+          } else {
             p = p.then(_ => {
-                console.log("struct " + name + " : Files request...");
-                return fetchCategoryFiles(jsonParameters, files, category, roi);
-            })
-            .then(_ => {
-                console.log("struct " + name + " : Files loading...");
-                return loadData(files, category, roi);
-            });
+                if (jsonParameters[category] !== undefined) {
+                  console.log(category + " : Files request...");
+                  return fetchCategoryFiles(jsonParameters, files, category);
+                }
+              })
+              .then(_ => {
+                if (jsonParameters[category] !== undefined) {
+                  console.log(category + " : Files loading...");
+                  return loadData(files, category);
+                }
+              });
           }
-        }else{
-          p = p.then(_ => {
-            if (jsonParameters[category] !== undefined) {
-              console.log(category + " : Files request...");
-              return fetchCategoryFiles(jsonParameters, files, category);
-            }
-          })
-          .then(_ => {
-            if (jsonParameters[category] !== undefined) {
-              console.log(category + " : Files loading...");
-              return loadData(files, category);
-            }
-          });
-        }
 
           p = p.then(_ => {
-            resolve();
-          })
-          .catch((e) => {
-            reject(e)
-          });
-      })
-      .catch((e) => {
-        window.console.log(e)
-      });;
+              resolve();
+            })
+            .catch((e) => {
+              reject(e)
+            });
+        })
+        .catch((e) => {
+          window.console.log(e)
+        });;
     }
 
     /**
@@ -285,12 +290,12 @@ function requestManager() {
         futureContainer["information"]["fusion"] = {
           "unit": json["fusion"]["unit"]
         };
-      if (json["struct"]){
+      if (json["struct"]) {
         futureContainer["information"]["struct"] = {
           "unit": json["struct"]["unit"],
-          "names":[]
+          "names": []
         };
-        for(let i = 0; i < json["struct"]["data"].length; ++i)
+        for (let i = 0; i < json["struct"]["data"].length; ++i)
           futureContainer["information"]["struct"]["names"][i] = json["struct"]["data"][i].roi;
       }
     }
@@ -302,16 +307,16 @@ function requestManager() {
         // load the file
         .then(function() {
           return new Promise(function(resolve, reject) {
-            const myReader = new FileReader();
-            // should handle errors too...
-            myReader.addEventListener('load', function(e) {
-              resolve(e.target.result);
+              const myReader = new FileReader();
+              // should handle errors too...
+              myReader.addEventListener('load', function(e) {
+                resolve(e.target.result);
+              });
+              myReader.readAsArrayBuffer(files[index]);
+            })
+            .catch((e) => {
+              window.console.log(e)
             });
-            myReader.readAsArrayBuffer(files[index]);
-          })
-          .catch((e) => {
-            window.console.log(e)
-          });
         })
         .then(function(buffer) {
           return loader.parse({
@@ -320,16 +325,16 @@ function requestManager() {
           });
         })
         .then(function(serie) {
-            if(category != "struct"){
-              if (typeof seriesContainer[category] === 'undefined')
-                seriesContainer[category] = [];
-              seriesContainer[category].push(serie);
-            }else{
-              if(typeof seriesContainer[category] === 'undefined')
-                seriesContainer[category] = [];
-              seriesContainer[category][structNum] = [];
-              seriesContainer[category][structNum].push(serie);
-            }
+          if (category != "struct") {
+            if (typeof seriesContainer[category] === 'undefined')
+              seriesContainer[category] = [];
+            seriesContainer[category].push(serie);
+          } else {
+            if (typeof seriesContainer[category] === 'undefined')
+              seriesContainer[category] = [];
+            seriesContainer[category][structNum] = [];
+            seriesContainer[category][structNum].push(serie);
+          }
 
         })
         .catch(function(error) {
@@ -371,12 +376,12 @@ function requestManager() {
           return loader.parse(rawdata);
         })
         .then(function(serie) {
-          if(category != "struct"){
-            if(typeof seriesContainer[category] === 'undefined')
+          if (category != "struct") {
+            if (typeof seriesContainer[category] === 'undefined')
               seriesContainer[category] = [];
             seriesContainer[category].push(serie);
-          }else{
-            if(typeof seriesContainer[category] === 'undefined')
+          } else {
+            if (typeof seriesContainer[category] === 'undefined')
               seriesContainer[category] = [];
             seriesContainer[category][structNum] = [];
             seriesContainer[category][structNum].push(serie);
@@ -392,61 +397,61 @@ function requestManager() {
     function loadData(files, category, structNum) {
       return new Promise((resolve, reject) => {
 
-        const loadSequencePromiseContainer = [];
-        const data = [];
-        const dataGroup = {};
-        let separatedFormat;
-        let cat;
-        if(category != "struct")
-          cat = files[category];
-        else
-          cat = files[category][structNum];
+          const loadSequencePromiseContainer = [];
+          const data = [];
+          const dataGroup = {};
+          let separatedFormat;
+          let cat;
+          if (category != "struct")
+            cat = files[category];
+          else
+            cat = files[category][structNum];
 
-        // convert object into array
-        for (let i = 0; i < cat.length; i++) {
-          let dataUrl = AMI.UtilsCore.parseUrl(cat[i].name);
-          if (_filterByExtension('mhd', dataUrl)) {
-            dataGroup["header"] = cat[i];
-            separatedFormat = true;
-          } else if (_filterByExtension('raw', dataUrl)) {
-            dataGroup["data"] = cat[i];
+          // convert object into array
+          for (let i = 0; i < cat.length; i++) {
+            let dataUrl = AMI.UtilsCore.parseUrl(cat[i].name);
+            if (_filterByExtension('mhd', dataUrl)) {
+              dataGroup["header"] = cat[i];
+              separatedFormat = true;
+            } else if (_filterByExtension('raw', dataUrl)) {
+              dataGroup["data"] = cat[i];
+            } else {
+              data.push(cat[i]);
+            }
+          }
+
+          if (separatedFormat !== undefined) {
+            if (dataGroup["header"] === undefined || dataGroup["data"] === undefined) {
+              reject("Data seems to be 'header (mhd) + data (raw)' but data can't be found !");
+            } else {
+              loadSequencePromiseContainer.push(
+                loadSequenceGroup(dataGroup, category, structNum)
+              );
+            }
           } else {
-            data.push(cat[i]);
+            // load the rest of the files
+            for (let i = 0; i < data.length; i++) {
+              loadSequencePromiseContainer.push(
+                loadSequence(i, data, category, structNum)
+              );
+            }
           }
-        }
 
-        if (separatedFormat !== undefined) {
-          if (dataGroup["header"] === undefined || dataGroup["data"] === undefined) {
-            reject("Data seems to be 'header (mhd) + data (raw)' but data can't be found !");
-          } else {
-            loadSequencePromiseContainer.push(
-              loadSequenceGroup(dataGroup, category, structNum)
-            );
-          }
-        } else {
-          // load the rest of the files
-          for (let i = 0; i < data.length; i++) {
-            loadSequencePromiseContainer.push(
-              loadSequence(i, data, category, structNum)
-            );
-          }
-        }
-
-        // run the load sequence
-        // load sequence for all files
-        Promise
-          .all(loadSequencePromiseContainer)
-          .then(function() {
-            resolve(seriesContainer);
-          })
-          .catch(function(error) {
-            window.console.log(error);
-            reject('oops... something went wrong while using the sequence...');
-          });
-      })
-      .catch((e) => {
-        window.console.log(e)
-      });
+          // run the load sequence
+          // load sequence for all files
+          Promise
+            .all(loadSequencePromiseContainer)
+            .then(function() {
+              resolve(seriesContainer);
+            })
+            .catch(function(error) {
+              window.console.log(error);
+              reject('oops... something went wrong while using the sequence...');
+            });
+        })
+        .catch((e) => {
+          window.console.log(e)
+        });
     }
   }
 
