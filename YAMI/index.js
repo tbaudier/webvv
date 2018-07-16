@@ -1,4 +1,5 @@
 const express = require('express');
+require('babel-polyfill');
 const app = express();
 
 const port = 9191;
