@@ -65,7 +65,7 @@ function requestManager() {
         xhr.send();
       })
       .catch((e) => {
-        console.log(e)
+        window.console.log(e)
       });
   }
 
@@ -153,7 +153,7 @@ function requestManager() {
 
     })
     .catch((e) => {
-      reject(e)
+      window.console.log(e)
     });
   }
 
@@ -253,7 +253,10 @@ function requestManager() {
           .catch((e) => {
             reject(e)
           });
-      });
+      })
+      .catch((e) => {
+        window.console.log(e)
+      });;
     }
 
     /**
@@ -299,7 +302,7 @@ function requestManager() {
             myReader.readAsArrayBuffer(files[index]);
           })
           .catch((e) => {
-            reject(e)
+            window.console.log(e)
           });
         })
         .then(function(buffer) {
@@ -349,7 +352,7 @@ function requestManager() {
             };
           })
           .catch((e) => {
-            reject(e)
+            window.console.log(e)
           })
         );
       }
@@ -434,7 +437,7 @@ function requestManager() {
           });
       })
       .catch((e) => {
-        reject(e)
+        window.console.log(e)
       });
     }
   }
