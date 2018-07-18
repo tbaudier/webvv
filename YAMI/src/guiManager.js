@@ -61,47 +61,54 @@ function f() {
     customContainer.appendChild(gui.domElement);
 
     stackFolder = gui.addFolder('Main image');
-    stackFolder.add(
-      stackHelper.slice, 'windowWidth', 0, stack.minMax[1] - stack.minMax[0]).listen().onChange((value) => {
-      windowPreset.window = 'Custom';
-      changes.hasChanged = true;
-    });
-    stackFolder.add(
-      stackHelper.slice, 'windowCenter', stack.minMax[0], stack.minMax[1]).listen().onChange(_ => {
-      windowPreset.window = 'Custom';
-      changes.hasChanged = true;
-    });
-    //stackFolder.add(stackHelper.slice, 'intensityAuto').listen();
-    stackFolder.add(stackHelper.slice, 'invert').onChange(_ => {
-      changes.hasChanged = true;
-    });
+
+    stackFolder.add(stackHelper.slice, 'windowWidth', 0, stack.minMax[1] - stack.minMax[0])
+      .listen()
+      .onChange((value) => {
+        windowPreset.window = 'Custom';
+        changes.hasChanged = true;
+      });
+
+    stackFolder.add(stackHelper.slice, 'windowCenter', stack.minMax[0], stack.minMax[1])
+      .listen().onChange(_ => {
+        windowPreset.window = 'Custom';
+        changes.hasChanged = true;
+      });
+
+    stackFolder.add(stackHelper.slice, 'invert')
+      .onChange(_ => {
+        changes.hasChanged = true;
+      });
     //stackFolder.add(stackHelper.slice, 'interpolation', { No:0, Yes:1}).listen();
     //stackFolder.add(stackHelper.slice, 'interpolation', 0, 1).step(1).listen();
-    let lutWindowUpdate = stackFolder.add(
-      windowPreset, 'window', lutWindowManager.listPresets()).listen();
-    lutWindowUpdate.onChange(function(value) {
-      if (value === "Custom") return;
-      let preset = lutWindowManager.getPresetValue(windowPreset.window);
-      stackHelper.slice.windowWidth = preset[0];
-      stackHelper.slice.windowCenter = preset[1];
-      changes.hasChanged = true;
-    });
-    let lutUpdate = stackFolder.add(
-      stackHelper.slice.lut, 'lut', stackHelper.slice.lut.lutsAvailable()).name("Lut Color");
-    lutUpdate.onChange(function(value) {
-      stackHelper.slice.lutTexture = stackHelper.slice.lut.texture;
-      changes.hasChanged = true;
-    });
+    stackFolder.add(windowPreset, 'window', lutWindowManager.listPresets())
+      .listen()
+      .onChange(function(value) {
+        if (value === "Custom") return;
+        let preset = lutWindowManager.getPresetValue(windowPreset.window);
+        stackHelper.slice.windowWidth = preset[0];
+        stackHelper.slice.windowCenter = preset[1];
+        changes.hasChanged = true;
+      });
+
+    stackFolder.add(stackHelper.slice.lut, 'lut', stackHelper.slice.lut.lutsAvailable())
+      .name("Lut Color")
+      .onChange(function(value) {
+        stackHelper.slice.lutTexture = stackHelper.slice.lut.texture;
+        changes.hasChanged = true;
+      });
     /*    let lutDiscrete = stackFolder.add(stackHelper.slice.lut, 'discrete', false);
         lutDiscrete.onChange(function(value) {
           stackHelper.slice.lutTexture = stackHelper.slice.lut.texture;
           changes.hasChanged = true;
         });*/
 
-    indexDOM = stackFolder.add(
-      stackHelper, 'index', 0, stackHelper.orientationMaxIndex - 1).step(1).listen().onChange(_ => {
-      changes.hasChanged = true;
-    });
+    indexDOM = stackFolder.add(stackHelper, 'index', 0, stackHelper.orientationMaxIndex - 1)
+      .step(1)
+      .listen()
+      .onChange(_ => {
+        changes.hasChanged = true;
+      });
     stackFolder.open();
 
     buildFusionGUI(fusionUni);
@@ -110,63 +117,75 @@ function f() {
 
     // camera
     let cameraFolder = gui.addFolder('Camera');
-    let invertRows = cameraFolder.add(camUtils, 'invertRows');
-    invertRows.onChange(function() {
-      camera.invertRows();
-      updateLabels(camera.directionsLabel, stack.modality);
-      changes.hasChanged = true;
-    });
+    cameraFolder.add(camUtils, 'invertRows')
+      .onChange(function() {
+        camera.invertRows();
+        updateLabels(camera.directionsLabel, stack.modality);
+        changes.hasChanged = true;
+      });
 
-    let invertColumns = cameraFolder.add(camUtils, 'invertColumns');
-    invertColumns.onChange(function() {
-      camera.invertColumns();
-      updateLabels(camera.directionsLabel, stack.modality);
-      changes.hasChanged = true;
-    });
+    cameraFolder.add(camUtils, 'invertColumns')
+      .onChange(function() {
+        camera.invertColumns();
+        updateLabels(camera.directionsLabel, stack.modality);
+        changes.hasChanged = true;
+      });
 
-    let angle = cameraFolder.add(camera, 'angle', 0, 360).step(1).listen();
-    angle.onChange(function() {
-      updateLabels(camera.directionsLabel, stack.modality);
-      changes.hasChanged = true;
-    });
+    cameraFolder.add(camera, 'angle', 0, 360)
+      .step(1)
+      .listen()
+      .onChange(function() {
+        updateLabels(camera.directionsLabel, stack.modality);
+        changes.hasChanged = true;
+      });
   }
 
   function buildFusionGUI(fusionUni) {
     // Fusion
     if (fusionUni) {
       let fusionFolder = gui.addFolder('Fusion');
-      fusionFolder.add(sceneManager.uniformsMix.uFusionUse, 'value').name("show fusion").onChange(_ => {
-        changePtr.hasChanged = true;
-      });
-      console.log(fusionUni);
 
-      fusionFolder.add(
-        fusionUni.uWindowCenterWidth.value, 1, 0, fusionUni.uWindowCenterWidth.max - fusionUni.uWindowCenterWidth.min).name("Window width").listen().onChange((value) => {
-        changePtr.hasChanged = true;
-      });
-      fusionFolder.add(
-        fusionUni.uWindowCenterWidth.value, 0, fusionUni.uWindowCenterWidth.min, fusionUni.uWindowCenterWidth.max).name("Window center").listen().onChange(_ => {
-        changePtr.hasChanged = true;
-      });
+      fusionFolder.add(sceneManager.uniformsMix.uFusionUse, 'value')
+        .name("show fusion")
+        .onChange(_ => {
+          changePtr.hasChanged = true;
+        });
 
-      let lutUpdateFusion = fusionFolder.add(
-        sceneManager.luts.fusion, 'lut', sceneManager.luts.fusion.lutsAvailable());
-      lutUpdateFusion.onChange(function(value) {
-        fusionUni.uTextureLUT.value = sceneManager.luts.fusion.texture;
-        changePtr.hasChanged = true;
-      });
-      let thresholdFusion = fusionFolder.add(sceneManager.uniformsMix.uFusionThreshold, 'value', 0, 1).name("Threshold");
-      thresholdFusion.onChange(function(value) {
-        changePtr.hasChanged = true;
-      });
-      let opacityMinFusion = fusionFolder.add(sceneManager.uniformsMix.uFusionOpacityMin, 'value', 0, 1).name("Opacity min");
-      opacityMinFusion.onChange(function(value) {
-        changePtr.hasChanged = true;
-      });
-      let opacityMaxFusion = fusionFolder.add(sceneManager.uniformsMix.uFusionOpacityMax, 'value', 0, 1).name("Opacity max");
-      opacityMaxFusion.onChange(function(value) {
-        changePtr.hasChanged = true;
-      });
+      fusionFolder.add(fusionUni.uWindowCenterWidth.value, 1, 0, fusionUni.uWindowCenterWidth.max - fusionUni.uWindowCenterWidth.min)
+        .name("Window width")
+        .listen()
+        .onChange((value) => {
+          changePtr.hasChanged = true;
+        });
+
+      fusionFolder.add(fusionUni.uWindowCenterWidth.value, 0, fusionUni.uWindowCenterWidth.min, fusionUni.uWindowCenterWidth.max)
+        .name("Window center")
+        .listen()
+        .onChange(_ => {
+          changePtr.hasChanged = true;
+        });
+
+      fusionFolder.add(sceneManager.luts.fusion, 'lut', sceneManager.luts.fusion.lutsAvailable())
+        .onChange(function(value) {
+          fusionUni.uTextureLUT.value = sceneManager.luts.fusion.texture;
+          changePtr
+            .hasChanged = true;
+        });
+      fusionFolder.add(sceneManager.uniformsMix.uFusionThreshold, 'value', 0, 1)
+        .name("Threshold")
+        .onChange(function(value) {
+          changePtr.hasChanged = true;
+        });
+      fusionFolder.add(sceneManager.uniformsMix.uFusionOpacityMin, 'value', 0, 1)
+        .name("Opacity min")
+        .onChange(function(value) {
+          changePtr.hasChanged = true;
+        });
+      fusionFolder.add(sceneManager.uniformsMix.uFusionOpacityMax, 'value', 0, 1)
+        .name("Opacity max")
+        .onChange(function(value) {
+          changePtr.hasChanged = true;
+        });
       fusionFolder.open();
 
     }
@@ -184,26 +203,36 @@ function f() {
         })
       };
       let structFolder = gui.addFolder("ROI : " + information["struct"]["names"][i]);
-      structFolder.add(temp, 'drawn').name("Display").listen().onChange(_ => {
-        sceneManager.uniformsMix.uStructFilling.value[i] = temp.drawn ? (temp.filled ? 1 : 0) : -1;
-        sceneManager.updateMixShaderSoft();
-        changePtr.hasChanged = true;
-      });
-      structFolder.add(temp, 'filled').name("Filled").onChange(_ => {
-        sceneManager.uniformsMix.uStructFilling.value[i] = temp.filled ? 1 : 0;
-        temp.drawn = true;
-        sceneManager.updateMixShaderSoft();
-        changePtr.hasChanged = true;
-      });
-      structFolder.addColor(temp, 'color').name("Color").onChange(_ => {
-        sceneManager.uniformsMix.uStructColors.value[4 * i] = temp.color[0] / 255.;
-        sceneManager.uniformsMix.uStructColors.value[4 * i + 1] = temp.color[1] / 255.;
-        sceneManager.uniformsMix.uStructColors.value[4 * i + 2] = temp.color[2] / 255.;
-        changePtr.hasChanged = true;
-      });
-      structFolder.add(sceneManager.uniformsMix.uStructColors.value, 4 * i + 3, 0, 1).name("Opacity").onChange(_ => {
-        changePtr.hasChanged = true;
-      });
+
+      structFolder.add(temp, 'drawn')
+        .name("Display")
+        .listen()
+        .onChange(_ => {
+          sceneManager.uniformsMix.uStructFilling.value[i] = temp.drawn ? (temp.filled ? 1 : 0) : -1;
+          sceneManager.updateMixShaderSoft();
+          changePtr.hasChanged = true;
+        });
+      structFolder.add(temp, 'filled')
+        .name("Filled")
+        .onChange(_ => {
+          sceneManager.uniformsMix.uStructFilling.value[i] = temp.filled ? 1 : 0;
+          temp.drawn = true;
+          sceneManager.updateMixShaderSoft();
+          changePtr.hasChanged = true;
+        });
+      structFolder.addColor(temp, 'color')
+        .name("Color")
+        .onChange(_ => {
+          sceneManager.uniformsMix.uStructColors.value[4 * i] = temp.color[0] / 255.;
+          sceneManager.uniformsMix.uStructColors.value[4 * i + 1] = temp.color[1] / 255.;
+          sceneManager.uniformsMix.uStructColors.value[4 * i + 2] = temp.color[2] / 255.;
+          changePtr.hasChanged = true;
+        });
+      structFolder.add(sceneManager.uniformsMix.uStructColors.value, 4 * i + 3, 0, 1)
+        .name("Opacity")
+        .onChange(_ => {
+          changePtr.hasChanged = true;
+        });
       let btn = {
         Forward: function() {
           sceneManager.swapLayerROI(i, true);
