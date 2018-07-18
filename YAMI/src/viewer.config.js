@@ -72,6 +72,7 @@ module.exports = {
   zoomOut: '-',
   zoomOut2: 'o',
   zoomHold: 17, // 'Ctrl'
+  moveHold: 16, // 'Shift'
 
   stackUp: 'ArrowUp',
   stackDown: 'ArrowDown',

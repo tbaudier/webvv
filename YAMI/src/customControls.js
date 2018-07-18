@@ -447,10 +447,12 @@ export default class customControls extends THREE.EventDispatcher {
 
         case config.stackUp:
           _this.scrollStack(true);
+          event.preventDefault();
           break;
 
         case config.stackDown:
           _this.scrollStack(false);
+          event.preventDefault();
           break;
       }
       updateDOM();
@@ -470,24 +472,28 @@ export default class customControls extends THREE.EventDispatcher {
       switch (event.which) { // which button of the mouse is pressed
 
         case 1: // left click
-          switch (_this._state) {
-            case STATE.PAN:
-              _this._state = STATE.PANNING;
-              break;
-            case STATE.ZOOM:
-              _this._state = STATE.ZOOMING;
-              break;
-            case STATE.SLICE:
-              _this._state = STATE.SLICING;
-              break;
-            case STATE.WINDOW:
-              _this._state = STATE.WINDOWING;
-              break;
-            case STATE.SETPROB:
-              _this._state = STATE.SETTINGPROB;
-              _this.prob(event);
-              break;
-          }
+        if(isDown(config.moveHold)){
+          _this._state = STATE.PANNING;
+        }else {
+            switch (_this._state) {
+              case STATE.PAN:
+                _this._state = STATE.PANNING;
+                break;
+              case STATE.ZOOM:
+                _this._state = STATE.ZOOMING;
+                break;
+              case STATE.SLICE:
+                _this._state = STATE.SLICING;
+                break;
+              case STATE.WINDOW:
+                _this._state = STATE.WINDOWING;
+                break;
+              case STATE.SETPROB:
+                _this._state = STATE.SETTINGPROB;
+                _this.prob(event);
+                break;
+            }
+        }
           break;
 
         case 2: // middle click

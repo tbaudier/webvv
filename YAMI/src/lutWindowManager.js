@@ -13,7 +13,6 @@ function lutWindowManager() {
     'Soft tissue': [400, 40],
     'Liver': [160, 40],
     'Brain': [80, 40],
-    'Tumor': [220, 130],
   }
 
   /**
