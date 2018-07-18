@@ -18,6 +18,7 @@ function f() {
   let stackHelper;
   let sceneManager;
   let stackFolder;
+  let structGUIStatus = [];
 
   var changePtr;
 
@@ -113,8 +114,6 @@ function f() {
 
     buildFusionGUI(fusionUni);
 
-    buildStructGUI();
-
     // camera
     let cameraFolder = gui.addFolder('Camera');
     cameraFolder.add(camUtils, 'invertRows')
@@ -138,6 +137,8 @@ function f() {
         updateLabels(camera.directionsLabel, stack.modality);
         changes.hasChanged = true;
       });
+
+      buildStructGUI();
   }
 
   function buildFusionGUI(fusionUni) {
@@ -194,14 +195,21 @@ function f() {
 
   function buildStructGUI() {
 
-    for (let i = sceneManager.uniformsMix.uStructTexturesCount.value - 1; i >= 0; --i) {
-      let temp = {
-        drawn: true,
-        filled: false,
-        color: sceneManager.uniformsMix.uStructColors.value.slice(4 * i, 4 * i + 3).map((x) => {
-          return 255 * x;
-        })
-      };
+    for (let i = sceneManager.uniformsMix.uStructTexturesCount.value - 1, j = 0; i >= 0; --i, ++j) {
+      let temp;
+      if (structGUIStatus.length > j) {
+        temp = structGUIStatus[j];
+      } else {
+        temp = {
+          closed: true,
+          drawn: true,
+          filled: false,
+          color: sceneManager.uniformsMix.uStructColors.value.slice(4 * i, 4 * i + 3).map((x) => {
+            return 255 * x;
+          }),
+        };
+        structGUIStatus[j] = temp;
+      }
       let structFolder = gui.addFolder("ROI : " + information["struct"]["names"][i]);
 
       structFolder.add(temp, 'drawn')
@@ -237,12 +245,14 @@ function f() {
         Forward: function() {
           sceneManager.swapLayerROI(i, true);
           swapInfoROI(i, true);
+          saveClosedStructs();
           changePtr.hasChanged = true;
           updateStruct()
         },
         Backward: function() {
           sceneManager.swapLayerROI(i, false);
           swapInfoROI(i, false);
+          saveClosedStructs();
           changePtr.hasChanged = true;
           updateStruct()
         }
@@ -252,6 +262,8 @@ function f() {
       if (i != 0)
         structFolder.add(btn, 'Backward').name("Backward ↓");;
       roiDOMs[i] = structFolder;
+      if (!temp.closed)
+        structFolder.open();
     }
   }
 
@@ -262,6 +274,16 @@ function f() {
     let temp = information["struct"]["names"][i1];
     information["struct"]["names"][i1] = information["struct"]["names"][i2];
     information["struct"]["names"][i2] = temp;
+
+    let temp2 = structGUIStatus[i1];
+    structGUIStatus[i1] = structGUIStatus[i2];
+    structGUIStatus[i2] = temp2;
+  }
+
+  function saveClosedStructs() {
+    for (let i = 0; i < roiDOMs.length; i++) {
+      structGUIStatus[i].closed = roiDOMs[i].closed;
+    }
   }
 
 
