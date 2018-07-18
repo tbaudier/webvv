@@ -264,8 +264,10 @@ export default class sceneManager {
       let offset = 0;
       if (stack._minMax[0] < 0) {
         offset = -stack._minMax[0];
-        uniformsLayer.uWindowCenterWidth["offset"] = offset;
       }
+      uniformsLayer.uWindowCenterWidth["offset"] = offset;
+      uniformsLayer.uWindowCenterWidth["min"] = stack.minMax[0]; //not needed by AMI but to display interval stops in GUI
+      uniformsLayer.uWindowCenterWidth["max"] = stack.minMax[1]; //not needed by AMI but to display interval stops in GUI
       uniformsLayer.uLowerUpperThreshold.value = [stack.minMax[0] + offset, stack.minMax[1] + offset];
       uniformsLayer.uLut.value = 1;
       uniformsLayer.uTextureLUT.value = lut.texture;

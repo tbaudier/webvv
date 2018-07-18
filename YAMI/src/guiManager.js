@@ -138,6 +138,17 @@ function f() {
       fusionFolder.add(sceneManager.uniformsMix.uFusionUse, 'value').name("show fusion").onChange(_ => {
         changePtr.hasChanged = true;
       });
+      console.log(fusionUni);
+
+      fusionFolder.add(
+        fusionUni.uWindowCenterWidth.value, 1, 0, fusionUni.uWindowCenterWidth.max - fusionUni.uWindowCenterWidth.min).name("Window width").listen().onChange((value) => {
+        changePtr.hasChanged = true;
+      });
+      fusionFolder.add(
+        fusionUni.uWindowCenterWidth.value, 0, fusionUni.uWindowCenterWidth.min, fusionUni.uWindowCenterWidth.max).name("Window center").listen().onChange(_ => {
+        changePtr.hasChanged = true;
+      });
+
       let lutUpdateFusion = fusionFolder.add(
         sceneManager.luts.fusion, 'lut', sceneManager.luts.fusion.lutsAvailable());
       lutUpdateFusion.onChange(function(value) {
@@ -164,7 +175,7 @@ function f() {
 
   function buildStructGUI() {
 
-    for (let i = sceneManager.uniformsMix.uStructTexturesCount.value-1; i >=0 ; --i) {
+    for (let i = sceneManager.uniformsMix.uStructTexturesCount.value - 1; i >= 0; --i) {
       let temp = {
         drawn: true,
         filled: false,
