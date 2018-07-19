@@ -1,6 +1,6 @@
-import FusionShaderFrag from './shaders/shaders.layer.fragment';
-import FusionShaderUni from './shaders/shaders.layer.uniform';
-import LutHelper from './customLutHelper';
+import FusionShaderFrag from './AMIv2/shaders/shaders.layer.fragment';
+import FusionShaderUni from './AMIv2/shaders/shaders.layer.uniform';
+import LutHelper from './AMIv2/customLutHelper';
 // Viewer config file
 const config = require('./viewer.config');
 

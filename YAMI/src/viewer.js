@@ -16,9 +16,13 @@ import animationManager from './animator';
 // GUI managment
 const guiManager = require('./guiManager');
 // Controls
-import CustomControls from './customControls';
+import CustomControls from './AMIv2/customControls';
 // Scene Managment
 import SceneManager from './sceneManager';
+// Customization of AMI for slicing
+import ModelsStack from './AMIv2/2DSlices/customStack';
+// Customization of AMI for slicing
+import StackHelper from './AMIv2/2DSlices/customStackHelper';
 
 // standard global variables
 
@@ -115,14 +119,14 @@ window.onload = function() {
     // prepare for slice visualization
     let stackList = {};
 
-
     // main image
-    let stack = seriesContainer["image"][0].mergeSeries(seriesContainer["image"])[0].stack[0];
+    let stack = new ModelsStack();
+    stack.copy_values(seriesContainer["image"][0].mergeSeries(seriesContainer["image"])[0].stack[0]);
     stackList["image"] = stack;
     // we add the "unit" attribute to the stacks
     stack.unit = information["image"].unit;
     // we create the main stackHelper (easy manipulation of stacks)
-    let stackHelper = new AMI.StackHelper(stack);
+    let stackHelper = new StackHelper(stack);
     stackHelper.bbox.visible = false;
     stackHelper.border.visible = false;
     // Cleaning the imported (now useless) raw data
@@ -132,13 +136,10 @@ window.onload = function() {
     sceneManager.setMainStackHelper(stackHelper);
     // and add the stacks we have loaded to the 3D scene
 
-
-
-
     // fusion
     if (seriesContainer["fusion"]) {
-      let stackFusion;
-      stackFusion = seriesContainer["fusion"][0].mergeSeries(seriesContainer["fusion"])[0].stack[0];
+      let stackFusion = new ModelsStack();
+      stackFusion.copy_values(seriesContainer["fusion"][0].mergeSeries(seriesContainer["fusion"])[0].stack[0]);
       stackFusion.unit = information["fusion"].unit;
       sceneManager.addLayerStack(stackFusion, "fusion");
       stackList["fusion"] = stackFusion;
@@ -148,8 +149,8 @@ window.onload = function() {
 
     // struct
     for (let structNum in seriesContainer["struct"]) {
-      let stackStruct;
-      stackStruct = seriesContainer["struct"][structNum][0].mergeSeries(seriesContainer["struct"][structNum])[0].stack[0];
+      let stackStruct = new ModelsStack();
+      stackStruct.copy_values(seriesContainer["struct"][structNum][0].mergeSeries(seriesContainer["struct"][structNum])[0].stack[0]);
       // stackStruct.unit = information["struct"].unit;
       sceneManager.addLayerStack(stackStruct, "struct");
       // do not add to the stacklist (stacklist is only to display pointed value);

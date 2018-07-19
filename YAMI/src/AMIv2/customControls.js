@@ -1,9 +1,9 @@
 /*
  * Inspired by AMI.TrackballOrthoControl
  */
-const config = require('./viewer.config');
+const config = require('../viewer.config');
 // GUI managment
-const guiManager = require('./guiManager');
+const guiManager = require('../guiManager');
 
 export default class customControls extends THREE.EventDispatcher {
   constructor(camera, stackCtrl, stacks, domElement, chgPtr) {

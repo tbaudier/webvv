@@ -6,6 +6,7 @@
   "dependencies": {
     "babel-polyfill": "^6.26.0",
     "express": "^4.16.3",
+    "math-float32-to-binary-string": "^1.0.0",
     "webpack": "^4.8.3"
   },
   "devDependencies": {
