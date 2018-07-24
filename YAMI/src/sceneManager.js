@@ -1,3 +1,6 @@
+import DataFragmentShader from './AMIv2/shaders/shaders.slice.fragment';
+import DataUniformShader from './AMIv2/shaders/shaders.slice.uniform';
+import DataVertexShader from './AMIv2/shaders/shaders.slice.vertex';
 import FusionShaderFrag from './AMIv2/shaders/shaders.layer.fragment';
 import FusionShaderUni from './AMIv2/shaders/shaders.layer.uniform';
 import LutHelper from './AMIv2/customLutHelper';
@@ -225,28 +228,36 @@ export default class sceneManager {
       stack.prepare();
       stack.pack();
 
-      let texture = [];
-      for (let m = 0; m < stack._rawData.length; m++) {
-        let tex = new THREE.DataTexture(
-          stack.rawData[m],
-          stack.textureSize,
-          stack.textureSize,
-          stack.textureType,
-          THREE.UnsignedByteType,
-          THREE.UVMapping,
-          THREE.ClampToEdgeWrapping,
-          THREE.ClampToEdgeWrapping,
-          THREE.NearestFilter,
-          THREE.NearestFilter);
-        tex.needsUpdate = true;
-        tex.flipY = true;
-        texture.push(tex);
-      }
+      stack._prepareTexture();
 
       // create material && mesh then add it to sceneLayers[i]
-      let uniformsLayer = AMI.DataUniformShader.uniforms();
+      let uniformsLayer = createDataUniforms(stack, lut);
+      _this.uniforms[stackname] = uniformsLayer;
+
+      // generate shaders on-demand!
+      let fs = new DataFragmentShader(uniformsLayer);
+      let vs = new DataVertexShader();
+      let materialLayer = new THREE.ShaderMaterial({
+        side: THREE.DoubleSide,
+        uniforms: uniformsLayer,
+        vertexShader: vs.compute(),
+        fragmentShader: fs.compute(),
+      });
+
+      let meshLayer = new THREE.Mesh(_this.stackHelper.slice.geometry, materialLayer);
+      meshes[stackname] = meshLayer;
+      // go the LPS space
+      meshLayer.applyMatrix(_this.stackHelper.stack._ijk2LPS);
+      scene.add(meshLayer);
+      // Update the whole scene BB
+      updateWorldBB(stack.worldBoundingBox());
+
+      updateMixShader();
+    }
+
+    function createDataUniforms(stack, lut){
+      let uniformsLayer = DataUniformShader.uniforms();
       uniformsLayer.uTextureSize.value = stack.textureSize;
-      uniformsLayer.uTextureContainer.value = texture;
       uniformsLayer.uWorldToData.value = stack.lps2IJK;
       uniformsLayer.uNumberOfChannels.value = stack.numberOfChannels;
       uniformsLayer.uBitsAllocated.value = stack.bitsAllocated;
@@ -269,29 +280,13 @@ export default class sceneManager {
       uniformsLayer.uWindowCenterWidth["min"] = stack.minMax[0]; //not needed by AMI but to display interval stops in GUI
       uniformsLayer.uWindowCenterWidth["max"] = stack.minMax[1]; //not needed by AMI but to display interval stops in GUI
       uniformsLayer.uLowerUpperThreshold.value = [stack.minMax[0] + offset, stack.minMax[1] + offset];
-      uniformsLayer.uLut.value = 1;
-      uniformsLayer.uTextureLUT.value = lut.texture;
-      _this.uniforms[stackname] = uniformsLayer;
-
-      // generate shaders on-demand!
-      let fs = new AMI.DataFragmentShader(uniformsLayer);
-      let vs = new AMI.DataVertexShader();
-      let materialLayer = new THREE.ShaderMaterial({
-        side: THREE.DoubleSide,
-        uniforms: uniformsLayer,
-        vertexShader: vs.compute(),
-        fragmentShader: fs.compute(),
-      });
-
-      let meshLayer = new THREE.Mesh(_this.stackHelper.slice.geometry, materialLayer);
-      meshes[stackname] = meshLayer;
-      // go the LPS space
-      meshLayer.applyMatrix(_this.stackHelper.stack._ijk2LPS);
-      scene.add(meshLayer);
-      // Update the whole scene BB
-      updateWorldBB(stack.worldBoundingBox());
-
-      updateMixShader();
+      if(lut != null) {
+        uniformsLayer.uLut.value = 1;
+        uniformsLayer.uTextureLUT.value = lut.texture;
+      }
+      uniformsLayer.uTextureSlice.value = stack._textures[0];
+      uniformsLayer.uOrientationSlice.value = 0;
+      return uniformsLayer;
     }
 
     this.addLayerROI = function(stack, stackname) {
@@ -333,34 +328,12 @@ export default class sceneManager {
       }
 
       // create material && mesh then add it to sceneLayers[i]
-      let uniformsLayer = AMI.DataUniformShader.uniforms();
-      uniformsLayer.uTextureSize.value = stack.textureSize;
-      uniformsLayer.uTextureContainer.value = texture;
-      uniformsLayer.uWorldToData.value = stack.lps2IJK;
-      uniformsLayer.uNumberOfChannels.value = stack.numberOfChannels;
-      uniformsLayer.uBitsAllocated.value = stack.bitsAllocated;
-      uniformsLayer.uPixelType.value = stack.pixelType;
-      uniformsLayer.uPackedPerPixel.value = stack.packedPerPixel;
-      uniformsLayer.uWindowCenterWidth.value = [stack.windowCenter, stack.windowWidth];
-      uniformsLayer.uWindowCenterWidth.unit = stack.unit; // this is not in AMI class, used for display
-      uniformsLayer.uRescaleSlopeIntercept.value = [stack.rescaleSlope, stack.rescaleIntercept];
-      uniformsLayer.uDataDimensions.value = [stack.dimensionsIJK.x,
-        stack.dimensionsIJK.y,
-        stack.dimensionsIJK.z
-      ];
-      uniformsLayer.uInterpolation.value = config.interpolationNM;
-      // we can only display positive values
-      let offset = 0;
-      if (stack._minMax[0] < 0) {
-        offset = -stack._minMax[0];
-        uniformsLayer.uWindowCenterWidth["offset"] = offset;
-      }
-      uniformsLayer.uLowerUpperThreshold.value = [stack.minMax[0] + offset, stack.minMax[1] + offset];
+      let uniformsLayer = createDataUniforms(stack);
       _this.uniforms.struct = [..._this.uniforms.struct, uniformsLayer];
 
       // generate shaders on-demand!
-      let fs = new AMI.DataFragmentShader(uniformsLayer);
-      let vs = new AMI.DataVertexShader();
+      let fs = new DataFragmentShader(uniformsLayer);
+      let vs = new DataVertexShader();
       let materialLayer = new THREE.ShaderMaterial({
         side: THREE.DoubleSide,
         uniforms: uniformsLayer,
