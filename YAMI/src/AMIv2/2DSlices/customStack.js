@@ -37,6 +37,7 @@ export default class ModelsStack extends ModelsBase {
     this._textureSize = 4096;
     this._nbTextures = 7;
     this._rawData = [];
+    this._textures = [];
 
     this._windowCenter = 0;
     this._windowWidth = 0;
@@ -738,6 +739,27 @@ export default class ModelsStack extends ModelsBase {
     }
 
     return packed;
+  }
+
+
+  _prepareTexture() {
+    this._textures = [];
+    for (let m = 0; m < this._rawData.length; m++) {
+      let tex = new THREE.DataTexture(
+        this.rawData[m],
+        this.textureSize,
+        this.textureSize,
+        this.textureType,
+        THREE.UnsignedByteType,
+        THREE.UVMapping,
+        THREE.ClampToEdgeWrapping,
+        THREE.ClampToEdgeWrapping,
+        THREE.NearestFilter,
+        THREE.NearestFilter);
+      tex.needsUpdate = true;
+      tex.flipY = true;
+      this._textures.push(tex);
+    }
   }
 
   _getMaxFromOrientation(frame, orientation) {

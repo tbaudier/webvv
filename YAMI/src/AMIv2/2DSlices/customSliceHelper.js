@@ -71,7 +71,6 @@ const helpersSlice = (three = window.THREE) => {
       // there is also a switch to move back mesh to LPS space automatically
       this._aaBBspace = aabbSpace; // or LPS -> different transforms, esp for the geometry/mesh
       this._material = null;
-      this._textures = [];
       this._shadersFragment = DataFragmentShader;
       this._shadersVertex = DataVertexShader;
       this._uniforms = DataUniformShader.uniforms();
@@ -229,7 +228,7 @@ const helpersSlice = (three = window.THREE) => {
 
     set index(index) {
       this._index = index;
-      this._uniforms.uTextureSlice.value = this._textures[this._index];
+      this._uniforms.uTextureSlice.value = this._stack._textures[this._index];
       this._update();
     }
 
@@ -380,8 +379,8 @@ const helpersSlice = (three = window.THREE) => {
         this._uniforms.uThickness.value = this._thickness;
         this._uniforms.uThicknessMethod.value = this._thicknessMethod;
         // compute texture if material exist
-        this._prepareTexture();
-        this._uniforms.uTextureSlice.value = this._textures[this._index];
+        this._stack._prepareTexture();
+        this._uniforms.uTextureSlice.value = this._stack._textures[this._index];
         this._uniforms.uOrientationSlice.value = 0;
 
         this._createMaterial({
@@ -499,10 +498,12 @@ const helpersSlice = (three = window.THREE) => {
 
     dispose() {
       // Release memory
+      /*
       for (let j =0; j< this._textures.length; j++) {
         this._textures[j].dispose();
         this._textures[j] = null;
       }
+      */
       this._textures = null;
       this._shadersFragment = null;
       this._shadersVertex = null;

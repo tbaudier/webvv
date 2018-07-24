@@ -346,7 +346,7 @@ export default class customControls extends THREE.EventDispatcher {
       _this.camera.fitBox(2);
       _this.stack.orientation = _this.camera.stackOrientation;
       _this.stack._stack.slicing(_this.stack.orientation);
-      _this.stack._slice._prepareTexture();
+      _this.stack._stack._prepareTexture();
 
       switch (_this.stack.orientation) {
         case 0: // axial

@@ -32,26 +32,6 @@
 
       this._material.needsUpdate = true;
     }
-
-    _prepareTexture() {
-      this._textures = [];
-      for (let m = 0; m < this._stack._rawData.length; m++) {
-        let tex = new three.DataTexture(
-          this._stack.rawData[m],
-          this._stack.textureSize,
-          this._stack.textureSize,
-          this._stack.textureType,
-          three.UnsignedByteType,
-          three.UVMapping,
-          three.ClampToEdgeWrapping,
-          three.ClampToEdgeWrapping,
-          three.NearestFilter,
-          three.NearestFilter);
-        tex.needsUpdate = true;
-        tex.flipY = true;
-        this._textures.push(tex);
-      }
-    }
   };
 };
 
