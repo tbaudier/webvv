@@ -1,12 +1,3 @@
-
-/**
- * Taken from AMI.helpersMaterialMixin
- * changes :
- *   - prepare texture
- *
- * @module helpers/material/mixin
- */
-
  const helpersMaterialMixin = (three = window.THREE) => {
   if (three === undefined || three.Object3D === undefined) {
     return null;

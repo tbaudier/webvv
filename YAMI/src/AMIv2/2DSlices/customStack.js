@@ -1,4 +1,3 @@
-
 /**
  * Taken from AMI.stackModel
  * changes :
@@ -103,9 +102,9 @@ export default class ModelsStack extends ModelsBase {
     this._pixelType = stack._pixelType;
     this._pixelRepresentation = stack._pixelRepresentation;
 
-    this._textureSize = 4096;
-    this._nbTextures = 7;
-    this._rawData = [];
+    this._textureSize = stack._textureSize;
+    this._nbTextures = stack._nbTextures;
+    this._rawData = stack._rawData;
 
     this._windowCenter = stack._windowCenter;
     this._windowWidth = stack._windowWidth;
@@ -179,9 +178,9 @@ export default class ModelsStack extends ModelsBase {
 
     // merge frames
     let prevIndex = -1;
-    for (let i = 0; i<this._frame.length; i++) {
+    for (let i = 0; i < this._frame.length; i++) {
       if (!mergedFrames[prevIndex] ||
-          mergedFrames[prevIndex]._dist != this._frame[i]._dist) {
+        mergedFrames[prevIndex]._dist != this._frame[i]._dist) {
         mergedFrames.push(this._frame[i]);
         prevIndex++;
 
@@ -193,9 +192,7 @@ export default class ModelsStack extends ModelsBase {
         // If we merge frames without scaling, then we can not differenciate
         // voxels from segmentation A or B as the value is 0 or 1 in both cases.
         for (
-          let k=0;
-          k<mergedFrames[prevIndex]._rows * mergedFrames[prevIndex]._columns;
-          k++) {
+          let k = 0; k < mergedFrames[prevIndex]._rows * mergedFrames[prevIndex]._columns; k++) {
           mergedFrames[prevIndex]._pixelData[k] *=
             this._frame[i]._referencedSegmentNumber;
         }
@@ -203,12 +200,10 @@ export default class ModelsStack extends ModelsBase {
         // frame already exsits at this location.
         // merge data from this segmentation into existing frame
         for (
-          let k=0;
-          k<mergedFrames[prevIndex]._rows * mergedFrames[prevIndex]._columns;
-          k++) {
+          let k = 0; k < mergedFrames[prevIndex]._rows * mergedFrames[prevIndex]._columns; k++) {
           mergedFrames[prevIndex]._pixelData[k] +=
             this._frame[i].pixelData[k] *
-              this._frame[i]._referencedSegmentNumber;
+            this._frame[i]._referencedSegmentNumber;
         }
       }
 
@@ -219,7 +214,7 @@ export default class ModelsStack extends ModelsBase {
     // get information about segments
     let dict = {};
     let max = 0;
-    for (let i = 0; i<this._segmentationSegments.length; i++) {
+    for (let i = 0; i < this._segmentationSegments.length; i++) {
       max =
         Math.max(
           max, parseInt(this._segmentationSegments[i].segmentNumber, 10));
@@ -345,11 +340,11 @@ export default class ModelsStack extends ModelsBase {
     // 4 echo times...
     let echos = 4;
     let packedEcho = [];
-    for (let i=0; i< this._frame.length; i+=echos) {
+    for (let i = 0; i < this._frame.length; i += echos) {
       let frame = this._frame[i];
-      for (let k=0; k<this._rows * this._columns; k++) {
-        for (let j=1; j<echos; j++) {
-          frame.pixelData[k] += this._frame[i+j].pixelData[k];
+      for (let k = 0; k < this._rows * this._columns; k++) {
+        for (let j = 1; j < echos; j++) {
+          frame.pixelData[k] += this._frame[i + j].pixelData[k];
         }
         frame.pixelData[k] /= echos;
       }
@@ -398,7 +393,7 @@ export default class ModelsStack extends ModelsBase {
     if (this._frame[0].dimensionIndexValues) {
       this._frame.sort(this._orderFrameOnDimensionIndicesArraySort);
 
-    // else order with image position and orientation
+      // else order with image position and orientation
     } else if (
       this._frame[0].imagePosition && this._frame[0].imageOrientation &&
       this._frame[1] &&
@@ -532,12 +527,12 @@ export default class ModelsStack extends ModelsBase {
   merge(stack) {
     // also make sure x/y/z cosines are a match!
     if (this._stackID === stack.stackID &&
-        this._numberOfFrames === 1 && stack._numberOfFrames === 1 &&
-        this._frame[0].columns === stack.frame[0].columns &&
-        this._frame[0].rows === stack.frame[0].rows &&
-        this._xCosine.equals(stack.xCosine) &&
-        this._yCosine.equals(stack.yCosine) &&
-        this._zCosine.equals(stack.zCosine)) {
+      this._numberOfFrames === 1 && stack._numberOfFrames === 1 &&
+      this._frame[0].columns === stack.frame[0].columns &&
+      this._frame[0].rows === stack.frame[0].rows &&
+      this._xCosine.equals(stack.xCosine) &&
+      this._yCosine.equals(stack.yCosine) &&
+      this._zCosine.equals(stack.zCosine)) {
       return this.mergeModels(this._frame, stack.frame);
     } else {
       return false;
@@ -546,11 +541,39 @@ export default class ModelsStack extends ModelsBase {
 
   /**
    * Pack current stack pixel data into 8 bits array buffers
+   * changed for 2DSlicing (YAMI specific)
    */
   pack() {
-    // Get total number of voxels
-    const nbVoxels =
-      this._dimensionsIJK.x * this._dimensionsIJK.y * this._dimensionsIJK.z;
+    // default orientation is axial
+    this.slicing(0);
+
+    this._packed = true;
+  }
+
+
+  /**
+   * Prepare packing but only in one direction (YAMI specific)
+   * @param {number} orientation 0 for axial, 1 sagittal, 2 coronal
+   */
+  slicing(orientation) {
+    this._rawData = [];
+    let nbVoxelsPerSlice;
+    let nbSlices;
+
+    switch (orientation) {
+      case 1:
+        nbVoxelsPerSlice = this._dimensionsIJK.y * this._dimensionsIJK.z;
+        nbSlices = this._dimensionsIJK.x;
+        break;
+      case 2:
+        nbVoxelsPerSlice = this._dimensionsIJK.x * this._dimensionsIJK.z;
+        nbSlices = this._dimensionsIJK.y;
+        break;
+      default:
+        nbVoxelsPerSlice = this._dimensionsIJK.x * this._dimensionsIJK.y;
+        nbSlices = this._dimensionsIJK.z;
+    }
+    this._nbTextures = nbSlices;
 
     // Packing style
     if (this._bitsAllocated === 8 && this._numberOfChannels === 1 || this._bitsAllocated === 1) {
@@ -561,46 +584,41 @@ export default class ModelsStack extends ModelsBase {
       this._packedPerPixel = 2;
     }
 
-    // Loop through all the textures we need
-    const textureDimension = this._textureSize * this._textureSize;
-    const requiredTextures =
-      Math.ceil(nbVoxels / (textureDimension * this._packedPerPixel));
-    let voxelIndexStart = 0;
-    let voxelIndexStop = this._packedPerPixel * textureDimension;
-    if (voxelIndexStop > nbVoxels) {
-      voxelIndexStop = nbVoxels;
+    let textureDimension;
+    const nbPixelPerSlice = Math.ceil(nbVoxelsPerSlice / this._packedPerPixel);
+    // check ideal texture size from 32*32 to 4096*4096 (over that will be cropped)
+    // textures bigger than 4096*4096 might be too big for GC, check before taking bigger
+    for (let po = 5; po <= 12; ++po) {
+      textureDimension = Math.pow(2, po);
+      if (nbPixelPerSlice < textureDimension * textureDimension) {
+        this._textureSize = textureDimension;
+        break;
+      }
     }
 
-    for (let ii = 0; ii < requiredTextures; ii++) {
+    for (let ii = 0; ii < nbSlices; ++ii) {
       let packed =
         this._packTo8Bits(
           this._numberOfChannels,
           this._frame,
+          ii,
           this._textureSize,
-          voxelIndexStart,
-          voxelIndexStop);
+          orientation);
       this._textureType = packed.textureType;
       this._rawData.push(packed.data);
-
-      voxelIndexStart += this._packedPerPixel * textureDimension;
-      voxelIndexStop += this._packedPerPixel * textureDimension;
-      if (voxelIndexStop > nbVoxels) {
-        voxelIndexStop = nbVoxels;
-      }
     }
-
-    this._packed = true;
   }
 
   /**
    * Pack frame data to 32 bits texture
+   * TODO changed for 2DSlicing
    * @param {*} channels
    * @param {*} frame
+   * @param {*} slice
    * @param {*} textureSize
-   * @param {*} startVoxel
-   * @param {*} stopVoxel
+   * @param {*} orientation 0 for axial, 1 sagittal, 2 coronal
    */
-  _packTo8Bits(channels, frame, textureSize, startVoxel, stopVoxel) {
+  _packTo8Bits(channels, frame, slice, textureSize, orientation = 0) {
     const packed = {
       textureType: null,
       data: null,
@@ -610,24 +628,21 @@ export default class ModelsStack extends ModelsBase {
     const pixelType = frame[0].pixelType;
 
     // transform signed to unsigned for convenience
-    let offset = 0;
-    if (this._minMax[0] < 0) {
-      offset -= this._minMax[0];
-    }
+    const offset = (this._minMax[0] < 0) ? -this._minMax[0] : 0;
 
     let packIndex = 0;
     let frameIndex = 0;
     let inFrameIndex = 0;
-    // frame should return it!
-    const frameDimension = frame[0].rows * frame[0].columns;
+
+    let stopVoxel = this._getMaxFromOrientation(frame, orientation);
 
     if (bitsAllocated === 8 && channels === 1 || bitsAllocated === 1) {
       let data = new Uint8Array(textureSize * textureSize * 4);
       let coordinate = 0;
       let channelOffset = 0;
-      for (let i = startVoxel; i < stopVoxel; i++) {
-        frameIndex = ~~(i / frameDimension);
-        inFrameIndex = i % (frameDimension);
+      for (let i = 0; i < stopVoxel; i++) {
+        frameIndex = this._getFrameFromOrientation(i, slice, frame, orientation);
+        inFrameIndex = this._getIndexFromOrientation(i, slice, frame, orientation);
 
         let raw = frame[frameIndex].pixelData[inFrameIndex] + offset;
         if (!Number.isNaN(raw)) {
@@ -645,11 +660,9 @@ export default class ModelsStack extends ModelsBase {
       let coordinate = 0;
       let channelOffset = 0;
 
-      for (let i = startVoxel; i < stopVoxel; i++) {
-        frameIndex = ~~(i / frameDimension);
-        inFrameIndex = i % (frameDimension);
-
-
+      for (let i = 0; i < stopVoxel; i++) {
+        frameIndex = this._getFrameFromOrientation(i, slice, frame, orientation);
+        inFrameIndex = this._getIndexFromOrientation(i, slice, frame, orientation);
         let raw = frame[frameIndex].pixelData[inFrameIndex] + offset;
         if (!Number.isNaN(raw)) {
           data[4 * coordinate + 2 * channelOffset] = raw & 0x00FF;
@@ -665,9 +678,9 @@ export default class ModelsStack extends ModelsBase {
       packed.data = data;
     } else if (bitsAllocated === 32 && channels === 1 && pixelType === 0) {
       let data = new Uint8Array(textureSize * textureSize * 4);
-      for (let i = startVoxel; i < stopVoxel; i++) {
-        frameIndex = ~~(i / frameDimension);
-        inFrameIndex = i % (frameDimension);
+      for (let i = 0; i < stopVoxel; i++) {
+        frameIndex = this._getFrameFromOrientation(i, slice, frame, orientation);
+        inFrameIndex = this._getIndexFromOrientation(i, slice, frame, orientation);
 
         let raw = frame[frameIndex].pixelData[inFrameIndex] + offset;
         if (!Number.isNaN(raw)) {
@@ -684,9 +697,9 @@ export default class ModelsStack extends ModelsBase {
     } else if (bitsAllocated === 32 && channels === 1 && pixelType === 1) {
       let data = new Uint8Array(textureSize * textureSize * 4);
 
-      for (let i = startVoxel; i < stopVoxel; i++) {
-        frameIndex = ~~(i / frameDimension);
-        inFrameIndex = i % (frameDimension);
+      for (let i = 0; i < stopVoxel; i++) {
+        frameIndex = this._getFrameFromOrientation(i, slice, frame, orientation);
+        inFrameIndex = this._getIndexFromOrientation(i, slice, frame, orientation);
 
         let raw = frame[frameIndex].pixelData[inFrameIndex] + offset;
         if (!Number.isNaN(raw)) {
@@ -707,9 +720,9 @@ export default class ModelsStack extends ModelsBase {
     } else if (bitsAllocated === 8 && channels === 3) {
       let data = new Uint8Array(textureSize * textureSize * 3);
 
-      for (let i = startVoxel; i < stopVoxel; i++) {
-        frameIndex = ~~(i / frameDimension);
-        inFrameIndex = i % (frameDimension);
+      for (let i = 0; i < stopVoxel; i++) {
+        frameIndex = this._getFrameFromOrientation(i, slice, frame, orientation);
+        inFrameIndex = this._getIndexFromOrientation(i, slice, frame, orientation);
 
         data[3 * packIndex] =
           frame[frameIndex].pixelData[3 * inFrameIndex];
@@ -725,6 +738,37 @@ export default class ModelsStack extends ModelsBase {
     }
 
     return packed;
+  }
+
+  _getMaxFromOrientation(frame, orientation) {
+    switch (orientation) {
+      case 1:
+        return frame.length * frame[0].columns;
+      case 2:
+        return frame.length * frame[0].rows;
+      default:
+        return frame[0].rows * frame[0].columns;
+    }
+  }
+  _getFrameFromOrientation(i_voxel, slice, frame, orientation) {
+    switch (orientation) {
+      case 1:
+        return ~~(i_voxel / frame[0].rows);
+      case 2:
+        return ~~(i_voxel / frame[0].columns);
+      default:
+        return slice;
+    }
+  }
+  _getIndexFromOrientation(i_voxel, slice, frame, orientation) {
+    switch (orientation) {
+      case 1:
+        return slice + (i_voxel % frame[0].rows) *  frame[0].columns;
+      case 2:
+        return i_voxel % frame[0].columns + slice * frame[0].columns;
+      default:
+        return i_voxel;
+    }
   }
 
   /**
@@ -801,11 +845,11 @@ export default class ModelsStack extends ModelsBase {
 
   static indexInDimensions(index, dimensions) {
     if (index.x >= 0 &&
-         index.y >= 0 &&
-         index.z >= 0 &&
-         index.x < dimensions.x &&
-         index.y < dimensions.y &&
-         index.z < dimensions.z) {
+      index.y >= 0 &&
+      index.z >= 0 &&
+      index.x < dimensions.x &&
+      index.y < dimensions.y &&
+      index.z < dimensions.z) {
       return true;
     }
 
@@ -817,7 +861,7 @@ export default class ModelsStack extends ModelsBase {
       array[index],
       array[index + 1],
       array[index + 2]
-      );
+    );
   }
 
   _orderFrameOnDimensionIndicesArraySort(a, b) {

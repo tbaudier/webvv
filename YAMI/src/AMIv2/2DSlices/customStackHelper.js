@@ -145,7 +145,7 @@ const helpersStack = (three = window.THREE) => {
     }
 
     /**
-     * Set/get current slice orientation.<br>
+     * Set/get current slice orientation. (YAMI specific)<br>
      * Values: <br>
      *   - 0: acquisition direction (slice normal is z_cosine)<br>
      *   - 1: next direction (slice normal is x_cosine)<br>
@@ -166,6 +166,7 @@ const helpersStack = (three = window.THREE) => {
       this._slice.thickness = this._slice.spacing;
 
       this._slice.planeDirection = this._prepareDirection(this._orientation);
+      this._slice._uniforms.uOrientationSlice.value = orientation;
 
       // also update the border
       this._border.helpersSlice = this._slice;

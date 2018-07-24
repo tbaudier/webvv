@@ -7,7 +7,10 @@
  */
 
 /** * Imports ***/
-import {helpersMaterialMixin} from './customMaterialMixin';
+import DataFragmentShader from '../shaders/shaders.slice.fragment';
+import DataUniformShader from '../shaders/shaders.slice.uniform';
+import DataVertexShader from '../shaders/shaders.slice.vertex';
+import {helpersMaterialMixin} from './helpers.material.mixin';
 
 /**
  * @module helpers/slice
@@ -69,9 +72,9 @@ const helpersSlice = (three = window.THREE) => {
       this._aaBBspace = aabbSpace; // or LPS -> different transforms, esp for the geometry/mesh
       this._material = null;
       this._textures = [];
-      this._shadersFragment = AMI.DataFragmentShader;
-      this._shadersVertex = AMI.DataVertexShader;
-      this._uniforms = AMI.DataUniformShader.uniforms();
+      this._shadersFragment = DataFragmentShader;
+      this._shadersVertex = DataVertexShader;
+      this._uniforms = DataUniformShader.uniforms();
       this._geometry = null;
       this._mesh = null;
       this._visible = true;
@@ -226,6 +229,7 @@ const helpersSlice = (three = window.THREE) => {
 
     set index(index) {
       this._index = index;
+      this._uniforms.uTextureSlice.value = this._textures[this._index];
       this._update();
     }
 
@@ -336,7 +340,7 @@ const helpersSlice = (three = window.THREE) => {
       }
     }
 
-    // private methods
+    // private methods (YAMI specific)
     _create() {
       if (!this._stack || !this._stack.prepared || !this._stack.packed) {
         return;
@@ -377,7 +381,8 @@ const helpersSlice = (three = window.THREE) => {
         this._uniforms.uThicknessMethod.value = this._thicknessMethod;
         // compute texture if material exist
         this._prepareTexture();
-        this._uniforms.uTextureContainer.value = this._textures;
+        this._uniforms.uTextureSlice.value = this._textures[this._index];
+        this._uniforms.uOrientationSlice.value = 0;
 
         this._createMaterial({
           side: three.DoubleSide,

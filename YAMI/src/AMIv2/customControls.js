@@ -339,10 +339,14 @@ export default class customControls extends THREE.EventDispatcher {
     }
 
     this.setView = function(orientation) {
+      if(_this.camera.orientation == orientation)
+        return;
       _this.camera.orientation = orientation;
       _this.camera.update();
       _this.camera.fitBox(2);
       _this.stack.orientation = _this.camera.stackOrientation;
+      _this.stack._stack.slicing(_this.stack.orientation);
+      _this.stack._slice._prepareTexture();
 
       switch (_this.stack.orientation) {
         case 0: // axial
@@ -362,7 +366,6 @@ export default class customControls extends THREE.EventDispatcher {
 
       updateMouseFromTarget();
       guiManager.updateLabels(_this.camera.directionsLabel, _this.stack._stack.modality);
-
       changePtr.hasChanged = true;
     }
 
