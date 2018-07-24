@@ -379,7 +379,6 @@ const helpersSlice = (three = window.THREE) => {
         this._uniforms.uThickness.value = this._thickness;
         this._uniforms.uThicknessMethod.value = this._thicknessMethod;
         // compute texture if material exist
-        this._stack._prepareTexture();
         this._uniforms.uTextureSlice.value = this._stack._textures[this._index];
         this._uniforms.uOrientationSlice.value = 0;
 

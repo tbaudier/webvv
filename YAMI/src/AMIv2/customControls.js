@@ -6,7 +6,7 @@ const config = require('../viewer.config');
 const guiManager = require('../guiManager');
 
 export default class customControls extends THREE.EventDispatcher {
-  constructor(camera, stackCtrl, stacks, domElement, chgPtr) {
+  constructor(camera, sceneManager, stackCtrl, stacks, domElement, chgPtr) {
     super();
     // a simple handler to access "this." attributes from functions not declared as "this."function (aka private)
     let _this = this;
@@ -48,6 +48,7 @@ export default class customControls extends THREE.EventDispatcher {
     // Public attributes
     this.camera = camera; // as a THREE.js camera (or AMI camera)
     this.stack = stackCtrl; // as a StackHelper, only the main stack
+    this.sceneManager = sceneManager;
     this.stackValues = stacks;
     this.domElement = (domElement !== undefined) ? domElement : document; // canvas
     this.crossTarget = new THREE.Vector3(); // 3D position of cross cursor (in World)
@@ -189,6 +190,16 @@ export default class customControls extends THREE.EventDispatcher {
         }
         this.stack.index -= 1;
       }
+     // update active slice for each slice except "image" (already done by StackManager)
+      for (let prop in _this.stackValues)
+        if (_this.stackValues.hasOwnProperty(prop) && prop != "image")
+          if (prop != "structs") {
+            updateActiveSlice(_this.stackValues[prop], _this.sceneManager.uniforms[prop]);
+          } else {
+            for (let i = 0; i < _this.stackValues[prop].length; ++i) {
+              updateActiveSlice(_this.stackValues[prop][i], _this.sceneManager.uniforms["struct"][i]);
+            }
+          }
       changePtr.hasChanged = true;
     }
 
@@ -279,7 +290,7 @@ export default class customControls extends THREE.EventDispatcher {
 
     function updateProbValue() {
       for (let prop in _this.stackValues)
-        if (_this.stackValues.hasOwnProperty(prop))
+        if (_this.stackValues.hasOwnProperty(prop) && prop != "structs")
           _this.values.data[prop] = getProbValue(_this.stackValues[prop], prop === "image");
       changePtr.hasChanged = true;
     }
@@ -339,14 +350,34 @@ export default class customControls extends THREE.EventDispatcher {
     }
 
     this.setView = function(orientation) {
-      if(_this.camera.orientation == orientation)
+      if (_this.camera.orientation == orientation)
         return;
       _this.camera.orientation = orientation;
       _this.camera.update();
       _this.camera.fitBox(2);
       _this.stack.orientation = _this.camera.stackOrientation;
-      _this.stack._stack.slicing(_this.stack.orientation);
-      _this.stack._stack._prepareTexture();
+
+      // update slicing orientation of each stack
+      for (let prop in _this.stackValues)
+        if (_this.stackValues.hasOwnProperty(prop))
+          if (prop != "structs") {
+            _this.stackValues[prop].slicing(_this.stack.orientation);
+          } else {
+            for (let i = 0; i < _this.stackValues[prop].length; ++i) {
+              _this.stackValues[prop][i].slicing(_this.stack.orientation);
+            }
+          }
+      // update active slice for each slice except "image" (already done by StackManager)
+      for (let prop in _this.stackValues)
+        if (_this.stackValues.hasOwnProperty(prop) && prop != "image")
+          if (prop != "structs") {
+            updateActiveSlice(_this.stackValues[prop], _this.sceneManager.uniforms[prop]);
+          } else {
+            for (let i = 0; i < _this.stackValues[prop].length; ++i) {
+              updateActiveSlice(_this.stackValues[prop][i], _this.sceneManager.uniforms["struct"][i]);
+            }
+          }
+
 
       switch (_this.stack.orientation) {
         case 0: // axial
@@ -367,6 +398,33 @@ export default class customControls extends THREE.EventDispatcher {
       updateMouseFromTarget();
       guiManager.updateLabels(_this.camera.directionsLabel, _this.stack._stack.modality);
       changePtr.hasChanged = true;
+    }
+
+    function updateActiveSlice(stack, uniform) {
+      let localCoordinates = new THREE.Vector3()
+        .copy(_this.crossTarget)
+        .applyMatrix4(stack.lps2IJK)
+        .addScalar(0.5)
+        .floor();
+      let index = 0;
+      switch (_this.stack.orientation) {
+        case 1:
+          if (localCoordinates.x >= 0 && localCoordinates.x < stack.dimensionsIJK.x) {
+            index = localCoordinates.x;
+          }
+          break;
+        case 2:
+          if (localCoordinates.y >= 0 && localCoordinates.y < stack.dimensionsIJK.y) {
+            index = localCoordinates.y;
+          }
+          break;
+        default:
+          if (localCoordinates.z >= 0 && localCoordinates.z < stack.dimensionsIJK.z) {
+            index = localCoordinates.z;
+          }
+      }
+      uniform.uTextureSlice.value = stack._textures[index];
+      uniform.uOrientationSlice.value = _this.stack.orientation;
     }
 
     this.changeCanvasSize = function(size) {
@@ -475,9 +533,9 @@ export default class customControls extends THREE.EventDispatcher {
       switch (event.which) { // which button of the mouse is pressed
 
         case 1: // left click
-        if(isDown(config.moveHold)){
-          _this._state = STATE.PANNING;
-        }else {
+          if (isDown(config.moveHold)) {
+            _this._state = STATE.PANNING;
+          } else {
             switch (_this._state) {
               case STATE.PAN:
                 _this._state = STATE.PANNING;
@@ -496,7 +554,7 @@ export default class customControls extends THREE.EventDispatcher {
                 _this.prob(event);
                 break;
             }
-        }
+          }
           break;
 
         case 2: // middle click

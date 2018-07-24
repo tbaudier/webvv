@@ -153,8 +153,9 @@ window.onload = function() {
       stackStruct.copy_values(seriesContainer["struct"][structNum][0].mergeSeries(seriesContainer["struct"][structNum])[0].stack[0]);
       // stackStruct.unit = information["struct"].unit;
       sceneManager.addLayerStack(stackStruct, "struct");
-      // do not add to the stacklist (stacklist is only to display pointed value);
-      //stackList["struct "+structNum] = stackStruct;
+      if(stackList["structs"] == null)
+        stackList["structs"] = [];
+      stackList["structs"].push(stackStruct);
       // Cleaning the imported (now useless) raw data
       cleanStack(stackStruct);
     }
@@ -163,7 +164,7 @@ window.onload = function() {
     createCross();
 
     // setup controls and shortcuts
-    controls = new CustomControls(camera, stackHelper, stackList, canvas, changePtr);
+    controls = new CustomControls(camera, sceneManager, stackHelper, stackList, canvas, changePtr);
     camera.controls = controls;
 
     // setup camera

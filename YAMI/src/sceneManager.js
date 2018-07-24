@@ -228,8 +228,6 @@ export default class sceneManager {
       stack.prepare();
       stack.pack();
 
-      stack._prepareTexture();
-
       // create material && mesh then add it to sceneLayers[i]
       let uniformsLayer = createDataUniforms(stack, lut);
       _this.uniforms[stackname] = uniformsLayer;
@@ -308,24 +306,6 @@ export default class sceneManager {
       // Stack preparation
       stack.prepare();
       stack.pack();
-
-      let texture = [];
-      for (let m = 0; m < stack._rawData.length; m++) {
-        let tex = new THREE.DataTexture(
-          stack.rawData[m],
-          stack.textureSize,
-          stack.textureSize,
-          stack.textureType,
-          THREE.UnsignedByteType,
-          THREE.UVMapping,
-          THREE.ClampToEdgeWrapping,
-          THREE.ClampToEdgeWrapping,
-          THREE.NearestFilter,
-          THREE.NearestFilter);
-        tex.needsUpdate = true;
-        tex.flipY = true;
-        texture.push(tex);
-      }
 
       // create material && mesh then add it to sceneLayers[i]
       let uniformsLayer = createDataUniforms(stack);

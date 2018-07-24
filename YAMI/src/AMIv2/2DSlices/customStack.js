@@ -608,6 +608,7 @@ export default class ModelsStack extends ModelsBase {
       this._textureType = packed.textureType;
       this._rawData.push(packed.data);
     }
+    this._prepareTexture();
   }
 
   /**
@@ -644,7 +645,6 @@ export default class ModelsStack extends ModelsBase {
       for (let i = 0; i < stopVoxel; i++) {
         frameIndex = this._getFrameFromOrientation(i, slice, frame, orientation);
         inFrameIndex = this._getIndexFromOrientation(i, slice, frame, orientation);
-
         let raw = frame[frameIndex].pixelData[inFrameIndex] + offset;
         if (!Number.isNaN(raw)) {
           data[4 * coordinate + channelOffset] = raw;
@@ -765,9 +765,9 @@ export default class ModelsStack extends ModelsBase {
   _getMaxFromOrientation(frame, orientation) {
     switch (orientation) {
       case 1:
-        return frame.length * frame[0].columns;
-      case 2:
         return frame.length * frame[0].rows;
+      case 2:
+        return frame.length * frame[0].columns;
       default:
         return frame[0].rows * frame[0].columns;
     }
@@ -785,7 +785,7 @@ export default class ModelsStack extends ModelsBase {
   _getIndexFromOrientation(i_voxel, slice, frame, orientation) {
     switch (orientation) {
       case 1:
-        return slice + (i_voxel % frame[0].rows) *  frame[0].columns;
+        return slice + (i_voxel % frame[0].rows) * frame[0].columns;
       case 2:
         return i_voxel % frame[0].columns + slice * frame[0].columns;
       default:
