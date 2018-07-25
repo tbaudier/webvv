@@ -73,6 +73,7 @@ export default class sceneManager {
      * @memberof SceneManager
      */
     this.stackHelper;
+    this.stacks = {};
     /**
      * object having the luts scales (CustomLutHelper) created
      * @memberof SceneManager
@@ -85,6 +86,8 @@ export default class sceneManager {
      * @see FusionShaderUni
      */
     this.uniformsMix;
+
+    this.target3D = new THREE.Vector3();
 
     let sceneMix;
     let materialMix;
@@ -155,6 +158,7 @@ export default class sceneManager {
       }
 
       _this.uniforms["background"] = stackHelperI.slice._uniforms;
+      _this.stacks["background"] = stackHelperI._stack;
 
       meshes["background"] = stackHelperI;
       // add it to its 3D scene
@@ -201,6 +205,9 @@ export default class sceneManager {
         this.addLayerROI(stack, stackname);
       if (!(stackname == "fusion" || stackname == "overlay"))
         return;
+
+      _this.stacks[stackname] = stack;
+
       // Constructions
       let scene = new THREE.Scene();
       scenes[stackname] = scene;
@@ -247,13 +254,14 @@ export default class sceneManager {
       // go the LPS space
       meshLayer.applyMatrix(_this.stackHelper.stack._ijk2LPS);
       scene.add(meshLayer);
+      updateActiveSlice(stack, uniformsLayer);
       // Update the whole scene BB
       updateWorldBB(stack.worldBoundingBox());
 
       updateMixShader();
     }
 
-    function createDataUniforms(stack, lut){
+    function createDataUniforms(stack, lut) {
       let uniformsLayer = DataUniformShader.uniforms();
       uniformsLayer.uTextureSize.value = stack.textureSize;
       uniformsLayer.uWorldToData.value = stack.lps2IJK;
@@ -278,7 +286,7 @@ export default class sceneManager {
       uniformsLayer.uWindowCenterWidth["min"] = stack.minMax[0]; //not needed by AMI but to display interval stops in GUI
       uniformsLayer.uWindowCenterWidth["max"] = stack.minMax[1]; //not needed by AMI but to display interval stops in GUI
       uniformsLayer.uLowerUpperThreshold.value = [stack.minMax[0] + offset, stack.minMax[1] + offset];
-      if(lut != null) {
+      if (lut != null) {
         uniformsLayer.uLut.value = 1;
         uniformsLayer.uTextureLUT.value = lut.texture;
       }
@@ -290,6 +298,12 @@ export default class sceneManager {
     this.addLayerROI = function(stack, stackname) {
       if (stackname !== "struct")
         return;
+
+
+      if (_this.stacks["structs"] == null)
+        _this.stacks["structs"] = [];
+      _this.stacks["structs"].push(stack);
+
       // Constructions
       //
       let scene = new THREE.Scene();
@@ -326,6 +340,7 @@ export default class sceneManager {
       // go the LPS space
       meshLayer.applyMatrix(_this.stackHelper.stack._ijk2LPS);
       scene.add(meshLayer);
+      updateActiveSlice(stack, uniformsLayer);
       // Update the whole scene BB
       updateWorldBB(stack.worldBoundingBox());
 
@@ -341,9 +356,9 @@ export default class sceneManager {
       _this.uniformsMix.uStructTextures.value[i2] = temp1;
       // swap color
       for (let i = 0; i < 4; i++) {
-        let temp2 = _this.uniformsMix.uStructColors.value[i1*4+i];
-        _this.uniformsMix.uStructColors.value[i1*4+i] = _this.uniformsMix.uStructColors.value[i2*4+i];
-        _this.uniformsMix.uStructColors.value[i2*4+i] = temp2;
+        let temp2 = _this.uniformsMix.uStructColors.value[i1 * 4 + i];
+        _this.uniformsMix.uStructColors.value[i1 * 4 + i] = _this.uniformsMix.uStructColors.value[i2 * 4 + i];
+        _this.uniformsMix.uStructColors.value[i2 * 4 + i] = temp2;
       }
 
       // swap fill
@@ -352,6 +367,61 @@ export default class sceneManager {
       _this.uniformsMix.uStructFilling.value[i2] = temp3;
 
       _this.updateMixShaderSoft();
+    }
+
+    this.reslice = function() {
+      for (let prop in _this.stacks)
+        if (_this.stacks.hasOwnProperty(prop))
+          if (prop != "structs") {
+            _this.stacks[prop].slicing(_this.stackHelper.orientation);
+          } else {
+            for (let i = 0; i < _this.stacks[prop].length; ++i) {
+              _this.stacks[prop][i].slicing(_this.stackHelper.orientation);
+            }
+          }
+    }
+
+    this.updateActiveSlices = function() {
+      if (_this.target3D != null) {
+        for (let prop in _this.stacks) {
+          if (_this.stacks.hasOwnProperty(prop) && prop != "image") {
+            if (prop != "structs") {
+              updateActiveSlice(_this.stacks[prop], _this.uniforms[prop]);
+            } else {
+              for (let i = 0; i < _this.stacks[prop].length; ++i) {
+                updateActiveSlice(_this.stacks[prop][i], _this.uniforms["struct"][i]);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    function updateActiveSlice(stack, uniform) {
+      let localCoordinates = new THREE.Vector3()
+        .copy(_this.target3D)
+        .applyMatrix4(stack.lps2IJK)
+        .addScalar(0.5)
+        .floor();
+      let index = 0;
+      switch (_this.stackHelper.orientation) {
+        case 1:
+          if (localCoordinates.x >= 0 && localCoordinates.x < stack.dimensionsIJK.x) {
+            index = localCoordinates.x;
+          }
+          break;
+        case 2:
+          if (localCoordinates.y >= 0 && localCoordinates.y < stack.dimensionsIJK.y) {
+            index = localCoordinates.y;
+          }
+          break;
+        default:
+          if (localCoordinates.z >= 0 && localCoordinates.z < stack.dimensionsIJK.z) {
+            index = localCoordinates.z;
+          }
+      }
+      uniform.uTextureSlice.value = stack._textures[index];
+      uniform.uOrientationSlice.value = _this.stackHelper.orientation;
     }
 
     /**

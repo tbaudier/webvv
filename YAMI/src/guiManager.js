@@ -108,6 +108,7 @@ function f() {
       .step(1)
       .listen()
       .onChange(_ => {
+        sceneManager.updateActiveSlices();
         changes.hasChanged = true;
       });
     stackFolder.open();
