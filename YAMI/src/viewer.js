@@ -32,6 +32,7 @@ let stats; // @type {Stats}
 
 let sceneManager; // @type {sceneManager}
 let animator;
+      document.body.style.cursor = "wait";
 
 let changePtr = { // a pointer to pass the "haschanged" value by reference
   hasChanged: true
@@ -90,6 +91,7 @@ window.onload = function() {
   // it loads and parses the images
   let loader = new AMI.VolumeLoader(canvas);
   // Reads the GET params, reads the JSON and load the files
+  document.body.style.cursor = "wait";
   requestManager.readMultipleFiles(loader, handleSeries, handleError);
 
 
@@ -100,6 +102,7 @@ window.onload = function() {
    */
   function handleError() {
     canvas.innerHTML = "An error has occured.<br/>Check the JS console for more info.";
+    document.body.style.cursor = "auto";
   }
 
   /**
@@ -111,6 +114,7 @@ window.onload = function() {
    * @param  {Object} information     object containing other information contained in the input json.
    */
   function handleSeries(seriesContainer, information) {
+  document.body.style.cursor = "auto";
     // cleanup the loader and its progress bar
     loader.free();
     loader = null;
