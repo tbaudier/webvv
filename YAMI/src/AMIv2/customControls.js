@@ -345,36 +345,55 @@ export default class customControls extends THREE.EventDispatcher {
     this.setView = function(orientation) {
       if (_this.camera.orientation == orientation)
         return;
-      _this.camera.orientation = orientation;
-      _this.camera.update();
-      _this.camera.fitBox(2);
-      _this.stack.orientation = _this.camera.stackOrientation;
 
-      // update slicing orientation of each stack
-      _this.sceneManager.reslice();
-      // update active slice for each slice except "image" (already done by StackHelper)
-      _this.sceneManager.updateActiveSlices();
-
-
-      switch (_this.stack.orientation) {
-        case 0: // axial
-          _this.stack.index = Math.floor(_this.values.positionPX.z - 0.5);
-          break;
-        case 1: // sagittal
-          _this.stack.index = Math.floor(_this.values.positionPX.x - 0.5);
-          break;
-        case 2: // coronal
-          _this.stack.index = Math.floor(_this.values.positionPX.y - 0.5);
-          break;
-        default:
-          let indexMax = _this.stack.orientationMaxIndex;
-          _this.stack.index = Math.floor(indexMax / 2);
-
+      // disable buttons to show loading
+      let state = []
+      let buttons = document.getElementsByTagName('button');
+      for (let i = 0; i < buttons.length; i++) {
+          state[i] = buttons[i].disabled;
+          buttons[i].disabled = true;
       }
+      document.body.style.cursor = "wait";
 
-      updateMouseFromTarget();
-      guiManager.updateLabels(_this.camera.directionsLabel, _this.stack._stack.modality);
-      changePtr.hasChanged = true;
+      // do the loading 0.1s after, to let the browser update its DOM elements
+      setTimeout(function(){
+        _this.camera.orientation = orientation;
+        _this.camera.update();
+        _this.camera.fitBox(2);
+        _this.stack.orientation = _this.camera.stackOrientation;
+
+        // update slicing orientation of each stack
+        _this.sceneManager.reslice();
+
+
+        switch (_this.stack.orientation) {
+          case 0: // axial
+            _this.stack.index = Math.floor(_this.values.positionPX.z - 0.5);
+            break;
+          case 1: // sagittal
+            _this.stack.index = Math.floor(_this.values.positionPX.x - 0.5);
+            break;
+          case 2: // coronal
+            _this.stack.index = Math.floor(_this.values.positionPX.y - 0.5);
+            break;
+          default:
+            let indexMax = _this.stack.orientationMaxIndex;
+            _this.stack.index = Math.floor(indexMax / 2);
+
+        }
+
+        updateMouseFromTarget();
+        guiManager.updateLabels(_this.camera.directionsLabel, _this.stack._stack.modality);
+        changePtr.hasChanged = true;
+        guiManager.updateIndex();
+
+        // return to the normal state
+        for (let i = 0; i < buttons.length; i++) {
+          buttons[i].disabled = state[i];
+        }
+        document.body.style.cursor = "auto";
+
+      }, 100);
     }
 
 
@@ -645,7 +664,6 @@ export default class customControls extends THREE.EventDispatcher {
           break;
       }
       _this.setView(orientation);
-      guiManager.updateIndex();
 
       evt.preventDefault();
     }

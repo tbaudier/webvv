@@ -379,6 +379,8 @@ export default class sceneManager {
               _this.stacks[prop][i].slicing(_this.stackHelper.orientation);
             }
           }
+
+      this.updateActiveSlices();
     }
 
     this.updateActiveSlices = function() {
