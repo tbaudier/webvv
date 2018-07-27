@@ -245,15 +245,15 @@ function f() {
       let btn = {
         Forward: function() {
           sceneManager.swapLayerROI(i, true);
-          swapInfoROI(i, true);
           saveClosedStructs();
+          swapInfoROI(i, j, true);
           changePtr.hasChanged = true;
           updateStruct()
         },
         Backward: function() {
           sceneManager.swapLayerROI(i, false);
-          swapInfoROI(i, false);
           saveClosedStructs();
+          swapInfoROI(i, j, false);
           changePtr.hasChanged = true;
           updateStruct()
         }
@@ -262,23 +262,25 @@ function f() {
         structFolder.add(btn, 'Forward').name("Forward ↑");
       if (i != 0)
         structFolder.add(btn, 'Backward').name("Backward ↓");;
-      roiDOMs[i] = structFolder;
+      roiDOMs[j] = structFolder;
       if (!temp.closed)
         structFolder.open();
     }
   }
 
-  function swapInfoROI(indexToMove, isUpward) {
+  function swapInfoROI(indexToMove, invertedIndex, isUpward) {
     let i1 = indexToMove;
     let i2 = isUpward ? (i1 + 1) : (i1 - 1);
+    let ii1 = invertedIndex;
+    let ii2 = isUpward ? (ii1 - 1) : (ii1 + 1);
 
     let temp = information["struct"]["names"][i1];
     information["struct"]["names"][i1] = information["struct"]["names"][i2];
     information["struct"]["names"][i2] = temp;
 
-    let temp2 = structGUIStatus[i1];
-    structGUIStatus[i1] = structGUIStatus[i2];
-    structGUIStatus[i2] = temp2;
+    let temp2 = structGUIStatus[ii1];
+    structGUIStatus[ii1] = structGUIStatus[ii2];
+    structGUIStatus[ii2] = temp2;
   }
 
   function saveClosedStructs() {
