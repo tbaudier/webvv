@@ -377,6 +377,7 @@ function f() {
     stackFolder.remove(indexDOM);
     indexDOM = stackFolder.add(
       stackHelper, 'index', 0, stackHelper.orientationMaxIndex - 1).step(1).listen().onChange(_ => {
+      sceneManager.updateActiveSlices();
       changePtr.hasChanged = true;
     });
   }
