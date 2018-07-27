@@ -352,7 +352,7 @@ export default class customControls extends THREE.EventDispatcher {
 
       // update slicing orientation of each stack
       _this.sceneManager.reslice();
-      // update active slice for each slice except "image" (already done by StackManager)
+      // update active slice for each slice except "image" (already done by StackHelper)
       _this.sceneManager.updateActiveSlices();
 
 

@@ -420,6 +420,7 @@ export default class sceneManager {
             index = localCoordinates.z;
           }
       }
+      uniform.uTextureSize.value = stack.textureSize;
       uniform.uTextureSlice.value = stack._textures[index];
       uniform.uOrientationSlice.value = _this.stackHelper.orientation;
     }
