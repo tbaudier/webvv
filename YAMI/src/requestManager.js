@@ -176,11 +176,13 @@ function requestManager() {
    * @memberof module:RequestManager
    */
   function readMultipleFiles(loader, handleSeriesFunct, handleError) {
-
     let seriesContainer = {};
 
     let files = {};
     let jsonParameters;
+    loader
+    let total_files_i = 0;
+    let file_i = -1;
 
     // Use Promises to keep every call synchronous
     let p = Promise.resolve()
@@ -196,11 +198,26 @@ function requestManager() {
         parseInformationData(jsonParameters, files);
       })
       .then(_ => {
+        // follow the count to show the
         for (let prop in jsonParameters)
-          if (jsonParameters.hasOwnProperty(prop))
+          if (jsonParameters.hasOwnProperty(prop) && prop !== "information" && prop !== "study")
+            ++total_files_i;
+
+        for (let prop in jsonParameters)
+          if (jsonParameters.hasOwnProperty(prop) && prop !== "information" && prop !== "study")
             p = p.then(_ => {
+              ++file_i;
+              // and proceed
               return fetchAndLoadData(jsonParameters, files, prop);
             });
+        p = p.then(_ => {
+          return new Promise((resolve, reject) => {
+              // update loader
+              if (loader._progressBar)
+                loader._progressBar.update(95, 100, 'load'); // the last 5 percents will be the slicing
+              setTimeout(resolve, 10);
+            });
+        });
         p = p.then((series) => {
           console.log("Files loaded.");
           handleSeriesFunct(seriesContainer, files["information"]);
@@ -230,14 +247,21 @@ function requestManager() {
           let p = Promise.resolve();
           if (category === "struct") {
             for (let roi in jsonParameters["struct"]["data"]) {
-              // TODO remember name : jsonParameters["struct"]["data"][roi]["roi"]
               let name = jsonParameters["struct"]["data"][roi]["roi"];
               p = p.then(_ => {
                   console.log("struct " + name + " : Files request...");
+                  // update loader
+                  if (loader._progressBar) {
+                    loader._progressBar.update(file_i, total_files_i, 'load');
+                  }
                   return fetchCategoryFiles(jsonParameters, files, category, roi);
                 })
                 .then(_ => {
                   console.log("struct " + name + " : Files loading...");
+                  // update loader
+                  if (loader._progressBar) {
+                    loader._progressBar.update(file_i + 0.5, total_files_i, 'load');
+                  }
                   return loadData(files, category, roi);
                 });
             }
@@ -245,12 +269,20 @@ function requestManager() {
             p = p.then(_ => {
                 if (jsonParameters[category] !== undefined) {
                   console.log(category + " : Files request...");
+                  // update loader
+                  if (loader._progressBar) {
+                    loader._progressBar.update(file_i, total_files_i, 'load');
+                  }
                   return fetchCategoryFiles(jsonParameters, files, category);
                 }
               })
               .then(_ => {
                 if (jsonParameters[category] !== undefined) {
                   console.log(category + " : Files loading...");
+                  // update loader
+                  if (loader._progressBar) {
+                    loader._progressBar.update(file_i + 0.5, total_files_i, 'load');
+                  }
                   return loadData(files, category);
                 }
               });

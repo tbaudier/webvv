@@ -91,7 +91,7 @@ window.onload = function() {
   // it loads and parses the images
   let loader = new AMI.VolumeLoader(canvas);
   // Reads the GET params, reads the JSON and load the files
-  document.body.style.cursor = "wait";
+  document.body.style.cursor = "wait"; // display "busy" cursor
   requestManager.readMultipleFiles(loader, handleSeries, handleError);
 
 
@@ -102,7 +102,7 @@ window.onload = function() {
    */
   function handleError() {
     canvas.innerHTML = "An error has occured.<br/>Check the JS console for more info.";
-    document.body.style.cursor = "auto";
+    document.body.style.cursor = "auto"; // restore classic cursor
   }
 
   /**
@@ -114,7 +114,7 @@ window.onload = function() {
    * @param  {Object} information     object containing other information contained in the input json.
    */
   function handleSeries(seriesContainer, information) {
-  document.body.style.cursor = "auto";
+    document.body.style.cursor = "auto"; // restore classic cursor
     // cleanup the loader and its progress bar
     loader.free();
     loader = null;
