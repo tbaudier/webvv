@@ -37,6 +37,7 @@ function f() {
     stackHelper = scene.stackHelper;
     let stack = scene.stackHelper._stack;
     let fusionUni = scene.uniforms.fusion;
+    let overlayUni = scene.uniforms.overlay;
     information = info;
     canvas = domElement;
 
@@ -63,7 +64,7 @@ function f() {
 
     stackFolder = gui.addFolder('Main image');
 
-    stackFolder.add(stackHelper.slice, 'windowWidth', 0, stack.minMax[1] - stack.minMax[0])
+    stackFolder.add(stackHelper.slice, 'windowWidth', 1, stack.minMax[1] - stack.minMax[0])
       .listen()
       .onChange((value) => {
         windowPreset.window = 'Custom';
@@ -98,11 +99,6 @@ function f() {
         stackHelper.slice.lutTexture = stackHelper.slice.lut.texture;
         changes.hasChanged = true;
       });
-    /*    let lutDiscrete = stackFolder.add(stackHelper.slice.lut, 'discrete', false);
-        lutDiscrete.onChange(function(value) {
-          stackHelper.slice.lutTexture = stackHelper.slice.lut.texture;
-          changes.hasChanged = true;
-        });*/
 
     indexDOM = stackFolder.add(stackHelper, 'index', 0, stackHelper.orientationMaxIndex - 1)
       .step(1)
@@ -114,6 +110,8 @@ function f() {
     stackFolder.open();
 
     buildFusionGUI(fusionUni);
+
+    buildOverlayGUI(overlayUni);
 
     // camera
     let cameraFolder = gui.addFolder('Camera');
@@ -139,7 +137,7 @@ function f() {
         changes.hasChanged = true;
       });
 
-      buildStructGUI();
+    buildStructGUI();
   }
 
   function buildFusionGUI(fusionUni) {
@@ -153,14 +151,14 @@ function f() {
           changePtr.hasChanged = true;
         });
 
-      fusionFolder.add(fusionUni.uWindowCenterWidth.value, 1, 0, fusionUni.uWindowCenterWidth.max - fusionUni.uWindowCenterWidth.min)
+      fusionFolder.add(fusionUni.uWindowCenterWidth.value, 1, 1, fusionUni.uLowerUpperThreshold.value[1] - fusionUni.uLowerUpperThreshold.value[0])
         .name("Window width")
         .listen()
         .onChange((value) => {
           changePtr.hasChanged = true;
         });
 
-      fusionFolder.add(fusionUni.uWindowCenterWidth.value, 0, fusionUni.uWindowCenterWidth.min, fusionUni.uWindowCenterWidth.max)
+      fusionFolder.add(fusionUni.uWindowCenterWidth.value, 0, fusionUni.uLowerUpperThreshold.value[0] - fusionUni.uLowerUpperThreshold.offset, fusionUni.uLowerUpperThreshold.value[1] - fusionUni.uLowerUpperThreshold.offset)
         .name("Window center")
         .listen()
         .onChange(_ => {
@@ -170,8 +168,7 @@ function f() {
       fusionFolder.add(sceneManager.luts.fusion, 'lut', sceneManager.luts.fusion.lutsAvailable())
         .onChange(function(value) {
           fusionUni.uTextureLUT.value = sceneManager.luts.fusion.texture;
-          changePtr
-            .hasChanged = true;
+          changePtr.hasChanged = true;
         });
       fusionFolder.add(sceneManager.uniformsMix.uFusionThreshold, 'value', 0, 1)
         .name("Threshold")
@@ -189,6 +186,39 @@ function f() {
           changePtr.hasChanged = true;
         });
       fusionFolder.open();
+
+    }
+  }
+
+  function buildOverlayGUI(overlayUni) {
+    // Overlay
+    if (overlayUni) {
+      let overlayFolder = gui.addFolder('Overlay');
+      let windowHelper = {
+        center: overlayUni.uWindowCenterWidth.value[0] - overlayUni.uWindowCenterWidth.offset,
+        offset: overlayUni.uWindowCenterWidth.offset,
+      };
+
+      overlayFolder.add(sceneManager.uniformsMix.uOverlayUse, 'value')
+        .name("show overlay")
+        .onChange(_ => {
+          changePtr.hasChanged = true;
+        });
+
+      overlayFolder.add(overlayUni.uWindowCenterWidth.value, 1, 1, overlayUni.uLowerUpperThreshold.value[1] - overlayUni.uLowerUpperThreshold.value[0])
+        .name("Window width")
+        .onChange((value) => {
+          changePtr.hasChanged = true;
+        });
+
+      overlayFolder.add(windowHelper, 'center', overlayUni.uLowerUpperThreshold.value[0] - windowHelper.offset, overlayUni.uLowerUpperThreshold.value[1] - windowHelper.offset)
+        .name("Window center")
+        .onChange(_ => {
+          overlayUni.uWindowCenterWidth.value[0] = windowHelper.center + windowHelper.offset;
+          changePtr.hasChanged = true;
+        });
+
+      overlayFolder.open();
 
     }
   }

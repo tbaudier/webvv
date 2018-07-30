@@ -122,8 +122,8 @@ export default class sceneManager {
     this.render = function(renderer, camera) {
       // background
       renderer.render(scenes["background"], camera, textureTargets["background"], true);
-      // fusion
 
+      // fusion
       if (textureTargets["fusion"] !== null)
         renderer.render(scenes["fusion"], camera, textureTargets["fusion"], true);
 
@@ -132,9 +132,8 @@ export default class sceneManager {
         renderer.render(scenes["overlay"], camera, textureTargets["overlay"], true);
 
       // RT structs
-      for (let i = 0; i < textureTargets["struct"].length; i++) {
+      for (let i = 0; i < textureTargets["struct"].length; i++)
         renderer.render(scenes["struct"][i], camera, textureTargets["struct"][i], true);
-      }
 
       renderer.render(sceneMix, camera);
     }
@@ -212,16 +211,30 @@ export default class sceneManager {
       let scene = new THREE.Scene();
       scenes[stackname] = scene;
 
-      let lut = new LutHelper('my-lut-canvases', 'default', 'linear', [
-        [0, 0, 0, 0],
-        [1, 1, 1, 1]
-      ], [
-        [0, 0],
-        [1, 1]
-      ]);
-      lut.luts = LutHelper.presetLuts();
-      luts[stackname] = lut;
-      lut.lut = "spectrum";
+      let lut;
+      if (stackname == "overlay") {
+        lut = new LutHelper('my-lut-canvases', 'default', 'linear', [
+          [0, 0, 0, 0],
+          [1, 1, 1, 1]
+        ], [
+          [0, 1],
+          [1, 1]
+        ]);
+        lut.luts = LutHelper.presetLuts();
+        luts[stackname] = lut;
+        lut.lut = "default";
+      } else {
+        lut = new LutHelper('my-lut-canvases', 'default', 'linear', [
+          [0, 0, 0, 0],
+          [1, 1, 1, 1]
+        ], [
+          [0, 0],
+          [1, 1]
+        ]);
+        lut.luts = LutHelper.presetLuts();
+        luts[stackname] = lut;
+        lut.lut = "spectrum";
+      }
 
       let sceneTexture = new THREE.WebGLRenderTarget(canvas.clientWidth, canvas.clientHeight, {
         minFilter: THREE.NearestFilter,
@@ -283,8 +296,7 @@ export default class sceneManager {
         offset = -stack._minMax[0];
       }
       uniformsLayer.uWindowCenterWidth["offset"] = offset;
-      uniformsLayer.uWindowCenterWidth["min"] = stack.minMax[0]; //not needed by AMI but to display interval stops in GUI
-      uniformsLayer.uWindowCenterWidth["max"] = stack.minMax[1]; //not needed by AMI but to display interval stops in GUI
+      uniformsLayer.uWindowCenterWidth.value = [(stack.minMax[0] + stack.minMax[1]) / 2 + offset, stack.minMax[1] - stack.minMax[0]];
       uniformsLayer.uLowerUpperThreshold.value = [stack.minMax[0] + offset, stack.minMax[1] + offset];
       if (lut != null) {
         uniformsLayer.uLut.value = 1;
@@ -445,14 +457,22 @@ export default class sceneManager {
     function updateMixShader() {
       _this.uniformsMix.uBackgroundTexture.value = textureTargets["background"].texture;
       // fusion
-      if (textureTargets["fusion"] !== null)
+      if (textureTargets["fusion"] !== null) {
         _this.uniformsMix.uFusionTexture.value = textureTargets["fusion"].texture;
+        _this.uniformsMix.uFusionTexture.empty = false;
+        _this.uniformsMix.uFusionOpacityMin.value = 0.1;
+        _this.uniformsMix.uFusionOpacityMax.value = 0.8;
+        _this.uniformsMix.uFusionThreshold.value = 0.01;
+      }
       // overlay
-      if (textureTargets["overlay"] !== null)
+      if (textureTargets["overlay"] !== null) {
         _this.uniformsMix.uOverlayTexture.value = textureTargets["overlay"].texture;
+        _this.uniformsMix.uOverlayTexture.empty = false;
+      }
 
       // ROI
       if (textureTargets["struct"].length > 0) {
+        _this.uniformsMix.uStructBorderWidth.value = 1;
         _this.uniformsMix.uStructTextures.length = textureTargets["struct"].length;
         _this.uniformsMix.uStructFilling.length = textureTargets["struct"].length;
         _this.uniformsMix.uStructColors.length = textureTargets["struct"].length * 4;
@@ -478,10 +498,6 @@ export default class sceneManager {
         _this.uniformsMix.uStructTexturesCount.value = 0;
       }
 
-      _this.uniformsMix.uFusionOpacityMin.value = 0.1;
-      _this.uniformsMix.uFusionOpacityMax.value = 0.8;
-      _this.uniformsMix.uFusionThreshold.value = 0.01;
-      _this.uniformsMix.uStructBorderWidth.value = 1;
       _this.uniformsMix.uCanvasWidth.value = canvas.clientWidth;
       _this.uniformsMix.uCanvasHeight.value = canvas.clientHeight;
 

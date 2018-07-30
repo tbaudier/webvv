@@ -9,11 +9,13 @@ export default class ShadersUniform {
         value: [],
         typeGLSL: 'sampler2D',
       },
+
       // Fusion
       'uFusionTexture': {
         type: 't',
         value: [],
         typeGLSL: 'sampler2D',
+        empty: true,
       },
       'uFusionOpacityMin': {
         type: 'f',
@@ -35,17 +37,25 @@ export default class ShadersUniform {
         value: true,
         typeGLSL: 'bool',
       },
+
       // Overlay
-      'uTextureOverlay': {
+      'uOverlayTexture': {
         type: 't',
         value: [],
         typeGLSL: 'sampler2D',
+        empty: true,
+      },
+      'uOverlayHue': {
+        type: 'f',
+        value: 1/3,
+        typeGLSL: 'float',
       },
       'uOverlayUse': {
         type: 'b',
         value: true,
         typeGLSL: 'bool',
       },
+
       // Struct
       'uStructTexturesCount': { // n
         type: 'i',

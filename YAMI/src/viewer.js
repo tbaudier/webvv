@@ -32,7 +32,7 @@ let stats; // @type {Stats}
 
 let sceneManager; // @type {sceneManager}
 let animator;
-      document.body.style.cursor = "wait";
+document.body.style.cursor = "wait";
 
 let changePtr = { // a pointer to pass the "haschanged" value by reference
   hasChanged: true
@@ -151,13 +151,24 @@ window.onload = function() {
       cleanStack(stackFusion);
     }
 
+    // overlay
+    if (seriesContainer["overlay"]) {
+      let stackOver = new ModelsStack();
+      stackOver.copy_values(seriesContainer["overlay"][0].mergeSeries(seriesContainer["overlay"])[0].stack[0]);
+      stackOver.unit = information["overlay"].unit;
+      sceneManager.addLayerStack(stackOver, "overlay");
+      stackList["overlay"] = stackOver;
+      // Cleaning the imported (now useless) raw data
+      cleanStack(stackOver);
+    }
+
     // struct
     for (let structNum in seriesContainer["struct"]) {
       let stackStruct = new ModelsStack();
       stackStruct.copy_values(seriesContainer["struct"][structNum][0].mergeSeries(seriesContainer["struct"][structNum])[0].stack[0]);
       // stackStruct.unit = information["struct"].unit;
       sceneManager.addLayerStack(stackStruct, "struct");
-      if(stackList["structs"] == null)
+      if (stackList["structs"] == null)
         stackList["structs"] = [];
       stackList["structs"].push(stackStruct);
       // Cleaning the imported (now useless) raw data

@@ -318,6 +318,10 @@ function requestManager() {
         futureContainer["information"]["fusion"] = {
           "unit": json["fusion"]["unit"]
         };
+      if (json["overlay"])
+        futureContainer["information"]["overlay"] = {
+          "unit": json["overlay"]["unit"]
+        };
       if (json["struct"]) {
         futureContainer["information"]["struct"] = {
           "unit": json["struct"]["unit"],
