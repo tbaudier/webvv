@@ -393,7 +393,7 @@ export default class customControls extends THREE.EventDispatcher {
         }
         document.body.style.cursor = "auto";
 
-      }, 100);
+      }, 200);
     }
 
 

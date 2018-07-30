@@ -7,9 +7,13 @@ body, html {
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
 }
 
+button{
+  cursor: pointer;
+}
 /* Color of the button of the active mode */
 button:disabled{
   background-color: #00fa9a;
+  cursor: auto;
 }
 /* Underlining the first letter of the button because it's the shortcut keys
 If the shortcut key changes, it may be wise not to undeline it*/
