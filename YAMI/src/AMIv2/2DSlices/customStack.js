@@ -38,6 +38,7 @@ export default class ModelsStack extends ModelsBase {
     this._nbTextures = 7;
     this._rawData = [];
     this._textures = [];
+    this._texturesSave = [null, null, null];
 
     this._windowCenter = 0;
     this._windowWidth = 0;
@@ -557,58 +558,63 @@ export default class ModelsStack extends ModelsBase {
    * @param {number} orientation 0 for axial, 1 sagittal, 2 coronal
    */
   slicing(orientation) {
-    this._rawData = [];
-    let nbVoxelsPerSlice;
-    let nbSlices;
+    if (this._texturesSave[orientation] != null) {
+      this._textures = this._texturesSave[orientation];
+    } else {
+      this._rawData = [];
+      let nbVoxelsPerSlice;
+      let nbSlices;
 
-    switch (orientation) {
-      case 1:
-        nbVoxelsPerSlice = this._dimensionsIJK.y * this._dimensionsIJK.z;
-        nbSlices = this._dimensionsIJK.x;
-        break;
-      case 2:
-        nbVoxelsPerSlice = this._dimensionsIJK.x * this._dimensionsIJK.z;
-        nbSlices = this._dimensionsIJK.y;
-        break;
-      default:
-        nbVoxelsPerSlice = this._dimensionsIJK.x * this._dimensionsIJK.y;
-        nbSlices = this._dimensionsIJK.z;
-    }
-    this._nbTextures = nbSlices;
-
-    // Packing style
-    if (this._bitsAllocated === 8 && this._numberOfChannels === 1 || this._bitsAllocated === 1) {
-      this._packedPerPixel = 4;
-    }
-
-    if (this._bitsAllocated === 16 && this._numberOfChannels === 1) {
-      this._packedPerPixel = 2;
-    }
-
-    let textureDimension;
-    const nbPixelPerSlice = Math.ceil(nbVoxelsPerSlice / this._packedPerPixel);
-    // check ideal texture size from 32*32 to 4096*4096 (over that will be cropped)
-    // textures bigger than 4096*4096 might be too big for GC, check before taking bigger
-    for (let po = 5; po <= 12; ++po) {
-      textureDimension = Math.pow(2, po);
-      if (nbPixelPerSlice < textureDimension * textureDimension) {
-        this._textureSize = textureDimension;
-        break;
+      switch (orientation) {
+        case 1:
+          nbVoxelsPerSlice = this._dimensionsIJK.y * this._dimensionsIJK.z;
+          nbSlices = this._dimensionsIJK.x;
+          break;
+        case 2:
+          nbVoxelsPerSlice = this._dimensionsIJK.x * this._dimensionsIJK.z;
+          nbSlices = this._dimensionsIJK.y;
+          break;
+        default:
+          nbVoxelsPerSlice = this._dimensionsIJK.x * this._dimensionsIJK.y;
+          nbSlices = this._dimensionsIJK.z;
       }
-    }
+      this._nbTextures = nbSlices;
 
-    for (let ii = 0; ii < nbSlices; ++ii) {
-      let packed =
-        this._packTo8Bits(
-          this._numberOfChannels,
-          this._frame,
-          ii,
-          this._textureSize,
-          orientation);
-      this._textureType = packed.textureType;
-      this._rawData.push(packed.data);
+      // Packing style
+      if (this._bitsAllocated === 8 && this._numberOfChannels === 1 || this._bitsAllocated === 1) {
+        this._packedPerPixel = 4;
+      }
+
+      if (this._bitsAllocated === 16 && this._numberOfChannels === 1) {
+        this._packedPerPixel = 2;
+      }
+
+      let textureDimension;
+      const nbPixelPerSlice = Math.ceil(nbVoxelsPerSlice / this._packedPerPixel);
+      // check ideal texture size from 32*32 to 4096*4096 (over that will be cropped)
+      // textures bigger than 4096*4096 might be too big for GC, check before taking bigger
+      for (let po = 5; po <= 12; ++po) {
+        textureDimension = Math.pow(2, po);
+        if (nbPixelPerSlice < textureDimension * textureDimension) {
+          this._textureSize = textureDimension;
+          break;
+        }
+      }
+
+      for (let ii = 0; ii < nbSlices; ++ii) {
+        let packed =
+          this._packTo8Bits(
+            this._numberOfChannels,
+            this._frame,
+            ii,
+            this._textureSize,
+            orientation);
+        this._textureType = packed.textureType;
+        this._rawData.push(packed.data);
+      }
+      this._prepareTexture();
+      this._texturesSave[orientation] = this._textures;
     }
-    this._prepareTexture();
   }
 
   /**
