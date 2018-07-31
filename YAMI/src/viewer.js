@@ -1,4 +1,4 @@
-/* globals Stats, dat, AMI, THREE */
+/* globals dat, AMI, THREE */
 /**
  * This  module is the coordination between YAMI classes and modules. <br/>
  * If you use YAMI on your own project, you should probably write your own module instead of this one.
@@ -28,7 +28,6 @@ import StackHelper from './AMIv2/2DSlices/customStackHelper';
 
 let renderer; // @type {THREE.WebGLRenderer}
 let canvas; // HTML container
-let stats; // @type {Stats}
 
 let sceneManager; // @type {sceneManager}
 let animator;
@@ -67,9 +66,6 @@ function init() {
   renderer.setPixelRatio(window.devicePixelRatio);
   // add this renderer to the canvas
   canvas.appendChild(renderer.domElement);
-  // stats, fps, ...
-  stats = new Stats();
-  canvas.parentNode.insertBefore(stats.domElement, canvas);
   // empty scene
   sceneManager = new SceneManager(canvas);
   // camera
@@ -228,7 +224,6 @@ window.onload = function() {
           guiManager.updateProb(controls.values);
           changePtr.hasChanged = false;
         }
-        stats.update();
       });
   }
 

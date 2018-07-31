@@ -1,7 +1,7 @@
 /**
  * This module contains default constants. <br/>
  * In this file you can also edit default shortcuts.<br/>
- * Please edit this file (and recompilate with webpack or any other module manager) to change default values.<br/>
+ * Please edit this file (and recompile with webpack or any other module manager) to change default values.<br/>
  * @module
  */
 module.exports = {
