@@ -158,7 +158,7 @@ function f() {
           changePtr.hasChanged = true;
         });
 
-      fusionFolder.add(fusionUni.uWindowCenterWidth.value, 0, fusionUni.uLowerUpperThreshold.value[0] - fusionUni.uLowerUpperThreshold.offset, fusionUni.uLowerUpperThreshold.value[1] - fusionUni.uLowerUpperThreshold.offset)
+      fusionFolder.add(fusionUni.uWindowCenterWidth.value, 0, fusionUni.uLowerUpperThreshold.value[0], fusionUni.uLowerUpperThreshold.value[1])
         .name("Window center")
         .listen()
         .onChange(_ => {
