@@ -197,6 +197,7 @@ function f() {
       let windowHelper = {
         center: overlayUni.uWindowCenterWidth.value[0] - overlayUni.uWindowCenterWidth.offset,
         offset: overlayUni.uWindowCenterWidth.offset,
+        hue: 120,
       };
 
       overlayFolder.add(sceneManager.uniformsMix.uOverlayUse, 'value')
@@ -205,18 +206,37 @@ function f() {
           changePtr.hasChanged = true;
         });
 
-      overlayFolder.add(overlayUni.uWindowCenterWidth.value, 1, 1, overlayUni.uLowerUpperThreshold.value[1] - overlayUni.uLowerUpperThreshold.value[0])
+      overlayFolder.add(windowHelper, 'hue', 0, 359)
+        .name("Hue")
+        .onChange((value) => {
+          sceneManager.uniformsMix.uOverlayHue.value = windowHelper.hue / 360;
+          changePtr.hasChanged = true;
+        });
+
+      let windowW = overlayFolder.add(overlayUni.uWindowCenterWidth.value, 1, 1, overlayUni.uLowerUpperThreshold.value[1] - overlayUni.uLowerUpperThreshold.value[0])
         .name("Window width")
         .onChange((value) => {
           changePtr.hasChanged = true;
         });
 
-      overlayFolder.add(windowHelper, 'center', overlayUni.uLowerUpperThreshold.value[0] - windowHelper.offset, overlayUni.uLowerUpperThreshold.value[1] - windowHelper.offset)
+      let windowC = overlayFolder.add(windowHelper, 'center', overlayUni.uLowerUpperThreshold.value[0] - windowHelper.offset, overlayUni.uLowerUpperThreshold.value[1] - windowHelper.offset)
         .name("Window center")
         .onChange(_ => {
           overlayUni.uWindowCenterWidth.value[0] = windowHelper.center + windowHelper.offset;
           changePtr.hasChanged = true;
         });
+
+      let btn = {
+        CopyWindow: function() {
+          overlayUni.uWindowCenterWidth.value[1] = stackHelper.slice.windowWidth;
+          windowHelper.center = stackHelper.slice.windowCenter;
+          overlayUni.uWindowCenterWidth.value[0] = windowHelper.center + windowHelper.offset;
+          windowW.updateDisplay();
+          windowC.updateDisplay();
+          changePtr.hasChanged = true;
+        }
+      };
+      overlayFolder.add(btn, 'CopyWindow').name("Copy Window");
 
       overlayFolder.open();
 
