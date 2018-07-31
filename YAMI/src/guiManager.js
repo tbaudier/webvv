@@ -201,17 +201,31 @@ function f() {
       };
 
       overlayFolder.add(sceneManager.uniformsMix.uOverlayUse, 'value')
-        .name("show overlay")
+        .name("Show overlay")
         .onChange(_ => {
           changePtr.hasChanged = true;
         });
 
-      overlayFolder.add(windowHelper, 'hue', 0, 359)
+      overlayFolder.add(sceneManager.uniformsMix.uOverlayCrossMode, 'value')
+        .name("Alternative display ")
+        .onChange((value) => {
+          if (value)
+            hue.domElement.setAttribute('hidden', 'hidden');
+          else
+            hue.domElement.removeAttribute('hidden');
+          changePtr.hasChanged = true;
+        });
+
+      let hue = overlayFolder.add(windowHelper, 'hue', 0, 359)
         .name("Hue")
         .onChange((value) => {
           sceneManager.uniformsMix.uOverlayHue.value = windowHelper.hue / 360;
           changePtr.hasChanged = true;
         });
+      if (sceneManager.uniformsMix.uOverlayCrossMode.value)
+        hue.domElement.setAttribute('hidden', 'hidden');
+      else
+        hue.domElement.removeAttribute('hidden');
 
       let windowW = overlayFolder.add(overlayUni.uWindowCenterWidth.value, 1, 1, overlayUni.uLowerUpperThreshold.value[1] - overlayUni.uLowerUpperThreshold.value[0])
         .name("Window width")
@@ -236,7 +250,7 @@ function f() {
           changePtr.hasChanged = true;
         }
       };
-      overlayFolder.add(btn, 'CopyWindow').name("Copy Window");
+      overlayFolder.add(btn, 'CopyWindow').name("Copy from");
 
       overlayFolder.open();
 

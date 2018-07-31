@@ -138,30 +138,40 @@ export default class ShadersFragment {
       return `
         if(uOverlayUse)
         {
-          vec4 fragColorOverlay = texture2D(uOverlayTexture, texc);
+          if(uOverlayCrossMode)
+          {
+            if(texc.x > uOverlayCrossPosition.x == texc.y  < uOverlayCrossPosition.y)
+            {
+              gl_FragColor = texture2D(uOverlayTexture, texc);
+            }
+          }
+          else
+          {
+            vec4 fragColorOverlay = texture2D(uOverlayTexture, texc);
 
-          float gray1 = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
-          float gray2 = dot(fragColorOverlay.rgb, vec3(0.299, 0.587, 0.114));
+            float gray1 = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
+            float gray2 = dot(fragColorOverlay.rgb, vec3(0.299, 0.587, 0.114));
 
-          vec3 color1 = vec3(uOverlayHue, 1.0, gray1);
-          vec3 color2 = vec3(mod(uOverlayHue + 0.5, 1.0), 1.0, gray2);
+            vec3 color1 = vec3(uOverlayHue, 1.0, gray1);
+            vec3 color2 = vec3(mod(uOverlayHue + 0.5, 1.0), 1.0, gray2);
 
-          // // No need to compute full HSV color
-          // // go to hsv system;
-          // vec3 color1 = rgb2hsv(gl_FragColor.rgb);
-          // vec3 color2 = rgb2hsv(fragColorOverlay.rgb);
-          //
-          // // set hue
-          // color1.x = uOverlayHue;
-          // color2.x = mod(uOverlayHue + 0.5, 1.0);
-          //
-          // // set staturation
-          // color1.y = 1.0;
-          // color2.y = 1.0;
+            // // No need to compute full HSV color
+            // // go to hsv system;
+            // vec3 color1 = rgb2hsv(gl_FragColor.rgb);
+            // vec3 color2 = rgb2hsv(fragColorOverlay.rgb);
+            //
+            // // set hue
+            // color1.x = uOverlayHue;
+            // color2.x = mod(uOverlayHue + 0.5, 1.0);
+            //
+            // // set staturation
+            // color1.y = 1.0;
+            // color2.y = 1.0;
 
-          //go back to rgb
-          gl_FragColor.rgb = hsv2rgb(color1);
-          gl_FragColor.rgb += hsv2rgb(color2);
+            //go back to rgb
+            gl_FragColor.rgb = hsv2rgb(color1);
+            gl_FragColor.rgb += hsv2rgb(color2);
+          }
         }
         `;
     }

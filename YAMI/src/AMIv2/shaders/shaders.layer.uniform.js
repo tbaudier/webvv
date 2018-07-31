@@ -45,6 +45,16 @@ export default class ShadersUniform {
         typeGLSL: 'sampler2D',
         empty: true,
       },
+      'uOverlayCrossMode': {
+        type: 'b',
+        value: false,
+        typeGLSL: 'bool',
+      },
+      'uOverlayCrossPosition': {
+        type: 'v2',
+        value: new THREE.Vector2(0.3,0.3),
+        typeGLSL: 'vec2',
+      },
       'uOverlayHue': {
         type: 'f',
         value: 1/3,

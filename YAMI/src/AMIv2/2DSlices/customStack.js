@@ -341,7 +341,7 @@ export default class ModelsStack extends ModelsBase {
   packEchos() {
     // 4 echo times...
     let echos = 4;
-    let packedEcho = [];
+    let packedEcho = new Array(this._frame.length/echos);
     for (let i = 0; i < this._frame.length; i += echos) {
       let frame = this._frame[i];
       for (let k = 0; k < this._rows * this._columns; k++) {
@@ -561,7 +561,6 @@ export default class ModelsStack extends ModelsBase {
     if (this._texturesSave[orientation] != null) {
       this._textures = this._texturesSave[orientation];
     } else {
-      this._rawData = [];
       let nbVoxelsPerSlice;
       let nbSlices;
 
@@ -601,6 +600,7 @@ export default class ModelsStack extends ModelsBase {
         }
       }
 
+      this._rawData = new Array(nbSlices);
       for (let ii = 0; ii < nbSlices; ++ii) {
         let packed =
           this._packTo8Bits(
@@ -610,7 +610,7 @@ export default class ModelsStack extends ModelsBase {
             this._textureSize,
             orientation);
         this._textureType = packed.textureType;
-        this._rawData.push(packed.data);
+        this._rawData[ii] = packed.data;
       }
       this._prepareTexture();
       this._texturesSave[orientation] = this._textures;
@@ -621,7 +621,7 @@ export default class ModelsStack extends ModelsBase {
    * Pack frame data to 32 bits texture
    * TODO changed for 2DSlicing
    * @param {*} channels
-   * @param {*} frame
+   * @param {*} frame array of all original frames
    * @param {*} slice
    * @param {*} textureSize
    * @param {*} orientation 0 for axial, 1 sagittal, 2 coronal
@@ -749,7 +749,7 @@ export default class ModelsStack extends ModelsBase {
 
 
   _prepareTexture() {
-    this._textures = [];
+    this._textures = new Array(this._rawData.length);
     for (let m = 0; m < this._rawData.length; m++) {
       let tex = new THREE.DataTexture(
         this.rawData[m],
@@ -764,7 +764,7 @@ export default class ModelsStack extends ModelsBase {
         THREE.NearestFilter);
       tex.needsUpdate = true;
       tex.flipY = true;
-      this._textures.push(tex);
+      this._textures[m] = tex;
     }
   }
 

@@ -350,13 +350,13 @@ export default class customControls extends THREE.EventDispatcher {
       let state = []
       let buttons = document.getElementsByTagName('button');
       for (let i = 0; i < buttons.length; i++) {
-          state[i] = buttons[i].disabled;
-          buttons[i].disabled = true;
+        state[i] = buttons[i].disabled;
+        buttons[i].disabled = true;
       }
       document.body.style.cursor = "wait";
 
       // do the loading 0.1s after, to let the browser update its DOM elements
-      setTimeout(function(){
+      setTimeout(function() {
         _this.camera.orientation = orientation;
         _this.camera.update();
         _this.camera.fitBox(2);
@@ -407,6 +407,21 @@ export default class customControls extends THREE.EventDispatcher {
       _this.crossTarget.copy(temp);
       updateMouseFromTarget();
       changePtr.hasChanged = true;
+    }
+
+    this.updateOverlayCrossPosition = function(){
+      let mixUni = sceneManager.uniformsMix;
+
+      if (!mixUni.uOverlayTexture.empty && mixUni.uOverlayCrossMode.value) {
+
+        let rectCanvas = domElement.getBoundingClientRect();
+        sceneManager.uniformsMix.uOverlayCrossPosition.value.x =
+          ((newMousePosition.x - rectCanvas.left) / rectCanvas.width);
+        sceneManager.uniformsMix.uOverlayCrossPosition.value.y =
+         -((newMousePosition.y - rectCanvas.bottom) / rectCanvas.height);
+        changePtr.hasChanged = true;
+
+      }
     }
 
     ///////////
@@ -568,6 +583,7 @@ export default class customControls extends THREE.EventDispatcher {
           break;
       }
       oldMousePosition = newMousePosition.clone();
+      _this.updateOverlayCrossPosition();
     }
 
     function mousewheel(event) {
