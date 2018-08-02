@@ -1,4 +1,5 @@
 /* global settings */
+
 body, html {
   margin: 0;
   height: 100%;
@@ -7,33 +8,40 @@ body, html {
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
 }
 
-button{
+button {
   cursor: pointer;
 }
+
 /* Color of the button of the active mode */
-button:disabled{
+
+button:disabled {
   background-color: #00fa9a;
   cursor: auto;
 }
+
 /* Underlining the first letter of the button because it's the shortcut keys
 If the shortcut key changes, it may be wise not to undeline it*/
-button::first-letter{
+
+button::first-letter {
   text-decoration: underline;
 }
 
 a {
-  color : cyan;
-}
-/* color of a "disabled" text */
-.disabled{
-  color : grey;
+  color: cyan;
 }
 
-.float-right{
-  float : right;
+/* color of a "disabled" text */
+
+.disabled {
+  color: grey;
 }
-.float-left{
-  float : left;
+
+.float-right {
+  float: right;
+}
+
+.float-left {
+  float: left;
 }
 
 .wrapper {
@@ -44,30 +52,31 @@ a {
 }
 
 /* Three main panels (left, mid and right) */
+
 .general-panel, .viewer-panel, .gui-panel {
   display: inline-block;
   margin: 0;
   vertical-align: top;
-  text-align : center;
+  text-align: center;
 }
 
 .general-panel {
   width: 20%;
   min-width: 200px;
   max-width: 20%;
-  padding : 10px;
+  padding: 10px;
 }
 
 .general-panel .data-label {
   font-weight: bold;
 }
 
-#panel-register input{
-  width : 60px;
+#panel-register input {
+  width: 60px;
 }
 
 .data-content, .small {
-  font-size : 0.8em;
+  font-size: 0.8em;
 }
 
 .viewer-panel {
@@ -90,14 +99,14 @@ a {
   height: 500px;
   max-height: 500px;
   max-width: 500px;
-  border : solid 1px gray;
+  border: solid 1px gray;
   margin: auto;
-  margin-bottom : 10px;
+  margin-bottom: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow : hidden;
+  overflow: hidden;
 }
 
 .direction {
@@ -130,20 +139,21 @@ a {
   right: 8px;
 }
 
-#my-lut-canvases{
-  padding : 10px;
+#my-lut-canvases {
+  padding: 10px;
 }
-#my-lut-canvases canvas{
-  border : solid grey 1px;
+
+#my-lut-canvases canvas {
+  border: solid grey 1px;
 }
 
 #my-lut-container {
-  display : inline-block;
-  width : 300px;
+  display: inline-block;
+  width: 300px;
 }
 
-#data-prob{
-  float : right;
-  text-align : right;
+#data-prob {
+  float: right;
+  text-align: right;
   font-size: 0.8em;
 }
