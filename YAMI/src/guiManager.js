@@ -143,6 +143,8 @@ function f() {
   function buildFusionGUI(fusionUni) {
     // Fusion
     if (fusionUni) {
+      document.getElementById("panel-register").removeAttribute("hidden");
+
       let fusionFolder = gui.addFolder('Fusion');
 
       fusionFolder.add(sceneManager.uniformsMix.uFusionUse, 'value')
@@ -193,6 +195,8 @@ function f() {
   function buildOverlayGUI(overlayUni) {
     // Overlay
     if (overlayUni) {
+      document.getElementById("panel-register").removeAttribute("hidden");
+
       let overlayFolder = gui.addFolder('Overlay');
       let windowHelper = {
         center: overlayUni.uWindowCenterWidth.value[0] - overlayUni.uWindowCenterWidth.offset,
@@ -446,6 +450,12 @@ function f() {
     });
   }
 
+  function updateRegistration(translation) {
+    document.getElementById("register_x").value = translation.x;
+    document.getElementById("register_y").value = translation.y;
+    document.getElementById("register_z").value = translation.z;
+  }
+
   function round(x) {
     return Math.round(x * 100) / 100;
   }
@@ -456,7 +466,8 @@ function f() {
     updateProb: updateProb,
     updateCross: updateCross,
     updateIndex: updateIndex,
-    updateStruct: updateStruct
+    updateStruct: updateStruct,
+    updateRegistration: updateRegistration
   }
 }
 

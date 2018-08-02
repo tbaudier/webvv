@@ -26,6 +26,8 @@ export default class customControls extends THREE.EventDispatcher {
       ZOOMING: 8,
       SLICE: 9,
       SLICING: 10,
+      REGISTER: 11,
+      REGISTRING: 12,
     };
     // a map of booleans to know which key is down at the moment
     let pressedKeys = new Map();
@@ -73,9 +75,6 @@ export default class customControls extends THREE.EventDispatcher {
       data: {}
     };
 
-    this.noZoom = false; // possibility to disable zooming
-    this.noPan = false; // possibility to disable panning
-
     this._raycaster = new THREE.Raycaster(); // three js raycaster, only initialized once
     this._mouseRelative = new THREE.Vector2(); // mouse position retalive to canvas x and y in [-1;1]
     this._mouse = new THREE.Vector2(domElement.offsetWidth / 2, domElement.offsetHeight / 2);
@@ -111,9 +110,6 @@ export default class customControls extends THREE.EventDispatcher {
 
     // Moves the camera corresponding to a mouse movement from p1 to p2
     this.pan = function(p1, p2) {
-      if (this.noPan)
-        return;
-
       let x = p2.x - p1.x;
       let y = p2.y - p1.y;
       // update graphical cross
@@ -139,10 +135,57 @@ export default class customControls extends THREE.EventDispatcher {
       changePtr.hasChanged = true;
     }
 
+    this.registration = function(p1, p2) {
+      let x = p2.x - p1.x;
+      let y = p2.y - p1.y;
+
+      // relative movement [-1,1]
+      x /= domElement.offsetWidth;
+      y /= domElement.offsetHeight;
+
+      // Scale 2D movement to keep 3D world
+      let scale_x = (_this.camera.right - _this.camera.left) / _this.camera.zoom;
+      let scale_y = (_this.camera.top - _this.camera.bottom) / _this.camera.zoom;
+      x *= scale_x;
+      y *= scale_y;
+
+      let pan = new THREE.Vector3();
+      // vertical component
+      pan.copy(_this.camera.up).setLength(y);
+      // horizontal component
+      pan.add(_temp.copy(_this.camera._right).setLength(-x));
+
+      _this.register(pan);
+    }
+
+    this.register = function(pan, absolute) {
+      let stack = null;
+      if (_this.stackValues.overlay)
+        stack = _this.stackValues.overlay;
+      else if (_this.stackValues.fusion)
+        stack = _this.stackValues.fusion;
+
+      if (stack) {
+        // change the "registration" matrix
+        if (absolute)
+          stack.regMatrix.setPosition(pan);
+        else
+          stack.regMatrix.multiply(new THREE.Matrix4().makeTranslation(-pan.x, -pan.y, -pan.z));
+        // update other matrixes
+        stack.computeIJK2LPS();
+        stack.computeLPS2AABB();
+        // re-link the shader to the right new matrix
+        if (_this.stackValues.overlay)
+          sceneManager.uniforms.overlay.uWorldToData.value = stack.lps2IJK;
+        else
+          sceneManager.uniforms.fusion.uWorldToData.value = stack.lps2IJK;
+        guiManager.updateRegistration(new THREE.Vector3().setFromMatrixPosition(stack.regMatrix));
+      }
+      changePtr.hasChanged = true;
+    }
+
 
     this.zoom = function(directionIn, mouseFactor) {
-      if (this.noZoom)
-        return;
       // get the speed from the config
       let speed = config.zoomSpeed;
       if (mouseFactor !== undefined)
@@ -409,7 +452,7 @@ export default class customControls extends THREE.EventDispatcher {
       changePtr.hasChanged = true;
     }
 
-    this.updateOverlayCrossPosition = function(){
+    this.updateOverlayCrossPosition = function() {
       let mixUni = sceneManager.uniformsMix;
 
       if (!mixUni.uOverlayTexture.empty && mixUni.uOverlayCrossMode.value) {
@@ -417,8 +460,7 @@ export default class customControls extends THREE.EventDispatcher {
         let rectCanvas = domElement.getBoundingClientRect();
         sceneManager.uniformsMix.uOverlayCrossPosition.value.x =
           ((newMousePosition.x - rectCanvas.left) / rectCanvas.width);
-        sceneManager.uniformsMix.uOverlayCrossPosition.value.y =
-         -((newMousePosition.y - rectCanvas.bottom) / rectCanvas.height);
+        sceneManager.uniformsMix.uOverlayCrossPosition.value.y = -((newMousePosition.y - rectCanvas.bottom) / rectCanvas.height);
         changePtr.hasChanged = true;
 
       }
@@ -538,6 +580,9 @@ export default class customControls extends THREE.EventDispatcher {
                 _this._state = STATE.SETTINGPROB;
                 _this.prob(event);
                 break;
+              case STATE.REGISTER:
+                _this._state = STATE.REGISTRING;
+                break;
             }
           }
           break;
@@ -581,6 +626,9 @@ export default class customControls extends THREE.EventDispatcher {
         case STATE.SETTINGPROB:
           _this.prob(event);
           break;
+        case STATE.REGISTRING:
+          _this.registration(oldMousePosition, newMousePosition);
+          break;
       }
       oldMousePosition = newMousePosition.clone();
       _this.updateOverlayCrossPosition();
@@ -607,12 +655,14 @@ export default class customControls extends THREE.EventDispatcher {
       document.getElementById('button-control-slice').removeAttribute("disabled");
       document.getElementById('button-control-window').removeAttribute("disabled");
       document.getElementById('button-control-prob').removeAttribute("disabled");
+      document.getElementById('button-control-register').removeAttribute("disabled");
 
       document.getElementById('label-control-pan').classList.add("disabled");
       document.getElementById('label-control-zoom').classList.add("disabled");
       document.getElementById('label-control-slice').classList.add("disabled");
       document.getElementById('label-control-window').classList.add("disabled");
       document.getElementById('label-control-prob').classList.add("disabled");
+      document.getElementById('label-control-register').classList.add("disabled");
       switch (_this._state) {
         case STATE.PAN:
         case STATE.PANNING:
@@ -633,6 +683,11 @@ export default class customControls extends THREE.EventDispatcher {
         case STATE.SLICING:
           document.getElementById('button-control-slice').setAttribute("disabled", "true");
           document.getElementById('label-control-slice').classList.remove("disabled");
+          break;
+        case STATE.REGISTER:
+        case STATE.REGISTRING:
+          document.getElementById('button-control-register').setAttribute("disabled", "true");
+          document.getElementById('label-control-register').classList.remove("disabled");
           break;
         case STATE.SETPROB:
         case STATE.SETTINGPROB:
@@ -660,10 +715,20 @@ export default class customControls extends THREE.EventDispatcher {
         case 'button-control-prob':
           _this._state = STATE.SETPROB;
           break;
+        case 'button-control-register':
+          _this._state = STATE.REGISTER;
+          break;
       }
       _this._buttonState = _this._state;
       updateDOM();
       evt.preventDefault();
+    }
+
+    function changeRegistration(evt) {
+      let x= document.getElementById("register_x").value;
+      let y= document.getElementById("register_y").value;
+      let z= document.getElementById("register_z").value;
+      _this.register(new THREE.Vector3(x,y,z), true);
     }
 
     function setView(evt) {
@@ -719,6 +784,11 @@ export default class customControls extends THREE.EventDispatcher {
       document.getElementById('button-control-slice').addEventListener('click', setState);
       document.getElementById('button-control-window').addEventListener('click', setState);
       document.getElementById('button-control-prob').addEventListener('click', setState);
+      document.getElementById('button-control-register').addEventListener('click', setState);
+
+      document.getElementById('register_x').addEventListener('change', changeRegistration);
+      document.getElementById('register_y').addEventListener('change', changeRegistration);
+      document.getElementById('register_z').addEventListener('change', changeRegistration);
 
       document.getElementById('button-axial').addEventListener('click', setView);
       document.getElementById('button-coronal').addEventListener('click', setView);
@@ -745,6 +815,11 @@ export default class customControls extends THREE.EventDispatcher {
       document.getElementById('button-control-slice').removeEventListener('click', setState);
       document.getElementById('button-control-window').removeEventListener('click', setState);
       document.getElementById('button-control-prob').removeEventListener('click', setState);
+      document.getElementById('button-control-register').removeEventListener('click', setState);
+
+      document.getElementById('register_x').removeEventListener('change', changeRegistration);
+      document.getElementById('register_y').removeEventListener('change', changeRegistration);
+      document.getElementById('register_z').removeEventListener('change', changeRegistration);
 
       document.getElementById('button-axial').removeEventListener('click', setView);
       document.getElementById('button-coronal').removeEventListener('click', setView);
@@ -766,6 +841,7 @@ export default class customControls extends THREE.EventDispatcher {
 
     addEvents();
 
+    // guiManager.updateRegistration(0);
     this.handleResize();
     this.setAsResetState();
   }

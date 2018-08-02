@@ -58,6 +58,10 @@ button::first-letter{
   font-weight: bold;
 }
 
+#panel-register input{
+  width : 60px;
+}
+
 .data-content, .small {
   font-size : 0.8em;
 }

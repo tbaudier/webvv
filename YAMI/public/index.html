@@ -28,39 +28,49 @@
 
     <div class="align-left">
       <div class="general-panel">
-        <div id="general-info-panel" class="align-left">
-          <h3>Data</h3>
-        </div>
+        <details id="general-info-panel" class="align-left" open>
+          <summary>Data</summary>
+        </details>
         <hr/>
         <div id="controls-panel" class="align-left">
-          <h3>Basic controls</h3>
+          <details open>
+            <summary>Basic controls</summary>
 
-          <button id="button-control-prob">Prob</button> <span id="label-control-prob" class="small disabled">Click</span><br/>
-          <hr>
+            <button id="button-control-prob">Prob</button> <span id="label-control-prob" class="small disabled">Click</span><br/>
+            <hr>
 
-          <button id="button-control-pan">Move</button> <span id="label-control-pan" class="small disabled">Click and Drag</span> <br/>
-          <span class="small">Move : click on Wheel</span><br/>
-          <span class="small">Move : Shift + click and drag</span>
-          <hr>
+            <button id="button-control-pan">Move</button> <span id="label-control-pan" class="small disabled">Click and Drag</span> <br/>
+            <span class="small">Move : click on Wheel</span><br/>
+            <span class="small">Move : Shift + click and drag</span>
+            <hr>
 
-          <button id="button-control-zoom">Zoom</button> <span id="label-control-zoom" class="small disabled">Click and Drag</span> <br/>
-          <span class="small">Zoom In :  + , i , Ctrl + Wheel down<br/></span>
-          <span class="small">Zoom Out : - , o , Cltr + Wheel up <br/></span>
-          <hr>
+            <button id="button-control-zoom">Zoom</button> <span id="label-control-zoom" class="small disabled">Click and Drag</span> <br/>
+            <span class="small">Zoom In :  + , i , Ctrl + Wheel down<br/></span>
+            <span class="small">Zoom Out : - , o , Cltr + Wheel up <br/></span>
+            <hr>
 
-          <button id="button-control-slice">Slices</button> <span id="label-control-slice" class="small disabled">Click and Drag</span> <br/>
-          <span class="small">Slice Up :   ↑ , Wheel Up <br/></span>
-          <span class="small">Slice Down : ↓ , Wheel Down <br/></span>
-          <hr>
+            <button id="button-control-slice">Slices</button> <span id="label-control-slice" class="small disabled">Click and Drag</span> <br/>
+            <span class="small">Slice Up :   ↑ , Wheel Up <br/></span>
+            <span class="small">Slice Down : ↓ , Wheel Down <br/></span>
+            <hr>
 
-          <button id="button-control-window">Window</button> <span id="label-control-window" class="small disabled">Click and Drag</span> <br/>
-          <span class="small">Windowing : Right Click</span>
-          <hr>
+            <button id="button-control-window">Window</button> <span id="label-control-window" class="small disabled">Click and Drag</span> <br/>
+            <span class="small">Windowing : Right Click</span>
+            <hr>
 
-          <span class="small">Local Windowing : L</span>
-          <hr>
+            <div id="panel-register" hidden="hidden">
+              <button id="button-control-register">Registration</button> <span id="label-control-register" class="small disabled">Click and Drag</span> <br/>
+              <input type="number" id="register_x" name="register_x" value="0"/> X<br/>
+              <input type="number" id="register_y" name="register_y" value="0"/> Y<br/>
+              <input type="number" id="register_z" name="register_z" value="0"/> Z<br/>
+              <hr>
+            </div>
 
-          <span class="small">Camera Reset : R</span>
+            <span class="small">Local Windowing : L</span>
+            <hr>
+
+            <span class="small">Camera Reset : R</span>
+          </details>
           <hr>
         </div>
       </div>
