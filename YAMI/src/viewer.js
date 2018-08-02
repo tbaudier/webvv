@@ -91,6 +91,10 @@ window.onload = function() {
   // instantiate the loader
   // it loads and parses the images
   let loader = new AMI.VolumeLoader(canvas);
+  // delete blue parsing bar
+  delete loader._progressBar._modes.parse;
+  loader._progressBar.free(); // and rebuild it
+  loader._progressBar.init();
   // Reads the GET params, reads the JSON and load the files
   document.body.style.cursor = "wait"; // display "busy" cursor
   requestManager.readMultipleFiles(loader, handleSeries, handleError);
