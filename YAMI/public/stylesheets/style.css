@@ -20,6 +20,10 @@ If the shortcut key changes, it may be wise not to undeline it*/
 button::first-letter{
   text-decoration: underline;
 }
+
+a {
+  color : cyan;
+}
 /* color of a "disabled" text */
 .disabled{
   color : grey;
