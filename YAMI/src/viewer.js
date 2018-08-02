@@ -54,6 +54,11 @@ let cross = {
  * @private
  */
 function init() {
+  let ua = window.navigator.userAgent;
+  if (ua.indexOf('MSIE ') > 0 || ua.indexOf('Trident/') > 0 || ua.indexOf('Edge/') > 0) {
+    alert('Notice : this website may encounter problems under Internet Explorer and Edge. If it doesn\'t load, try using another browser.');
+  }
+
   animator = new animationManager();
   // canvas and THREE.js renderer
   canvas = document.getElementById('r3d');
