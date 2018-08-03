@@ -63,6 +63,7 @@ function init() {
   // canvas and THREE.js renderer
   canvas = document.getElementById('r3d');
   renderer = new THREE.WebGLRenderer({
+    alpha: true,
     antialias: (config.interpolation == 1)
   });
   // set up the renderer

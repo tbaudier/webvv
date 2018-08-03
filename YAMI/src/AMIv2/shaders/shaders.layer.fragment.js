@@ -103,9 +103,11 @@ export default class ShadersFragment {
     else
       return `
         vec4 baseColorFusion = texture2D(uFusionTexture, texc);
+        float opa = baseColorFusion.w;
+        baseColorFusion.w = 1.0;
 
-        if(uFusionUse && baseColorFusion.w >= uFusionThreshold) {
-          gl_FragColor = mix( gl_FragColor, baseColorFusion, uFusionOpacityMin+(uFusionOpacityMax-uFusionOpacityMin)*baseColorFusion.w);
+        if(uFusionUse && opa >= uFusionThreshold) {
+          gl_FragColor = mix( gl_FragColor, baseColorFusion, uFusionOpacityMin+(uFusionOpacityMax-uFusionOpacityMin)*opa);
         }
         `;
   }

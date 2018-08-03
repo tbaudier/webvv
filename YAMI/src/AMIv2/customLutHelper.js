@@ -135,7 +135,7 @@ export default class HelpersLut {
   updateLevels(windowCenterWidth) {
     let offset = (windowCenterWidth["offset"] == null) ? 0 : -windowCenterWidth["offset"];
     let roundSci = function(x) {
-      if ((x < 9999 && x > 0.1) || x == 0 || (x > -9999 && x < -0.1))
+      if ((x > 0.1 && x < 9999) || x == 0 || (x > -9999 && x < -0.1))
         return Math.round(x * 1000) / 1000;
       else
         return x.toExponential(3);
@@ -147,10 +147,12 @@ export default class HelpersLut {
 
   get texture() {
     let texture = new THREE.Texture(this._canvas);
+    console.log(texture);
+    console.log(this._canvas);
     texture.mapping = THREE.UVMapping;
     texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
     texture.magFilter = texture.minFilter = THREE.NearestFilter;
-    texture.premultiplyAlpha = true;
+    texture.premultiplyAlpha = false;
     texture.needsUpdate = true;
     return texture;
   }
@@ -226,13 +228,11 @@ export default class HelpersLut {
         [1, 1, 1, 1]
       ],
       'spectrum': [
-        [0, 0, 0, 0],
-        [0.1, 0, 0, 1],
-        [0.33, 0, 1, 1],
+        [0, 0, 0, 1],
+        [0.25, 0, 1, 1],
         [0.5, 0, 1, 0],
-        [0.66, 1, 1, 0],
-        [0.9, 1, 0, 0],
-        [1, 1, 1, 1]
+        [0.75, 1, 1, 0],
+        [1, 1, 0, 0],
       ],
       'hot_and_cold': [
         [0, 0, 0, 1],

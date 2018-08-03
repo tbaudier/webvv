@@ -459,7 +459,7 @@ function f() {
   }
 
   function roundSci(x) {
-    if ((x < 9999 && x > 0.1) || x == 0 || (x > -9999 && x < -0.1))
+    if ((x > 0.1 && x < 9999) || x == 0 || (x > -9999 && x < -0.1))
       return Math.round(x * 1000) / 1000;
     else
       return x.toExponential(3);

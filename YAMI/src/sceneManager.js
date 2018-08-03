@@ -228,7 +228,7 @@ export default class sceneManager {
           [0, 0, 0, 0],
           [1, 1, 1, 1]
         ], [
-          [0, 0],
+          [0, 0.01],
           [1, 1]
         ]);
         lut.luts = LutHelper.presetLuts();
