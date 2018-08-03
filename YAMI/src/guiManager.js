@@ -19,6 +19,9 @@ function f() {
   let sceneManager;
   let stackFolder;
   let structGUIStatus = [];
+  let windowPreset = {
+    window: 'Custom'
+  };
 
   var changePtr;
 
@@ -54,9 +57,6 @@ function f() {
       rotate: false,
       orientation: 'default',
       convention: 'radio',
-    };
-    let windowPreset = {
-      window: 'Custom'
     };
 
     let customContainer = document.getElementById('my-gui-container');
@@ -472,7 +472,8 @@ function f() {
     updateCross: updateCross,
     updateIndex: updateIndex,
     updateStruct: updateStruct,
-    updateRegistration: updateRegistration
+    updateRegistration: updateRegistration,
+    windowPreset: windowPreset, // we need to expose this to reset to 'custom' when setting the window from somewhere else
   }
 }
 

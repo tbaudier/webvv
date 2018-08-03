@@ -246,9 +246,14 @@ export default class customControls extends THREE.EventDispatcher {
       _this.stack.slice.windowCenter -= deltaCenter * config.windowingSpeedFactor;
       _this.stack.slice.windowCenter = Math.min(Math.max(_this.stack.slice.windowCenter, _this.stack._stack.minMax[0]), _this.stack._stack.minMax[1]);
 
+      guiManager.windowPreset.window = 'Custom';
       changePtr.hasChanged = true;
     }
 
+
+    /**    
+     * local windowing on a 3D cube, its size is config.localWindowingSize / this.camera.zoom
+     */
     this.localWindowing = function() {
       let rectCanvas = domElement.getBoundingClientRect();
       let mouseHoverRelative = new THREE.Vector2();
@@ -309,6 +314,7 @@ export default class customControls extends THREE.EventDispatcher {
         _this.stack.slice.windowWidth = minMax[1] - minMax[0] + 1;
         _this.stack.slice.windowCenter = (minMax[0] + minMax[1]) / 2;
 
+        guiManager.windowPreset.window = 'Custom';
         changePtr.hasChanged = true;
       }
     }
@@ -725,10 +731,10 @@ export default class customControls extends THREE.EventDispatcher {
     }
 
     function changeRegistration(evt) {
-      let x= document.getElementById("register_x").value;
-      let y= document.getElementById("register_y").value;
-      let z= document.getElementById("register_z").value;
-      _this.register(new THREE.Vector3(x,y,z), true);
+      let x = document.getElementById("register_x").value;
+      let y = document.getElementById("register_y").value;
+      let z = document.getElementById("register_z").value;
+      _this.register(new THREE.Vector3(x, y, z), true);
     }
 
     function setView(evt) {
