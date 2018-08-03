@@ -37,6 +37,7 @@ export default class ModelsStack extends ModelsBase {
     this._textureSize = 4096;
     this._nbTextures = 7;
     this._rawData = [];
+    this._textureSizes = [];
     this._textures = [];
     this._texturesSave = [null, null, null];
 
@@ -560,6 +561,7 @@ export default class ModelsStack extends ModelsBase {
   slicing(orientation) {
     if (this._texturesSave[orientation] != null) {
       this._textures = this._texturesSave[orientation];
+      this._textureSize = this._textureSizes[orientation];
     } else {
       let nbVoxelsPerSlice;
       let nbSlices;
@@ -596,6 +598,7 @@ export default class ModelsStack extends ModelsBase {
         textureDimension = Math.pow(2, po);
         if (nbPixelPerSlice < textureDimension * textureDimension) {
           this._textureSize = textureDimension;
+          this._textureSizes[orientation] = textureDimension;
           break;
         }
       }

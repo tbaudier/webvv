@@ -117,18 +117,6 @@ export default class ShadersFragment {
     if (this._uniforms["uOverlayTexture"].empty)
       return ``;
     else {
-
-      this._functions["rgb2hsv"] = `
-      vec3 rgb2hsv(vec3 c)
-      {
-          vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-          vec4 p = c.g < c.b ? vec4(c.bg, K.wz) : vec4(c.gb, K.xy);
-          vec4 q = c.r < p.x ? vec4(p.xyw, c.r) : vec4(c.r, p.yzx);
-
-          float d = q.x - min(q.w, q.y);
-          float e = 1.0e-10;
-          return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
-      }`;
       this._functions["hsv2rgb"] = `
       vec3 hsv2rgb(vec3 c)
       {
@@ -151,24 +139,13 @@ export default class ShadersFragment {
           {
             vec4 fragColorOverlay = texture2D(uOverlayTexture, texc);
 
-            float gray1 = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
-            float gray2 = dot(fragColorOverlay.rgb, vec3(0.299, 0.587, 0.114));
+            vec3 grayscale = vec3(0.299, 0.587, 0.114);
+            float gray1 = dot(gl_FragColor.rgb, grayscale);
+            float gray2 = dot(fragColorOverlay.rgb, grayscale);
 
+            // colors in hsv space
             vec3 color1 = vec3(uOverlayHue, 1.0, gray1);
             vec3 color2 = vec3(mod(uOverlayHue + 0.5, 1.0), 1.0, gray2);
-
-            // // No need to compute full HSV color
-            // // go to hsv system;
-            // vec3 color1 = rgb2hsv(gl_FragColor.rgb);
-            // vec3 color2 = rgb2hsv(fragColorOverlay.rgb);
-            //
-            // // set hue
-            // color1.x = uOverlayHue;
-            // color2.x = mod(uOverlayHue + 0.5, 1.0);
-            //
-            // // set staturation
-            // color1.y = 1.0;
-            // color2.y = 1.0;
 
             //go back to rgb
             gl_FragColor.rgb = hsv2rgb(color1);
