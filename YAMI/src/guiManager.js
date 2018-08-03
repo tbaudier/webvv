@@ -261,7 +261,6 @@ function f() {
     }
   }
 
-
   function buildStructGUI() {
 
     for (let i = sceneManager.uniformsMix.uStructTexturesCount.value - 1, j = 0; i >= 0; --i, ++j) {
@@ -357,7 +356,6 @@ function f() {
     }
   }
 
-
   function updateStruct() {
     for (let i = 0; i < roiDOMs.length; i++) {
       gui.removeFolder(roiDOMs[i]);
@@ -417,7 +415,7 @@ function f() {
       text += round(values.positionPX.x) + " / " + round(values.positionPX.y) + " / " + round(values.positionPX.z) + " px<br/>";
     text += "<br/>";
     for (let prop in values.data) {
-      text += prop + " : " + round(values.data[prop]) + " " + information[prop].unit + " <br/>";
+      text += prop + " : " + roundSci(values.data[prop]) + " " + information[prop].unit + " <br/>";
     }
     document.getElementById("data-prob").innerHTML = text;
   }
@@ -458,6 +456,13 @@ function f() {
 
   function round(x) {
     return Math.round(x * 100) / 100;
+  }
+
+  function roundSci(x) {
+    if ((x < 9999 && x > 0.1) || x == 0 || (x > -9999 && x < -0.1))
+      return Math.round(x * 1000) / 1000;
+    else
+      return x.toExponential(3);
   }
 
   return {
