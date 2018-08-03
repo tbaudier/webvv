@@ -65,6 +65,7 @@ export default class HelpersLut {
 
     // foreground
     this._canvas = this.createCanvas();
+    this._canvasTransparent = this.createCanvas();
     this._canvasContainer.appendChild(this._canvas);
   }
 
@@ -87,22 +88,29 @@ export default class HelpersLut {
     if (!this._discrete) {
       let color = ctx.createLinearGradient(0, 0, this._canvas.width, 0);
       for (let i = 0; i < this._color.length; i++) {
-        color.addColorStop(this._color[i][0], `rgba( ${Math.round(this._color[i][1] * 255)}, ${Math.round(this._color[i][2] * 255)}, ${Math.round(this._color[i][3] * 255)}, 1)`);
+        color.addColorStop(
+          this._color[i][0], `rgba( ${Math.round(this._color[i][1] * 255)}, ${Math.round(this._color[i][2] * 255)}, ${Math.round(this._color[i][3] * 255)}, 1)`);
       }
 
       ctx.fillStyle = color;
       ctx.fillRect(0, 0, this._canvas.width, this._canvas.height);
 
+      // create another canvas
+      let ctxTransparent = this._canvasTransparent.getContext('2d');
+      ctxTransparent.clearRect(0, 0, this._canvas.width, this._canvas.height);
+      ctxTransparent.globalCompositeOperation = 'source-over';
+      ctxTransparent.drawImage(this._canvas, 0, 0);
+
       // setup context
-      ctx.globalCompositeOperation = 'destination-in';
+      ctxTransparent.globalCompositeOperation = 'destination-in';
 
       // apply opacity
       let opacity = ctx.createLinearGradient(0, 0, this._canvas.width, 0);
       for (let i = 0; i < this._opacity.length; i++) {
         opacity.addColorStop(this._opacity[i][0], 'rgba(255, 255, 255, ' + this._opacity[i][1] + ')');
       }
-      ctx.fillStyle = opacity;
-      ctx.fillRect(0, 0, this._canvas.width, this._canvas.height);
+      ctxTransparent.fillStyle = opacity;
+      ctxTransparent.fillRect(0, 0, this._canvas.width, this._canvas.height);
     } else {
       ctx.lineWidth = 2 * this._canvas.height;
 
@@ -146,9 +154,7 @@ export default class HelpersLut {
   }
 
   get texture() {
-    let texture = new THREE.Texture(this._canvas);
-    console.log(texture);
-    console.log(this._canvas);
+    let texture = new THREE.Texture(this._canvasTransparent);
     texture.mapping = THREE.UVMapping;
     texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
     texture.magFilter = texture.minFilter = THREE.NearestFilter;
