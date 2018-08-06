@@ -828,6 +828,10 @@ export default class customControls extends THREE.EventDispatcher {
       evt.preventDefault();
     }
 
+    function resetKeyMap() {
+      pressedKeys = new Map();
+    }
+
     function addEvents() {
       // some event are better on the canvas, and others on the whole document.
       domElement.addEventListener('mousedown', mousedown, false);
@@ -860,6 +864,8 @@ export default class customControls extends THREE.EventDispatcher {
       document.getElementById('button-size-1').addEventListener('click', setSize);
       document.getElementById('button-size-2').addEventListener('click', setSize);
       document.getElementById('button-size-3').addEventListener('click', setSize);
+
+      window.addEventListener('blur', resetKeyMap);
     }
 
     function clearEvents() {
@@ -892,6 +898,8 @@ export default class customControls extends THREE.EventDispatcher {
       document.getElementById('button-size-1').removeEventListener('click', setSize);
       document.getElementById('button-size-2').removeEventListener('click', setSize);
       document.getElementById('button-size-3').removeEventListener('click', setSize);
+
+      window.removeEventListener('blur', resetKeyMap);
     }
 
 
