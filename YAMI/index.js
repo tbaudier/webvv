@@ -14,6 +14,7 @@ app.get('/', function(req, res) {
 })
 
 app.post('/registration', function(req, res) {
+  console.log("--------------");
   console.log("Registration received");
   console.log(req.body); // your JSON
   let result = {
@@ -29,7 +30,6 @@ app.post('/registration', function(req, res) {
       result.done = 'ok';
       console.log("Registration saved");
     }
-    console.log("--------------");
     sendNumidoRegistration(
       req.body.callback,
       name,
@@ -67,7 +67,8 @@ function randomString(len) {　　
 
 function sendNumidoRegistration(callbackToNumido, name, success, fail) {
   let xhr = new XMLHttpRequest();
-  let url = callbackToNumido.url + callbackToNumido.path + "?" + name;
+  let url = callbackToNumido.url + callbackToNumido.path + "?callback=" + name;
+  console.log("request sent to " + url);
   xhr.open('GET', url, true);
   xhr.onreadystatechange = function() {
     if (xhr.readyState == 4) {
