@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const fs = require('fs');
+const XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 
 const port = 9191;
 
@@ -18,7 +19,7 @@ app.post('/registration', function(req, res) {
   let result = {
     done: 'not ok'
   };
-  let registrationStr = JSON.stringify(req.body, null, 2);
+  let registrationStr = JSON.stringify(req.body.registrationJson, null, 2);
   let name = randomString(4) + "-" + randomString(4) + "-" + randomString(4) + "-" + randomString(4);
   fs.writeFile('registrations/' + name, registrationStr, 'utf8', (err) => {
     if (err) {
@@ -29,7 +30,17 @@ app.post('/registration', function(req, res) {
       console.log("Registration saved");
     }
     console.log("--------------");
-    res.send(result);
+    sendNumidoRegistration(
+      req.body.callback,
+      name,
+      _ => {
+        res.send(result);
+      },
+      _ => {
+        result.done = "Error while sending to numido";
+        res.send(result);
+      }
+    );
   });
 })
 
@@ -52,4 +63,20 @@ function randomString(len) {　　
     pwd += $chars.charAt(Math.floor(Math.random() * maxPos));　　
   }　　
   return pwd;
+}
+
+function sendNumidoRegistration(callbackToNumido, name, success, fail) {
+  let xhr = new XMLHttpRequest();
+  let url = callbackToNumido.url + callbackToNumido.path + "?" + name;
+  xhr.open('GET', url, true);
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState == 4) {
+      if (xhr.status == 200) {
+        success();
+      } else {
+        fail();
+      }
+    }
+  };
+  xhr.send();
 }
