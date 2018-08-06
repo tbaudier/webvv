@@ -181,9 +181,56 @@ export default class customControls extends THREE.EventDispatcher {
           sceneManager.uniforms.fusion.uWorldToData.value = stack.lps2IJK;
         guiManager.updateRegistration(new THREE.Vector3().setFromMatrixPosition(stack.regMatrix));
       }
+      // update active slice for each slice except "image" (already done by StackManager)
+      this.sceneManager.updateActiveSlices();
       changePtr.hasChanged = true;
     }
 
+    this.sendRegistration = function() {
+      let stack = null;
+      let moving = "none";
+      if (_this.stackValues.overlay) {
+        stack = _this.stackValues.overlay;
+        moving = "overlay";
+      } else if (_this.stackValues.fusion) {
+        stack = _this.stackValues.fusion;
+        moving = "fusion";
+      }
+
+      if (stack) {
+        let reg = new THREE.Vector3().setFromMatrixPosition(stack.regMatrix);
+        let registrationJson = {
+          fixed: {
+            id: _this.stackValues["image"].numido_id,
+            table: _this.stackValues["image"].numido_table
+          },
+          moving: {
+            id: stack.numido_id,
+            table: stack.numido_table
+          },
+          tx: reg.x,
+          ty: reg.y,
+          tz: reg.z,
+        };
+        let xhr = new XMLHttpRequest();
+        let url = '/registration';
+        xhr.open('POST', url, true);
+        xhr.setRequestHeader('Content-type', 'application/json');
+        xhr.responseType = 'json';
+        xhr.onreadystatechange = function() {
+          if (xhr.readyState == 4) {
+            if (xhr.status == 200 && this.response.done == 'ok') {
+              console.log('Registration sent.');
+              console.log(this.response);
+              alert('Registration sent.');
+            } else {
+              console.log('An error occured while sending the registration.');
+            }
+          }
+        }
+        xhr.send(JSON.stringify(registrationJson));
+      }
+    }
 
     this.zoom = function(directionIn, mouseFactor) {
       // get the speed from the config
@@ -251,7 +298,7 @@ export default class customControls extends THREE.EventDispatcher {
     }
 
 
-    /**    
+    /**
      * local windowing on a 3D cube, its size is config.localWindowingSize / this.camera.zoom
      */
     this.localWindowing = function() {
@@ -772,6 +819,11 @@ export default class customControls extends THREE.EventDispatcher {
       evt.preventDefault();
     }
 
+    function sendRegistration(evt) {
+      _this.sendRegistration();
+      evt.preventDefault();
+    }
+
     function addEvents() {
       // some event are better on the canvas, and others on the whole document.
       domElement.addEventListener('mousedown', mousedown, false);
@@ -795,6 +847,7 @@ export default class customControls extends THREE.EventDispatcher {
       document.getElementById('register_x').addEventListener('change', changeRegistration);
       document.getElementById('register_y').addEventListener('change', changeRegistration);
       document.getElementById('register_z').addEventListener('change', changeRegistration);
+      document.getElementById('button-control-send-registration').addEventListener('click', sendRegistration);
 
       document.getElementById('button-axial').addEventListener('click', setView);
       document.getElementById('button-coronal').addEventListener('click', setView);
@@ -826,6 +879,7 @@ export default class customControls extends THREE.EventDispatcher {
       document.getElementById('register_x').removeEventListener('change', changeRegistration);
       document.getElementById('register_y').removeEventListener('change', changeRegistration);
       document.getElementById('register_z').removeEventListener('change', changeRegistration);
+      document.getElementById('button-control-send-registration').removeEventListener('click', sendRegistration);
 
       document.getElementById('button-axial').removeEventListener('click', setView);
       document.getElementById('button-coronal').removeEventListener('click', setView);
