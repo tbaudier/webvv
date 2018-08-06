@@ -126,7 +126,6 @@ window.onload = function() {
     loader = null;
     // write information on the page
     writeInformation(information);
-    console.log(information);
     // prepare for slice visualization
     let stackList = {};
 

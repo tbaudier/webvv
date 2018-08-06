@@ -842,7 +842,6 @@ export default class customControls extends THREE.EventDispatcher {
       document.addEventListener('keyup', keyup, false); // Keys
       document.addEventListener('keydown', keydown, false); // Keys
 
-
       document.addEventListener('mousemove', mousemove, false);
 
       document.getElementById('button-control-pan').addEventListener('click', setState);
@@ -901,8 +900,7 @@ export default class customControls extends THREE.EventDispatcher {
 
       window.removeEventListener('blur', resetKeyMap);
     }
-
-
+    
     this.dispose = function() {
       clearEvents();
     };
@@ -913,7 +911,6 @@ export default class customControls extends THREE.EventDispatcher {
 
     addEvents();
 
-    // guiManager.updateRegistration(0);
     this.handleResize();
     this.setAsResetState();
   }
