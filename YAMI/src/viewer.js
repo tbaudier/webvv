@@ -126,6 +126,7 @@ window.onload = function() {
     loader = null;
     // write information on the page
     writeInformation(information);
+    console.log(information);
     // prepare for slice visualization
     let stackList = {};
 
@@ -135,8 +136,6 @@ window.onload = function() {
     stackList["image"] = stack;
     // we add the "unit" attribute to the stacks
     stack.unit = information["image"].unit;
-    stack.numido_id = information["image"].id;
-    stack.numido_table = information["image"].table;
     // we create the main stackHelper (easy manipulation of stacks)
     let stackHelper = new StackHelper(stack);
     stackHelper.bbox.visible = false;
@@ -152,9 +151,7 @@ window.onload = function() {
     if (seriesContainer["fusion"]) {
       let stackFusion = new ModelsStack();
       stackFusion.copy_values(seriesContainer["fusion"][0].mergeSeries(seriesContainer["fusion"])[0].stack[0]);
-      stackFusion.unit = information["fusion"].unit;
-      stackFusion.numido_id = information["fusion"].id;
-      stackFusion.numido_table = information["fusion"].table;
+      //stackFusion.unit = information["fusion"].unit;
       sceneManager.addLayerStack(stackFusion, "fusion");
       stackList["fusion"] = stackFusion;
       // Cleaning the imported (now useless) raw data
@@ -165,9 +162,7 @@ window.onload = function() {
     if (seriesContainer["overlay"]) {
       let stackOver = new ModelsStack();
       stackOver.copy_values(seriesContainer["overlay"][0].mergeSeries(seriesContainer["overlay"])[0].stack[0]);
-      stackOver.unit = information["overlay"].unit;
-      stackOver.numido_id = information["overlay"].id;
-      stackOver.numido_table = information["overlay"].table;
+      //stackOver.unit = information["overlay"].unit;
       sceneManager.addLayerStack(stackOver, "overlay");
       stackList["overlay"] = stackOver;
       // Cleaning the imported (now useless) raw data
@@ -192,7 +187,7 @@ window.onload = function() {
     createCross();
 
     // setup controls and shortcuts
-    controls = new CustomControls(camera, sceneManager, stackHelper, stackList, canvas, changePtr);
+    controls = new CustomControls(camera, sceneManager, stackHelper, stackList, canvas, information, changePtr);
     camera.controls = controls;
 
     // setup camera

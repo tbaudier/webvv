@@ -200,11 +200,11 @@ function requestManager() {
       .then(_ => {
         // follow the count to show the
         for (let prop in jsonParameters)
-          if (jsonParameters.hasOwnProperty(prop) && prop !== "information" && prop !== "study")
+          if (jsonParameters.hasOwnProperty(prop) && prop !== "information" && prop !== "study" && prop !== "callback")
             ++total_files_i;
 
         for (let prop in jsonParameters)
-          if (jsonParameters.hasOwnProperty(prop) && prop !== "information" && prop !== "study")
+          if (jsonParameters.hasOwnProperty(prop) && prop !== "information" && prop !== "study" && prop !== "callback")
             p = p.then(_ => {
               ++file_i;
               // and proceed
@@ -241,7 +241,7 @@ function requestManager() {
      * @memberof module:RequestManager
      */
     function fetchAndLoadData(jsonParameters, files, category) {
-      if (category === "information" || category === "study")
+      if (category === "information" || category === "study" || category === "callback")
         return;
       return new Promise((resolve, reject) => {
           let p = Promise.resolve();
@@ -310,6 +310,7 @@ function requestManager() {
       futureContainer["information"] = {};
       futureContainer["information"]["data"] = json["information"];
       futureContainer["information"]["data"]["study"] = json["study"];
+      futureContainer["information"]["callback"] = json["callback"];
       if (json["image"])
         futureContainer["information"]["image"] = {
           "unit": json["image"]["unit"],

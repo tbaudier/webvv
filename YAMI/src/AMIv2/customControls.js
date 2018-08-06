@@ -6,7 +6,7 @@ const config = require('../viewer.config');
 const guiManager = require('../guiManager');
 
 export default class customControls extends THREE.EventDispatcher {
-  constructor(camera, sceneManager, stackCtrl, stacks, domElement, chgPtr) {
+  constructor(camera, sceneManager, stackCtrl, stacks, domElement, info, chgPtr) {
     super();
     // a simple handler to access "this." attributes from functions not declared as "this."function (aka private)
     let _this = this;
@@ -52,6 +52,7 @@ export default class customControls extends THREE.EventDispatcher {
     this.stack = stackCtrl; // as a StackHelper, only the main stack
     this.sceneManager = sceneManager;
     this.stackValues = stacks;
+    this.information = info;
     this.domElement = (domElement !== undefined) ? domElement : document; // canvas
     this.crossTarget = new THREE.Vector3(); // 3D position of cross cursor (in World)
     /** @property  {Object} this.values object as <pre>
@@ -188,30 +189,34 @@ export default class customControls extends THREE.EventDispatcher {
 
     this.sendRegistration = function() {
       let stack = null;
-      let moving = "none";
+      let moving = null;
       if (_this.stackValues.overlay) {
         stack = _this.stackValues.overlay;
-        moving = "overlay";
+        moving = 'overlay';
       } else if (_this.stackValues.fusion) {
         stack = _this.stackValues.fusion;
-        moving = "fusion";
+        moving = 'fusion';
       }
 
       if (stack) {
         let reg = new THREE.Vector3().setFromMatrixPosition(stack.regMatrix);
-        let registrationJson = {
-          fixed: {
-            id: _this.stackValues["image"].numido_id,
-            table: _this.stackValues["image"].numido_table
+        let data = {
+          registrationJson: {
+            fixed: {
+              id: _this.information['image'].id,
+              table: _this.information['image'].table
+            },
+            moving: {
+              id: _this.information[moving].id,
+              table: _this.information[moving].table
+            },
+            tx: reg.x,
+            ty: reg.y,
+            tz: reg.z,
           },
-          moving: {
-            id: stack.numido_id,
-            table: stack.numido_table
-          },
-          tx: reg.x,
-          ty: reg.y,
-          tz: reg.z,
+          callback: _this.information.callback,
         };
+
         let xhr = new XMLHttpRequest();
         let url = '/registration';
         xhr.open('POST', url, true);
@@ -221,14 +226,13 @@ export default class customControls extends THREE.EventDispatcher {
           if (xhr.readyState == 4) {
             if (xhr.status == 200 && this.response.done == 'ok') {
               console.log('Registration sent.');
-              console.log(this.response);
               alert('Registration sent.');
             } else {
               console.log('An error occured while sending the registration.');
             }
           }
         }
-        xhr.send(JSON.stringify(registrationJson));
+        xhr.send(JSON.stringify(data));
       }
     }
 
