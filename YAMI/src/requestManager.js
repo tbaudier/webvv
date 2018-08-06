@@ -212,11 +212,11 @@ function requestManager() {
             });
         p = p.then(_ => {
           return new Promise((resolve, reject) => {
-              // update loader
-              if (loader._progressBar)
-                loader._progressBar.update(95, 100, 'load'); // the last 5 percents will be the slicing
-              setTimeout(resolve, 10);
-            });
+            // update loader
+            if (loader._progressBar)
+              loader._progressBar.update(95, 100, 'load'); // the last 5 percents will be the slicing
+            setTimeout(resolve, 10);
+          });
         });
         p = p.then((series) => {
           console.log("Files loaded.");
@@ -312,23 +312,34 @@ function requestManager() {
       futureContainer["information"]["data"]["study"] = json["study"];
       if (json["image"])
         futureContainer["information"]["image"] = {
-          "unit": json["image"]["unit"]
+          "unit": json["image"]["unit"],
+          "id": json["image"]["id"],
+          "table": json["image"]["type"],
         };
       if (json["fusion"])
         futureContainer["information"]["fusion"] = {
-          "unit": json["fusion"]["unit"]
+          "unit": json["fusion"]["unit"],
+          "id": json["fusion"]["id"],
+          "table": json["fusion"]["type"],
         };
       if (json["overlay"])
         futureContainer["information"]["overlay"] = {
-          "unit": json["overlay"]["unit"]
+          "unit": json["overlay"]["unit"],
+          "id": json["overlay"]["id"],
+          "table": json["overlay"]["type"],
         };
       if (json["struct"]) {
         futureContainer["information"]["struct"] = {
           "unit": json["struct"]["unit"],
-          "names": []
+          "names": [],
+          "ids": [],
+          "tables": []
         };
-        for (let i = 0; i < json["struct"]["data"].length; ++i)
-          futureContainer["information"]["struct"]["names"][i] = json["struct"]["data"][i].roi;
+        for (let i = 0; i < json["struct"]["data"].length; ++i) {
+          futureContainer["information"]["struct"]["names"][i] = json["struct"]["data"][i]["roi"];
+          futureContainer["information"]["struct"]["ids"][i] = json["struct"]["data"][i]["id"];
+          futureContainer["information"]["struct"]["tables"][i] = json["struct"]["data"][i]["type"];
+        }
       }
     }
 
