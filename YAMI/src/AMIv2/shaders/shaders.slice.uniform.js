@@ -95,7 +95,7 @@ export default class ShadersUniform {
         value: 1,
         typeGLSL: 'int',
       },
-      'uInterpolation': {
+      'uInterpolation': { // not used anymore, but is kept for compatibilty with AMI's StackHelper object
         type: 'i',
         value: 1,
         typeGLSL: 'int',
@@ -110,22 +110,22 @@ export default class ShadersUniform {
         value: 0.,
         typeGLSL: 'float',
       },
-      'uBorderColor': {
+      'uBorderColor': { // not used anymore, but is kept for compatibilty with AMI's StackHelper object
         type: 'v3',
         value: [1.0, 0.0, 0.5],
         typeGLSL: 'vec3',
       },
-      'uBorderWidth': {
+      'uBorderWidth': { // not used anymore, but is kept for compatibilty with AMI's StackHelper object
         type: 'f',
         value: 2.,
         typeGLSL: 'float',
       },
-      'uBorderMargin': {
+      'uBorderMargin': { // not used anymore, but is kept for compatibilty with AMI's StackHelper object
         type: 'f',
         value: 2.,
         typeGLSL: 'float',
       },
-      'uBorderDashLength': {
+      'uBorderDashLength': { // not used anymore, but is kept for compatibilty with AMI's StackHelper object
         type: 'f',
         value: 10.,
         typeGLSL: 'float',
@@ -135,17 +135,17 @@ export default class ShadersUniform {
         value: 1.0,
         typeGLSL: 'float',
       },
-      'uSpacing': {
+      'uSpacing': { // not used anymore, but is kept for compatibilty with AMI's StackHelper object
         type: 'f',
         value: 0.,
         typeGLSL: 'float',
       },
-      'uThickness': {
+      'uThickness': { // not used anymore, but is kept for compatibilty with AMI's StackHelper object
         type: 'f',
         value: 0.,
         typeGLSL: 'float',
       },
-      'uThicknessMethod': {
+      'uThicknessMethod': { // not used anymore, but is kept for compatibilty with AMI's StackHelper object
         type: 'i',
         value: 0,
         typeGLSL: 'int',

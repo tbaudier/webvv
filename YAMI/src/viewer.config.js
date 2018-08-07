@@ -10,14 +10,11 @@ module.exports = {
 
   /** Target Frame Per Secound count. <i>Performance related</i> */
   fps: 30,
-  /** <b>/!\</b> Seems to only be linear ('1' = trilinear interpolation) & is a big slow down for low perf computers. <i>Performance related</i> */
-  interpolation: 0,
-  interpolationNM: 0,
   /** Reset the intensity to 'best' values after every change (including changing the slide index) */
   autoIntensity: false,
   /** Background Color (behind the image borders) ( in hexa as 0x46BFB0 ) */
   bgColor: 0x00FF00,
-  /** Background opacity */
+  /** Background opacity. Take care with opacity, it might affect fusion's transparency display */
   bgAlpha: 0,
 
   /** Color of the cross (prob) (in string hexa as '#RRGGBBAA') (with alpha or not) */
@@ -71,6 +68,7 @@ module.exports = {
   zoomIn2: 'i',
   zoomOut: '-',
   zoomOut2: 'o',
+  // to get keycode http://keycode.info/
   zoomHold: 17, // 'Ctrl'
   moveHold: 16, // 'Shift'
 

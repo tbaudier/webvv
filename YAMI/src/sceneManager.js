@@ -57,13 +57,19 @@ export default class sceneManager {
     /**
      * World bouding box, use to "bestfit" the camera<br/>
      * Array : [xmin, xmax, ymin, ymax, zmin, zmax]
+     * @type {Number[]}
      * @memberof SceneManager
      */
     this.worldBB = worldBB;
     /**
-     * object having the Uniforms object (AMI.DataUniformShader). <i>Constants sent with the shader. cf OpenGL</i>
+     * object having the Uniforms objects (DataUniformShader). <i>Constants sent with the shader. cf OpenGL</i>
+     * @type {Object}
+     * @property {DataUniformShader} [background] Uniform (AMI's Uniform or custom Uniform) object containing data to display main image
+     * @property {DataUniformShader} [fusion] Uniform (AMI's Uniform or custom Uniform) object containing data to display fusion
+     * @property {DataUniformShader} [overlay] Uniform (AMI's Uniform or custom Uniform) object containing data to display overlay
+     * @property {DataUniformShader[]} struct Uniform (AMI's Uniform or custom Uniform) objects containing data to display each struct
      * @memberof SceneManager
-     * @see AMI.DataUniformShader
+     * @see DataUniformShader
      */
     this.uniforms = {
       struct: []
@@ -73,9 +79,24 @@ export default class sceneManager {
      * @memberof SceneManager
      */
     this.stackHelper;
+    /**
+     * object having the Stack objects (AMI.Stack or CustomStack).
+     * @type {Object}
+     * @property {CustomStack} [background] Stack (AMI's Stack or custom Stack) object
+     * @property {CustomStack} [fusion] Stack (AMI's Stack or custom Stack) object
+     * @property {CustomStack} [overlay] Stack (AMI's Stack or custom Stack) object
+     * @property {CustomStack[]} struct Stack (AMI's Stack or custom Stack) objects
+     * @memberof SceneManager
+     * @see CustomStack
+     */
     this.stacks = {};
     /**
      * object having the luts scales (CustomLutHelper) created
+     * @type {Object}
+     * @property {CustomLutHelper} background
+     * @property {CustomLutHelper} fusion
+     * @property {CustomLutHelper} overlay
+     * @property {CustomLutHelper[]} struct
      * @memberof SceneManager
      * @see CustomLutHelper
      */
@@ -140,7 +161,7 @@ export default class sceneManager {
 
     /**
      * Adds a stack to the scene and defines it as the main stack (background)
-     * @param {AMI.StackHelper} stackHelperI stackhelper containing the stack.
+     * @param {AMI.StackHelper|CustomStackHelper} stackHelperI stackhelper containing the stack.
      */
     this.setMainStackHelper = function(stackHelperI) {
       // keep the main stack in memory
@@ -196,8 +217,8 @@ export default class sceneManager {
     /**
      * Adds a new stack (Different from the main stack where you should use setMainStackHelper).<br/>
      *
-     * @param  {AMI.Stack} stack     description
-     * @param  {string} stackname the name of the stack (now it must be "fusion", "ROI" or "overlay", otherwise the stack will not be added)
+     * @param  {AMI.Stack|CustomStack} stack
+     * @param  {string} stackname the name of the stack (now it must be "fusion", "struct" or "overlay", otherwise the stack will not be added)
      */
     this.addLayerStack = function(stack, stackname) {
       if (stackname == "struct")
@@ -307,6 +328,12 @@ export default class sceneManager {
       return uniformsLayer;
     }
 
+    /**
+     * Adds a new stack describing a ROI
+     *
+     * @param  {AMI.Stack|CustomStack} stack
+     * @param  {string} stackname name of the stack (must be "struct", otherwise the stack will not be added)
+     */
     this.addLayerROI = function(stack, stackname) {
       if (stackname !== "struct")
         return;
@@ -359,6 +386,12 @@ export default class sceneManager {
       updateMixShader();
     }
 
+    /**
+     * this - Swap the order 2 consecutive struct : swaps their data and associated data so the new overlaying order is respected
+     *
+     * @param  {Number} indexToMove the index of the ROI to move (starting at 0)
+     * @param  {boolean} isUpward    true = swap with next, false = swap with previous (first rendered will be the "deeper", last will be "over" others)
+     */
     this.swapLayerROI = function(indexToMove, isUpward) {
       let i1 = indexToMove;
       let i2 = isUpward ? (i1 + 1) : (i1 - 1);
@@ -381,6 +414,9 @@ export default class sceneManager {
       _this.updateMixShaderSoft();
     }
 
+    /**
+     * Update the slicing of every stacks added to the sceneManager
+     */
     this.reslice = function() {
       for (let prop in _this.stacks)
         if (_this.stacks.hasOwnProperty(prop))
@@ -395,6 +431,10 @@ export default class sceneManager {
       this.updateActiveSlices();
     }
 
+    /**
+     * Choose the slice to display for every stack added to the sceneManager except the "background" one.<br>
+     * Slices are chosen to match the position of the active slice of the "background" stack.
+     */
     this.updateActiveSlices = function() {
       if (_this.target3D != null) {
         for (let prop in _this.stacks) {
@@ -410,7 +450,7 @@ export default class sceneManager {
         }
       }
     }
-
+    /** update the active slice of one stack, making it match with the slice of the "background" stack */
     function updateActiveSlice(stack, uniform) {
       let localCoordinates = new THREE.Vector3()
         .copy(_this.target3D)
@@ -439,9 +479,7 @@ export default class sceneManager {
       uniform.uOrientationSlice.value = _this.stackHelper.orientation;
     }
 
-    /**
-     * Create the mix layer
-     */
+    /** Create the mix layer */
     function setMixLayer() {
       sceneMix = new THREE.Scene();
 
@@ -454,6 +492,7 @@ export default class sceneManager {
       sceneMix.add(mesh);
     }
 
+    /** Undate the shader of the mix of all layers. And set default values. Must be called when adding a new stack for instance */
     function updateMixShader() {
       _this.uniformsMix.uBackgroundTexture.value = textureTargets["background"].texture;
       // fusion
@@ -504,7 +543,7 @@ export default class sceneManager {
       _this.updateMixShaderSoft();
     }
 
-    //update the shader without resetting the values
+    /** update the shader without resetting the values. updateMixShader() must have been called at least once before. */
     this.updateMixShaderSoft = function() {
       // generate shaders on-demand!
       let fls = new FusionShaderFrag(_this.uniformsMix);
