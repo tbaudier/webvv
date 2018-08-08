@@ -23,7 +23,7 @@ app.post('/registration', function(req, res) {
   };
   let registrationStr = JSON.stringify(req.body.registrationJson, null, 2);
   let name = randomString(4) + "-" + randomString(4) + "-" + randomString(4) + "-" + randomString(4);
-  fs.writeFile('registrations/' + name, registrationStr, 'utf8', (err) => {
+  fs.writeFile('registration/' + name, registrationStr, 'utf8', (err) => {
     if (err) {
       result.done = err;
       console.log("Error with this registration");
