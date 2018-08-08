@@ -31,7 +31,8 @@ app.post('/registration', function(req, res) {
       result.done = 'ok';
       console.log("Registration saved");
     }
-    sendNumidoRegistration(
+    req.body.callback.type = "registration";
+    sendNumidoCallback(
       req.body.callback,
       name,
       _ => {
@@ -80,14 +81,15 @@ function randomString(len) {　　
  * @param  {Object} callbackToNumido
  * @param  {String} callbackToNumido.url URl to Numido server
  * @param  {String} callbackToNumido.path path to concatenate with Numido URL
+ * @param  {String} callbackToNumido.type type of the callback Numido URL
  * @param  {String} name             name of the generated file
  * @param  {callback} success          success callback
  * @param  {callback} fail             fail callback
  */
-function sendNumidoRegistration(callbackToNumido, name, success, fail) {
+function sendNumidoCallback(callbackToNumido, name, success, fail) {
   let xhr = new XMLHttpRequest();
   let suffixe = "?callback=";
-  let url = callbackToNumido.url + callbackToNumido.path + suffixe + name;
+  let url = callbackToNumido.url + callbackToNumido.path + suffixe + callbackToNumido.type + "/" + name;
   console.log("request sent to " + url);
   xhr.open('GET', url, true);
   xhr.onreadystatechange = function() {
