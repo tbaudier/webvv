@@ -28,6 +28,7 @@ export default class customControls extends THREE.EventDispatcher {
       SLICING: 10,
       REGISTER: 11,
       REGISTRING: 12,
+      MEASURING: 13,
     };
     // a map of booleans to know which key is down at the moment
     let pressedKeys = new Map();
@@ -75,6 +76,13 @@ export default class customControls extends THREE.EventDispatcher {
       positionPX: null,
       data: {}
     };
+
+    this._measure = {
+      start: null, // 3D point in the scene
+      end: null, // 3D point in the scene
+      distance: 0, // distance between those points
+      domElement: null,
+    }
 
     this._raycaster = new THREE.Raycaster(); // three js raycaster, only initialized once
     this._mouseRelative = new THREE.Vector2(); // mouse position retalive to canvas x and y in [-1;1]
@@ -523,6 +531,44 @@ export default class customControls extends THREE.EventDispatcher {
       }
     }
 
+    this.resetMeasure = function() {
+      this._measure.start = null;
+      // raycast start
+      let rectCanvas = domElement.getBoundingClientRect();
+      let mouseHoverRelative = new THREE.Vector2();
+      mouseHoverRelative.x = ((oldMousePosition.x - rectCanvas.left) / rectCanvas.width) * 2 - 1;
+      mouseHoverRelative.y = -((oldMousePosition.y - rectCanvas.top) / rectCanvas.height) * 2 + 1;
+      _this._raycaster.setFromCamera(mouseHoverRelative, _this.camera);
+      let intersectsTarget = _this._raycaster.intersectObject(_this.stack._slice.children[0]);
+      if (intersectsTarget.length > 0) {
+        this._measure.start = new THREE.Vector3().copy(intersectsTarget[0].point);
+      }
+      // reset values
+      this._measure.distance = 0;
+      this._measure.domElement = null;
+    }
+
+    this.measureTo = function() {
+      this._measure.end = null;
+      // raycast end
+      let rectCanvas = domElement.getBoundingClientRect();
+      let mouseHoverRelative = new THREE.Vector2();
+      mouseHoverRelative.x = ((oldMousePosition.x - rectCanvas.left) / rectCanvas.width) * 2 - 1;
+      mouseHoverRelative.y = -((oldMousePosition.y - rectCanvas.top) / rectCanvas.height) * 2 + 1;
+      _this._raycaster.setFromCamera(mouseHoverRelative, _this.camera);
+      let intersectsTarget = _this._raycaster.intersectObject(_this.stack._slice.children[0]);
+      if (intersectsTarget.length > 0) {
+        this._measure.end = new THREE.Vector3().copy(intersectsTarget[0].point);
+        // update distance
+        this._measure.distance = this._measure.start.distanceTo(this._measure.end);
+        // update visual element
+        sceneManager.updateMeasure(this._measure.start, this._measure.end);
+        guiManager.updateRulerMeasure(this._measure.distance)
+        // must update to display the line
+        changePtr.hasChanged = true;
+      }
+    }
+
     ///////////
     // Event handlers
     ///////////
@@ -619,6 +665,9 @@ export default class customControls extends THREE.EventDispatcher {
         case 1: // left click
           if (isDown(config.moveHold)) {
             _this._state = STATE.PANNING;
+          } else if (isDown(config.measureHold)) {
+            _this.resetMeasure();
+            _this._state = STATE.MEASURING;
           } else {
             switch (_this._state) {
               case STATE.PAN:
@@ -685,6 +734,9 @@ export default class customControls extends THREE.EventDispatcher {
           break;
         case STATE.REGISTRING:
           _this.registration(oldMousePosition, newMousePosition);
+          break;
+        case STATE.MEASURING:
+          _this.measureTo();
           break;
       }
       oldMousePosition = newMousePosition.clone();
@@ -854,7 +906,8 @@ export default class customControls extends THREE.EventDispatcher {
       document.getElementById('register_x').addEventListener('change', changeRegistration);
       document.getElementById('register_y').addEventListener('change', changeRegistration);
       document.getElementById('register_z').addEventListener('change', changeRegistration);
-      document.getElementById('button-control-send-registration').addEventListener('click', sendRegistration);
+      if (document.getElementById('button-control-send-registration') != null)
+        document.getElementById('button-control-send-registration').addEventListener('click', sendRegistration);
 
       document.getElementById('button-axial').addEventListener('click', setView);
       document.getElementById('button-coronal').addEventListener('click', setView);
@@ -888,7 +941,8 @@ export default class customControls extends THREE.EventDispatcher {
       document.getElementById('register_x').removeEventListener('change', changeRegistration);
       document.getElementById('register_y').removeEventListener('change', changeRegistration);
       document.getElementById('register_z').removeEventListener('change', changeRegistration);
-      document.getElementById('button-control-send-registration').removeEventListener('click', sendRegistration);
+      if (document.getElementById('button-control-send-registration') != null)
+        document.getElementById('button-control-send-registration').removeEventListener('click', sendRegistration);
 
       document.getElementById('button-axial').removeEventListener('click', setView);
       document.getElementById('button-coronal').removeEventListener('click', setView);
@@ -900,7 +954,7 @@ export default class customControls extends THREE.EventDispatcher {
 
       window.removeEventListener('blur', resetKeyMap);
     }
-    
+
     this.dispose = function() {
       clearEvents();
     };

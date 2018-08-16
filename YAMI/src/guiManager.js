@@ -462,6 +462,11 @@ function f() {
     });
   }
 
+  function updateRulerMeasure(measure) {
+    // we use the background image for the units
+    document.getElementById("ruler-measure").innerHTML = roundSci(measure) + " mm";
+  }
+
   function updateRegistration(translation) {
     document.getElementById("register_x").value = translation.x;
     document.getElementById("register_y").value = translation.y;
@@ -486,6 +491,7 @@ function f() {
     updateCross: updateCross,
     updateIndex: updateIndex,
     updateStruct: updateStruct,
+    updateRulerMeasure: updateRulerMeasure,
     updateRegistration: updateRegistration,
     windowPreset: windowPreset, // we need to expose this to reset to 'custom' when setting the window from somewhere else
   }

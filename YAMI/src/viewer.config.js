@@ -71,6 +71,7 @@ module.exports = {
   // to get keycode http://keycode.info/
   zoomHold: 17, // 'Ctrl'
   moveHold: 16, // 'Shift'
+  measureHold: 17, // 'Ctrl'
 
   stackUp: 'ArrowUp',
   stackDown: 'ArrowDown',

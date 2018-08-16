@@ -54,6 +54,8 @@ export default class sceneManager {
       overlay: null,
       struct: [],
     }
+
+    let measure = null;
     /**
      * World bouding box, use to "bestfit" the camera<br/>
      * Array : [xmin, xmax, ymin, ymax, zmin, zmax]
@@ -450,6 +452,32 @@ export default class sceneManager {
         }
       }
     }
+
+    this.updateMeasure = function(pointA, pointB) {
+      if (!measure) {
+        //create a blue LineBasicMaterial
+        let material = new THREE.LineBasicMaterial({
+          color: 0xff5555,
+          linewidth: 2,
+        });
+        material.depthTest = false;
+        let geometry = new THREE.Geometry();
+        geometry.vertices.push(pointA);
+        geometry.vertices.push(pointB);
+        measure = new THREE.Line(geometry, material);
+        measure.renderOrder = 1;
+      } else {
+        measure.geometry = new THREE.Geometry();
+        measure.geometry.vertices.push(pointA);
+        measure.geometry.vertices.push(pointB);
+      }
+      sceneMix.add(measure);
+    }
+
+    this.deleteMeasure = function() {
+      if (measure)
+        sceneMix.remove(measure);
+    }
     /** update the active slice of one stack, making it match with the slice of the "background" stack */
     function updateActiveSlice(stack, uniform) {
       let localCoordinates = new THREE.Vector3()
@@ -553,11 +581,13 @@ export default class sceneManager {
         uniforms: _this.uniformsMix,
         vertexShader: vls.compute(),
         fragmentShader: fls.compute(),
-        transparent: true,
+        depthTest: false,
       });
       materialMix = mat;
-      if (mesheMix != null)
+      if (mesheMix != null) {
         mesheMix.material = materialMix;
+        mesheMix.renderOrder = 2;
+      }
     }
 
 
