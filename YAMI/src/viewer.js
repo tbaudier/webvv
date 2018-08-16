@@ -191,8 +191,7 @@ window.onload = function() {
     for (let structNum in seriesContainer["struct"]) {
       let stackStruct = new ModelsStack();
       stackStruct.copy_values(seriesContainer["struct"][structNum][0].mergeSeries(seriesContainer["struct"][structNum])[0].stack[0]);
-      // stackStruct.unit = information["struct"].unit;
-      // we don't need any information here (numido id, unit, ...)
+      stackStruct.name = information["struct"]["names"][structNum];
       sceneManager.addLayerStack(stackStruct, "struct");
       if (stackList["structs"] == null)
         stackList["structs"] = [];

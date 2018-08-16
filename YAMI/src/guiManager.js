@@ -431,6 +431,9 @@ function f() {
     for (let prop in values.data) {
       text += prop + " : " + roundSci(values.data[prop]) + " " + information[prop].unit + " <br/>";
     }
+    for (let roi of values.roiIn) {
+      text += roi + ", ";
+    }
     document.getElementById("data-prob").innerHTML = text;
   }
 

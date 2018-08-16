@@ -74,7 +74,8 @@ export default class customControls extends THREE.EventDispatcher {
     this.values = {
       positionMM: null,
       positionPX: null,
-      data: {}
+      data: {},
+      roiIn: [],
     };
 
     this._measure = {
@@ -389,9 +390,15 @@ export default class customControls extends THREE.EventDispatcher {
     }
 
     function updateProbValue() {
+      _this.values.roiIn = []
       for (let prop in _this.stackValues)
         if (_this.stackValues.hasOwnProperty(prop) && prop != "structs")
           _this.values.data[prop] = getProbValue(_this.stackValues[prop], prop === "image");
+      else if (prop == "structs")
+      for (let roi of _this.stackValues["structs"])
+        if (getProbValue(roi) == 1) {
+          _this.values.roiIn.push(roi.name);
+        }
       changePtr.hasChanged = true;
     }
 
