@@ -55,6 +55,13 @@ npm install webpack --save
 - `src` are readable .js before being bundled up.
 - `public` is what we send to the user : html files and the bundle of our .js'
 
+## Build the documentation
+Documentation has not been pushed on this repository.
+To build it, run the following command :
+```
+yarn doc
+```
+A folder **out** is created. It contains the documentation.
 ## Uses of this server
 This server has 2 main purposes
 #### The "bundling" of our .js files
