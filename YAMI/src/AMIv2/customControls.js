@@ -14,6 +14,8 @@ export default class customControls extends THREE.EventDispatcher {
     // a pointer to pass the "haschanged" value by reference { hasChanged: true };
     let changePtr = chgPtr;
 
+    let overlayShoudBeUpdated = true;
+
     // enum of possible states
     let STATE = {
       SETPROB: 1,
@@ -525,16 +527,18 @@ export default class customControls extends THREE.EventDispatcher {
     }
 
     this.updateOverlayCrossPosition = function() {
-      let mixUni = sceneManager.uniformsMix;
+      if (overlayShoudBeUpdated) {
+        let mixUni = sceneManager.uniformsMix;
 
-      if (!mixUni.uOverlayTexture.empty && mixUni.uOverlayCrossMode.value) {
+        if (!mixUni.uOverlayTexture.empty && mixUni.uOverlayCrossMode.value) {
 
-        let rectCanvas = domElement.getBoundingClientRect();
-        sceneManager.uniformsMix.uOverlayCrossPosition.value.x =
-          ((newMousePosition.x - rectCanvas.left) / rectCanvas.width);
-        sceneManager.uniformsMix.uOverlayCrossPosition.value.y = -((newMousePosition.y - rectCanvas.bottom) / rectCanvas.height);
-        changePtr.hasChanged = true;
+          let rectCanvas = domElement.getBoundingClientRect();
+          sceneManager.uniformsMix.uOverlayCrossPosition.value.x =
+            ((newMousePosition.x - rectCanvas.left) / rectCanvas.width);
+          sceneManager.uniformsMix.uOverlayCrossPosition.value.y = -((newMousePosition.y - rectCanvas.bottom) / rectCanvas.height);
+          changePtr.hasChanged = true;
 
+        }
       }
     }
 
@@ -707,6 +711,7 @@ export default class customControls extends THREE.EventDispatcher {
                 break;
             }
           }
+          overlayShoudBeUpdated = !overlayShoudBeUpdated;
           break;
 
         case 2: // middle click
