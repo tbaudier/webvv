@@ -394,11 +394,11 @@ export default class customControls extends THREE.EventDispatcher {
       for (let prop in _this.stackValues)
         if (_this.stackValues.hasOwnProperty(prop) && prop != "structs")
           _this.values.data[prop] = getProbValue(_this.stackValues[prop], prop === "image");
-      else if (prop == "structs")
-      for (let roi of _this.stackValues["structs"])
-        if (getProbValue(roi) == 1) {
-          _this.values.roiIn.push(roi.name);
-        }
+        else if (prop == "structs")
+        for (let roi of _this.stackValues["structs"])
+          if (getProbValue(roi) == 1) {
+            _this.values.roiIn.push(roi.name);
+          }
       changePtr.hasChanged = true;
     }
 
@@ -574,6 +574,15 @@ export default class customControls extends THREE.EventDispatcher {
         // must update to display the line
         changePtr.hasChanged = true;
       }
+    }
+    this.clearMeasure = function() {
+      this._measure.end = null;
+      this._measure.distance = 0;
+      // update visual element
+      sceneManager.updateMeasure(null, null);
+      guiManager.updateRulerMeasure(this._measure.distance)
+      // must update to display the line
+      changePtr.hasChanged = true;
     }
 
     ///////////
@@ -865,6 +874,10 @@ export default class customControls extends THREE.EventDispatcher {
       evt.preventDefault();
     }
 
+    function clearRuler(evt) {
+      _this.clearMeasure();
+    }
+
     function setSize(evt) {
       let size = 500;
       switch (evt.target.id) {
@@ -910,6 +923,8 @@ export default class customControls extends THREE.EventDispatcher {
       document.getElementById('button-control-prob').addEventListener('click', setState);
       document.getElementById('button-control-register').addEventListener('click', setState);
 
+      document.getElementById('button-clear-ruler').addEventListener('click', clearRuler);
+
       document.getElementById('register_x').addEventListener('change', changeRegistration);
       document.getElementById('register_y').addEventListener('change', changeRegistration);
       document.getElementById('register_z').addEventListener('change', changeRegistration);
@@ -944,6 +959,8 @@ export default class customControls extends THREE.EventDispatcher {
       document.getElementById('button-control-window').removeEventListener('click', setState);
       document.getElementById('button-control-prob').removeEventListener('click', setState);
       document.getElementById('button-control-register').removeEventListener('click', setState);
+
+      document.getElementById('button-clear-ruler').removeEventListener('click', clearRuler);
 
       document.getElementById('register_x').removeEventListener('change', changeRegistration);
       document.getElementById('register_y').removeEventListener('change', changeRegistration);

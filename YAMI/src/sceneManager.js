@@ -454,24 +454,28 @@ export default class sceneManager {
     }
 
     this.updateMeasure = function(pointA, pointB) {
-      if (!measure) {
-        //create a blue LineBasicMaterial
-        let material = new THREE.LineBasicMaterial({
-          color: 0xff5555,
-          linewidth: 2,
-        });
-        material.depthTest = false;
-        let geometry = new THREE.Geometry();
-        geometry.vertices.push(pointA);
-        geometry.vertices.push(pointB);
-        measure = new THREE.Line(geometry, material);
-        measure.renderOrder = 1;
+      if (!pointA || !pointB) {
+        this.deleteMeasure();
       } else {
-        measure.geometry = new THREE.Geometry();
-        measure.geometry.vertices.push(pointA);
-        measure.geometry.vertices.push(pointB);
+        if (!measure) {
+          //create a blue LineBasicMaterial
+          let material = new THREE.LineBasicMaterial({
+            color: 0xff5555,
+            linewidth: 2,
+          });
+          material.depthTest = false;
+          let geometry = new THREE.Geometry();
+          geometry.vertices.push(pointA);
+          geometry.vertices.push(pointB);
+          measure = new THREE.Line(geometry, material);
+          measure.renderOrder = 1;
+          sceneMix.add(measure);
+        } else {
+          measure.geometry = new THREE.Geometry();
+          measure.geometry.vertices.push(pointA);
+          measure.geometry.vertices.push(pointB);
+        }
       }
-      sceneMix.add(measure);
     }
 
     this.deleteMeasure = function() {
