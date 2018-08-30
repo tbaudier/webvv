@@ -52,7 +52,7 @@ npm install webpack --save
 - `package.json` is the first configuration of the server : dependencies and available commands (in the section "script")
 - `index.js` is the entry point, contains the configuration of the server (host, port...)
 - `webpack.config.js` is the configuration of the 'compilation' of our js
-- `src` are readable .js before being bundled up.
+- `src` are readable .js before being bundled up. See the README.md file inside this folder for more information.
 - `public` is what we send to the user : html files and the bundle of our .js'
 
 ## Build the documentation
