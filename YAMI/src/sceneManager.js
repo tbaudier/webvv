@@ -481,6 +481,7 @@ export default class sceneManager {
     this.deleteMeasure = function() {
       if (measure)
         sceneMix.remove(measure);
+      measure = null;
     }
     /** update the active slice of one stack, making it match with the slice of the "background" stack */
     function updateActiveSlice(stack, uniform) {
