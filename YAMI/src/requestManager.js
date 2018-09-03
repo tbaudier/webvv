@@ -180,7 +180,6 @@ function requestManager() {
 
     let files = {};
     let jsonParameters;
-    loader
     let total_files_i = 0;
     let file_i = -1;
 

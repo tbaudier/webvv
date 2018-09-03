@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <title>Web VV - Medical Viewer</title>
+
+  <link rel="stylesheet" type="text/css" href="YAMI/public/stylesheets/style.css">
+
+  <!-- 3D
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/92/three.min.js"></script>
+  -->
+  <script type="text/javascript" src="YAMI/public/lib/three.min.js"></script>
+
+  <!-- Follow the dat.gui repository, today it has a known bug : you cannot mannualy set a value to a field with ".listen()".
+  We use this .listen() on windowWidth and WindowCenter on the GUI (on the right of the window). Input values cannot be written.
+  -->
+  <!-- gui
+  <script type="text/javascript" src="https://cdn.rawgit.com/dataarts/dat.gui/master/build/dat.gui.min.js"></script>
+  -->
+  <script type="text/javascript" src="YAMI/public/lib/dat.gui.min.js"></script>
+
+  <!-- AMI -->
+  <script type="text/javascript" src="YAMI/public/lib/ami.min.js"></script>
+
+</head>
+
+<body>
+  <div style="position: absolute; min-height:100%; width : 100%;" id="settings">
+    <div style="background:white; width : 500px; margin : auto ; padding : 20px">
+      <h1>YAMI - Web VV</h1> Please specify your configuration and your files (nothing is uploaded anywhere, it stays only on your computer)<br/>
+
+      <div class="incomplete" id="bg-form">
+        <button class="float-right del" id="bg-reset">X</button>
+        <h2>Main Image</h2> Select (mhd AND raw) or (mha) or (nifti) or (dicoms).<br/> Hold Ctrl to select several files.<br/><br/>
+        <label for="bg-files">Files</label>
+        <input type="file" name="bg-files" id="bg-files" multiple/>
+        <label for="bg-units">| Unit</label>
+        <input type="text" name="bg-units" id="bg-units" size="10" />
+        <br/>
+      </div>
+
+      <div class="incomplete" id="fusion-form">
+        <button class="float-right del" id="fusion-reset">X</button>
+        <h2>Fusion Image</h2> Select (mhd AND raw) or (mha) or (nifti) or (dicoms).<br/> Hold Ctrl to select several files.<br/><br/>
+        <label for="fusion-files">Files</label>
+        <input type="file" name="fusion-files" id="fusion-files" multiple/>
+        <label for="fusion-units">| Unit</label>
+        <input type="text" name="fusion-units" id="fusion-units" size="10" />
+        <br/>
+      </div>
+
+      <div class="incomplete" id="overlay-form">
+        <button class="float-right del" id="overlay-reset">X</button>
+        <h2>Overlay Image</h2> Select (mhd AND raw) or (mha) or (nifti) or (dicoms).<br/> Hold Ctrl to select several files.<br/><br/>
+        <label for="overlay-files">Files</label>
+        <input type="file" name="overlay-files" id="overlay-files" multiple/>
+        <label for="overlay-units">| Unit</label>
+        <input type="text" name="overlay-units" id="overlay-units" size="10" />
+        <br/>
+      </div>
+
+      <div id="ROI-settings-container">
+      </div>
+      <h2 id="add-ROI">(+ Add a ROI)</h2>
+      <input type="hidden" name="ROI_count" id="ROI_count" value="0" />
+      <br/>
+      <button id="validate-input-settings">Validate</button>
+      <br/>
+      <br/>
+    </div>
+  </div>
+
+  <div class="wrapper">
+
+    <h1 class="title">YAMI - Medical Viewer</h1>
+    <h2 id="sub-title">Web VV</h2>
+
+    <div class="align-left">
+      <div class="general-panel">
+        <div id="controls-panel" class="align-left">
+          <button onClick="window.location.reload()">Change the images</button><br/>
+          <hr>
+
+          <details open>
+            <summary>Basic controls</summary>
+
+            <button id="button-control-prob">Prob</button> <span id="label-control-prob" class="small disabled">Click</span><br/>
+            <hr>
+
+            <span class="small">Ruler : Ctrl + click and drag</span><br/>
+            <span class="small">Measure : <span id="ruler-measure">0</span></span><br/>
+            <button id="button-clear-ruler">Clear</button>
+            <hr>
+
+            <button id="button-control-pan">Move</button> <span id="label-control-pan" class="small disabled">Click and Drag</span> <br/>
+            <span class="small">Move : click on Wheel</span><br/>
+            <span class="small">Move : Shift + click and drag</span>
+            <hr>
+
+            <button id="button-control-zoom">Zoom</button> <span id="label-control-zoom" class="small disabled">Click and Drag</span> <br/>
+            <span class="small">Zoom In :  + , i , Ctrl + Wheel down<br/></span>
+            <span class="small">Zoom Out : - , o , Cltr + Wheel up <br/></span>
+            <hr>
+
+            <button id="button-control-slice">Slices</button> <span id="label-control-slice" class="small disabled">Click and Drag</span> <br/>
+            <span class="small">Slice Up :   ↑ , Wheel Up <br/></span>
+            <span class="small">Slice Down : ↓ , Wheel Down <br/></span>
+            <hr>
+
+            <button id="button-control-window">Window</button> <span id="label-control-window" class="small disabled">Click and Drag</span> <br/>
+            <span class="small">Windowing : Right Click</span>
+            <hr>
+
+            <div id="panel-register" hidden="hidden">
+              <button id="button-control-register">Registration</button> <span id="label-control-register" class="small disabled">Click and Drag</span> <br/>
+              <div>
+                <input type="number" id="register_x" name="register_x" value="0" step="any" /> [mm] X<br/>
+                <input type="number" id="register_y" name="register_y" value="0" step="any" /> [mm] Y<br/>
+                <input type="number" id="register_z" name="register_z" value="0" step="any" /> [mm] Z<br/>
+              </div>
+              <hr>
+            </div>
+
+            <span class="small">Local Windowing : L</span>
+            <hr>
+
+            <span class="small">Camera Reset : R</span>
+          </details>
+          <hr>
+        </div>
+      </div>
+
+      <div class="viewer-panel">
+        <noscript>
+          Please activate JavaScript.<br/>
+          <a href="https://www.enable-javascript.com/" target="_blank">(Click here for more information...)</a>
+        </noscript>
+        <div class="viewer-canvas" id="r3d">
+          <div id="top" class="direction"></div>
+          <div id="bottom" class="direction"></div>
+          <div id="left" class="direction"></div>
+          <div id="right" class="direction"></div>
+        </div>
+
+        <div>
+          <div class="float-right">
+            <button id="button-size-1">500*500</button>
+            <button id="button-size-2">600*600</button>
+            <button id="button-size-3">800*800</button>
+          </div>
+          <div>
+            <button id="button-axial">Axial</button>
+            <button id="button-coronal">Coronal</button>
+            <button id="button-sagittal">Sagittal</button>
+          </div>
+          <div id="data-prob"></div>
+
+          <div id="my-lut-container">
+            <div id="my-lut-canvases">
+              <!-- Colormaps -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="gui-panel" id="my-gui-container">
+      <!-- GUI -->
+    </div>
+
+  </div>
+  <script type="text/javascript" src="YAMI/public/bundle.js"></script>
+  <script type="text/javascript" src="YAMI/public/setting_form.js"></script>
+</body>
+
+</html>

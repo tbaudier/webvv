@@ -8,8 +8,11 @@ body, html {
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
 }
 
-button {
+button, #add-ROI {
   cursor: pointer;
+}
+#add-ROI{
+  text-decoration : underline;
 }
 
 /* Color of the button of the active mode */
@@ -156,4 +159,28 @@ a {
   float: right;
   text-align: right;
   font-size: 0.8em;
+}
+
+#settings{
+  text-align : center;
+  background : #ddddddee;
+  z-index : 5000;
+  color : black;
+  font-size : 0.8em;
+}
+
+#settings .incomplete {
+  color : grey;
+}
+#settings .incomplete label{
+  color : black;
+}
+#settings button::first-letter {
+  text-decoration: none;
+}
+#settings button.del{
+  color : red;
+}
+#settings .incomplete button.del{
+  color : grey;
 }

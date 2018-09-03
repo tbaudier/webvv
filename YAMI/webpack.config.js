@@ -2,7 +2,7 @@ const webpack = require("webpack");
 const path = require("path");
 
 let config1 = {
-  entry: ["./src/viewer.js"],
+  entry: ["./src/Standalone/viewer.js"],
   output: {
     path: path.resolve(__dirname, "./public"),
     filename: "./bundle.js"
@@ -10,7 +10,7 @@ let config1 = {
      devtool: 'source-map'
 }
 let config2 = {
-  entry: ["babel-polyfill", "./src/viewer.js"],
+  entry: ["babel-polyfill", "./src/Standalone/viewer.js"],
   output: {
     path: path.resolve(__dirname, "./public"),
     filename: "./bundle.js"

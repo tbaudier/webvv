@@ -8,21 +8,21 @@
  */
 
 // Viewer config file
-const config = require('./viewer.config');
-// Managment of JSON request, and parsing
-const requestManager = require('./requestManager');
+const config = require('../viewer.config');
+// Manager for request from local files
+const requestManager = require('./localRequestManager');
 // FPS managment
-import animationManager from './animator';
+import animationManager from '../animator';
 // GUI managment
-const guiManager = require('./guiManager');
+const guiManager = require('../guiManager');
 // Controls
-import CustomControls from './AMIv2/customControls';
+import CustomControls from '../AMIv2/customControls';
 // Scene Managment
-import SceneManager from './sceneManager';
+import SceneManager from '../sceneManager';
 // Customization of AMI for slicing
-import ModelsStack from './AMIv2/2DSlices/customStack';
+import ModelsStack from '../AMIv2/2DSlices/customStack';
 // Customization of AMI for slicing
-import StackHelper from './AMIv2/2DSlices/customStackHelper';
+import StackHelper from '../AMIv2/2DSlices/customStackHelper';
 
 // standard global variables
 
@@ -31,9 +31,8 @@ let canvas; // HTML container
 
 let sceneManager; // @type {sceneManager}
 let animator;
-document.body.style.cursor = "wait";
 
-let changePtr = { // a pointer to pass the "haschanged" value by reference
+let changePtr = { // a pointer to pass the 'haschanged' value by reference
   hasChanged: true
 };
 
@@ -79,14 +78,75 @@ function init() {
     canvas.clientWidth / -2, canvas.clientWidth / 2,
     canvas.clientHeight / 2, canvas.clientHeight / -2,
     0.1, 10000);
+
+  document.getElementById('validate-input-settings').addEventListener('click', validateInputSettings);
 }
 
+function validateInputSettings(evt) {
+  let files = {};
+  let information = {};
+  let roi_count = document.getElementById('ROI_count').value;
 
-/** Our code begin on the "onload" function. We instanciate each needed objects to make YAMI works. */
+  if (document.getElementById('bg-files').files.length > 0) {
+    files['image'] = [];
+    for (let i = 0; i < document.getElementById('bg-files').files.length; ++i)
+      files['image'].push(document.getElementById('bg-files').files[i]);
+    information['image'] = {
+      unit: document.getElementById('bg-units').value
+    };
+  } else {
+    alert('No background image has been found');
+    return;
+  }
+
+  if (document.getElementById('fusion-files').files.length > 0) {
+    files['fusion'] = [];
+    for (let i = 0; i < document.getElementById('fusion-files').files.length; ++i)
+      files['fusion'].push(document.getElementById('fusion-files').files[i]);
+    information['fusion'] = {
+      unit: document.getElementById('fusion-units').value
+    };
+  }
+
+  if (document.getElementById('overlay-files').files.length > 0) {
+    files['overlay'] = [];
+    for (let i = 0; i < document.getElementById('overlay-files').files.length; ++i)
+      files['overlay'].push(document.getElementById('overlay-files').files[i]);
+    information['overlay'] = {
+      unit: document.getElementById('overlay-units').value
+    };
+  }
+
+  if (roi_count > 0) {
+    files['struct'] = [];
+    information['struct'] = {
+      names: []
+    };
+    for (let i = 0; i < roi_count; ++i) {
+      files['struct'].push([]);
+      for (let j = 0; j < document.getElementById(`roi${i}-files`).files.length; ++j)
+        files['struct'][i].push(document.getElementById(`roi${i}-files`).files[j]);
+      information['struct']['names'][i] = document.getElementById(`roi${i}-name`).value;
+    }
+  }
+  // call the new request manager
+  load(files, information);
+
+  // cleanup
+  document.getElementById('validate-input-settings').removeEventListener('click', validateInputSettings);
+  let form = document.getElementById('settings');
+  form.parentNode.removeChild(form);
+}
+
+/** Our code begin on the 'onload' function. We instanciate each needed objects to make YAMI works. */
 window.onload = function() {
   // init threeJS and the scene
   init();
+}
 
+function load(files, information) {
+  if (information['struct'])
+    changeIdenticalString(information['struct']['names']);
   // instantiate the loader
   // it loads and parses the images
   let loader = new AMI.VolumeLoader(canvas);
@@ -95,9 +155,8 @@ window.onload = function() {
   loader._progressBar.free(); // and rebuild it
   loader._progressBar.init();
   // Reads the GET params, reads the JSON and load the files
-  document.body.style.cursor = "wait"; // display "busy" cursor
-  requestManager.readMultipleFiles(loader, handleSeries, handleError);
-
+  document.body.style.cursor = 'wait'; // display 'busy' cursor
+  requestManager.readMultipleFiles(loader, files, handleSeries, handleError);
 
   /**
    * handleError - This function is called if requestManager encounters an error
@@ -105,8 +164,8 @@ window.onload = function() {
    * @global
    */
   function handleError() {
-    canvas.innerHTML = "An error has occured.<br/>Check the JS console for more info.";
-    document.body.style.cursor = "auto"; // restore classic cursor
+    canvas.innerHTML = 'An error has occured.<br/>Check the JS console for more info.';
+    document.body.style.cursor = 'auto'; // restore classic cursor
   }
 
   /**
@@ -119,42 +178,21 @@ window.onload = function() {
    * @param  {Stack[]} [seriesContainer.fusion] array of created stack for fusion image (the array dimension is the time, not used here). Optionnal
    * @param  {Stack[]} [seriesContainer.overlay]  array of created stack for overylay image (the array dimension is the time, not used here). Optionnal
    * @param  {Stack[][]} seriesContainer.struct   array of (array of created stacks) for struct image (the array dimension is the number of structs, the dimension of sub-arrays is the time, not used here).
-   * @param  {Object} information         object containing other information contained in the input json.
-   * @param  {Object} information.data    dictionnary of various information displayed "as it is" to the user
-   * @param  {string} information.data.study    name of the study
-   * @param  {string} information.data.patient  nale of the patient
-   * @param  {Object} information.callback      various information to execute callbacks to numido
-   * @param  {string} information.callback.url  url to Numido server
-   * @param  {string} information.callback.path path to Numido action (will be added after url)
-   * @param  {Object} information.image       object containing other information contained about the image
-   * @param  {string} information.image.unit  String to display after the numerical values for this stack (ie. units)
-   * @param  {Number} information.image.id    Id of this image in Numido system. Works with information.image.table
-   * @param  {string} information.image.table Table of this image in Numido system. Works with information.image.id
-   * @param  {Object} [information.fusion]    cf information.image
-   * @param  {Object} [information.overlay]   cf information.image
-   * @param  {Object} [information.struct]    various information about structs
-   * @param  {string} information.struct.unit    "bool", may be something else, not used, but this data is read in input json from Numido
-   * @param  {string[]} information.struct.names  array of the names of differents ROI
-   * @param  {string[]} information.struct.ids    array of the ids of differents ROI. Ids are in Numido system. Works with information.struct.tables
-   * @param  {string[]} information.struct.tables array of the tables of differents ROI. Tables are in Numido system. Works with information.struct.ids
    */
-  function handleSeries(seriesContainer, information) {
-    changeIdenticalString(information['struct']['names']);
-    document.body.style.cursor = "auto"; // restore classic cursor
+  function handleSeries(seriesContainer) {
+    document.body.style.cursor = 'auto'; // restore classic cursor
     // cleanup the loader and its progress bar
     loader.free();
     loader = null;
-    // write information on the page
-    writeInformation(information);
     // prepare for slice visualization
     let stackList = {};
 
     // main image
     let stack = new ModelsStack();
-    stack.copy_values(seriesContainer["image"][0].mergeSeries(seriesContainer["image"])[0].stack[0]);
-    stackList["image"] = stack;
-    // we add the "unit" attribute to the stacks
-    stack.unit = information["image"].unit;
+    stack.copy_values(seriesContainer['image'][0].mergeSeries(seriesContainer['image'])[0].stack[0]);
+    stackList['image'] = stack;
+    // we add the 'unit' attribute to the stacks
+    stack.unit = information['image'].unit;
     // we create the main stackHelper (easy manipulation of stacks)
     let stackHelper = new StackHelper(stack);
     stackHelper.bbox.visible = false;
@@ -167,36 +205,36 @@ window.onload = function() {
     // and add the stacks we have loaded to the 3D scene
 
     // fusion
-    if (seriesContainer["fusion"]) {
+    if (seriesContainer['fusion']) {
       let stackFusion = new ModelsStack();
-      stackFusion.copy_values(seriesContainer["fusion"][0].mergeSeries(seriesContainer["fusion"])[0].stack[0]);
-      stackFusion.unit = information["fusion"].unit;
-      sceneManager.addLayerStack(stackFusion, "fusion");
-      stackList["fusion"] = stackFusion;
+      stackFusion.copy_values(seriesContainer['fusion'][0].mergeSeries(seriesContainer['fusion'])[0].stack[0]);
+      stackFusion.unit = information['fusion'].unit;
+      sceneManager.addLayerStack(stackFusion, 'fusion');
+      stackList['fusion'] = stackFusion;
       // Cleaning the imported (now useless) raw data
       cleanStack(stackFusion);
     }
 
     // overlay
-    if (seriesContainer["overlay"]) {
+    if (seriesContainer['overlay']) {
       let stackOver = new ModelsStack();
-      stackOver.copy_values(seriesContainer["overlay"][0].mergeSeries(seriesContainer["overlay"])[0].stack[0]);
-      stackOver.unit = information["overlay"].unit;
-      sceneManager.addLayerStack(stackOver, "overlay");
-      stackList["overlay"] = stackOver;
+      stackOver.copy_values(seriesContainer['overlay'][0].mergeSeries(seriesContainer['overlay'])[0].stack[0]);
+      stackOver.unit = information['overlay'].unit;
+      sceneManager.addLayerStack(stackOver, 'overlay');
+      stackList['overlay'] = stackOver;
       // Cleaning the imported (now useless) raw data
       cleanStack(stackOver);
     }
 
     // struct
-    for (let structNum in seriesContainer["struct"]) {
+    for (let structNum in seriesContainer['struct']) {
       let stackStruct = new ModelsStack();
-      stackStruct.copy_values(seriesContainer["struct"][structNum][0].mergeSeries(seriesContainer["struct"][structNum])[0].stack[0]);
+      stackStruct.copy_values(seriesContainer['struct'][structNum][0].mergeSeries(seriesContainer['struct'][structNum])[0].stack[0]);
       stackStruct.name = information["struct"]["names"][structNum];
-      sceneManager.addLayerStack(stackStruct, "struct");
-      if (stackList["structs"] == null)
-        stackList["structs"] = [];
-      stackList["structs"].push(stackStruct);
+      sceneManager.addLayerStack(stackStruct, 'struct');
+      if (stackList['structs'] == null)
+        stackList['structs'] = [];
+      stackList['structs'].push(stackStruct);
       // Cleaning the imported (now useless) raw data
       cleanStack(stackStruct);
     }
@@ -239,7 +277,7 @@ window.onload = function() {
     guiManager.updateLabels(camera.directionsLabel, stack.modality);
     guiManager.buildGUI(sceneManager, camera, changePtr, canvas, information);
 
-    //Set the "Resize" listener
+    //Set the 'Resize' listener
     window.addEventListener('resize', onWindowResize, false);
     onWindowResize();
 
@@ -284,19 +322,6 @@ window.onload = function() {
    * {@link handleSeries}
    */
 
-  function writeInformation(jsonData) {
-    document.getElementById("sub-title").innerHTML = "[" + jsonData.data.study + "] " + jsonData.data.patient;
-    // iterate on sub properties
-    for (let prop in jsonData.data) {
-      if (jsonData.data.hasOwnProperty(prop)) { // check if it's a direct property as we expect
-        let div = document.createElement('div');
-        div.innerHTML = "<span class='data-label'>" + prop + "</span> : <span class='data-content'>" +
-          jsonData.data[prop] + "</span>";
-        document.getElementById("general-info-panel").appendChild(div);
-      }
-    }
-  }
-
   /** createCross - Create the Dom Elements of the cross */
   function createCross() {
     cross.horizontal = document.createElement('div');
@@ -327,4 +352,5 @@ window.onload = function() {
       }
     }
   }
+
 };
