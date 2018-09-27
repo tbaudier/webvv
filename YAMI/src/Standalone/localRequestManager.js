@@ -228,10 +228,9 @@ function localRequestManager() {
           else
             cat = files[category][structNum];
           // convert object into array
+          let text = ""
           for (let i = 0; i < cat.length; i++) {
-            let localurl = "file://localhost/" + cat[i].name
-            let tempUrl = new URL(cat[i].name);
-            console.log(tempUrl);
+            text += " " + cat[i].name;
             let dataUrl = AMI.UtilsCore.parseUrl(cat[i].name);
             if (_filterByExtension('mhd', dataUrl)) {
               dataGroup["header"] = cat[i];
@@ -242,6 +241,7 @@ function localRequestManager() {
               data.push(cat[i]);
             }
           }
+          document.getElementById("filenames").innerHTML = text;
           if (separatedFormat !== undefined) {
             if (dataGroup["header"] === undefined || dataGroup["data"] === undefined) {
               reject("Data seems to be 'header (mhd) + data (raw)' but data can't be found !");
