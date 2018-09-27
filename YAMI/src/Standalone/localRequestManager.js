@@ -229,7 +229,9 @@ function localRequestManager() {
             cat = files[category][structNum];
           // convert object into array
           for (let i = 0; i < cat.length; i++) {
-            console.log(AMI.UtilsCore.parseUrl(cat[i].name));
+            let localurl = "file://localhost/" + cat[i].name
+            let tempUrl = new URL(cat[i].name);
+            console.log(tempUrl);
             let dataUrl = AMI.UtilsCore.parseUrl(cat[i].name);
             if (_filterByExtension('mhd', dataUrl)) {
               dataGroup["header"] = cat[i];
