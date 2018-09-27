@@ -46,13 +46,19 @@ function localRequestManager() {
           if (files.hasOwnProperty(prop))
             ++total_files_i;
 
+        let text = "";
         for (let prop in files)
           if (files.hasOwnProperty(prop))
             p = p.then(_ => {
               ++file_i;
               // and proceed
+              text += prop + ": ";
+              for (let file in files)
+                text += file.name + " "
+              text += "\n";
               return loadAllData(files, prop);
             });
+        document.getElementById("filenames").innerHTML = text;
         p = p.then(_ => {
           return new Promise((resolve, reject) => {
             // update loader
@@ -228,9 +234,7 @@ function localRequestManager() {
           else
             cat = files[category][structNum];
           // convert object into array
-          let text = ""
           for (let i = 0; i < cat.length; i++) {
-            text += " " + cat[i].name;
             let dataUrl = AMI.UtilsCore.parseUrl(cat[i].name);
             if (_filterByExtension('mhd', dataUrl)) {
               dataGroup["header"] = cat[i];
@@ -241,7 +245,6 @@ function localRequestManager() {
               data.push(cat[i]);
             }
           }
-          document.getElementById("filenames").innerHTML = text;
           if (separatedFormat !== undefined) {
             if (dataGroup["header"] === undefined || dataGroup["data"] === undefined) {
               reject("Data seems to be 'header (mhd) + data (raw)' but data can't be found !");
