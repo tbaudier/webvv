@@ -53,10 +53,11 @@ function localRequestManager() {
               ++file_i;
               // and proceed
               text += prop + ": ";
-              for (let file in files[prop])
+              for (let file in files[prop]) {
                 text += file.name + " ";
+                console.log(file);
+              }
               text += "<br/>";
-              console.log(text);
               document.getElementById("filenames").innerHTML = text;
               return loadAllData(files, prop);
             });
