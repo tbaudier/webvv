@@ -56,7 +56,7 @@ function localRequestManager() {
                 for (let roi in files[prop]) {
                   text += prop + ": ";
                   for (let file in files[prop][roi])
-                    text += files[prop][file][roi].name + " ";
+                    text += files[prop][roi][file].name + " ";
                   text += "<br/>";
                 }
               } else {
