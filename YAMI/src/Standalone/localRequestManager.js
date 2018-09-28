@@ -46,16 +46,16 @@ function localRequestManager() {
           if (files.hasOwnProperty(prop))
             ++total_files_i;
 
-        let text = "coucou";
+        let text = "";
         for (let prop in files)
           if (files.hasOwnProperty(prop))
             p = p.then(_ => {
               ++file_i;
               // and proceed
               text += prop + ": ";
-              //for (let file in files)
-              //  text += file.name + " ";
-              text += "\n";
+              for (let file in files[prop])
+                text += file.name + " ";
+              text += "<br/>";
               console.log(text);
               document.getElementById("filenames").innerHTML = text;
               return loadAllData(files, prop);
