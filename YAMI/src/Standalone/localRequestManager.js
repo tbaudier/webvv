@@ -55,14 +55,12 @@ function localRequestManager() {
               if (prop === "struct") {
                 for (let roi in files[prop]) {
                   text += prop + ": ";
-                  for (let file in files[prop][roi])
-                    text += files[prop][roi][file].name + " ";
+                  text += files[prop][roi][0].name + " ";
                   text += "<br/>";
                 }
               } else {
                 text += prop + ": ";
-                for (let file in files[prop])
-                  text += files[prop][file].name + " ";
+                text += files[prop][0].name + " ";
                 text += "<br/>";
               }
               document.getElementById("filenames").innerHTML = text;
