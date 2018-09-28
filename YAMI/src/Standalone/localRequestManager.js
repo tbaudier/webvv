@@ -54,8 +54,9 @@ function localRequestManager() {
               // and proceed
               text += prop + ": ";
               for (let file in files)
-                text += file.name + " "
+                text += file.name + " ";
               text += "\n";
+              console.log(text);
               return loadAllData(files, prop);
             });
         document.getElementById("filenames").innerHTML = text;
