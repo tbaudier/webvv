@@ -51,12 +51,22 @@ function localRequestManager() {
           if (files.hasOwnProperty(prop))
             p = p.then(_ => {
               ++file_i;
-              // and proceed
-              text += prop + ": ";
-              for (let file in files[prop])
-                text += files[prop][file].name + " ";
-              text += "<br/>";
+              //Write filenames
+              if (prop === "struct") {
+                for (let roi in files[prop]) {
+                  text += prop + ": ";
+                  for (let file in files[prop][roi])
+                    text += files[prop][file][roi].name + " ";
+                  text += "<br/>";
+                }
+              } else {
+                text += prop + ": ";
+                for (let file in files[prop])
+                  text += files[prop][file].name + " ";
+                text += "<br/>";
+              }
               document.getElementById("filenames").innerHTML = text;
+              // and proceed
               return loadAllData(files, prop);
             });
         p = p.then(_ => {
