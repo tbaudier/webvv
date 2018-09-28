@@ -58,7 +58,7 @@ function localRequestManager() {
                     text += prop + ": " + files[prop][roi][0].name + "<br/>";
                 }
               } else {
-                if (files[prop][roi].length > 0)
+                if (files[prop].length > 0)
                   text += prop + ": " + files[prop][0].name + "<br/>";
               }
               document.getElementById("filenames").innerHTML = text;
