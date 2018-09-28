@@ -46,20 +46,20 @@ function localRequestManager() {
           if (files.hasOwnProperty(prop))
             ++total_files_i;
 
-        let text = "";
+        let text = "coucou";
         for (let prop in files)
           if (files.hasOwnProperty(prop))
             p = p.then(_ => {
               ++file_i;
               // and proceed
               text += prop + ": ";
-              for (let file in files)
-                text += file.name + " ";
+              //for (let file in files)
+              //  text += file.name + " ";
               text += "\n";
               console.log(text);
+              document.getElementById("filenames").innerHTML = text;
               return loadAllData(files, prop);
             });
-        document.getElementById("filenames").innerHTML = text;
         p = p.then(_ => {
           return new Promise((resolve, reject) => {
             // update loader
